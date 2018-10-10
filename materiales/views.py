@@ -30,8 +30,8 @@ class MaterialesCreateView(generic.CreateView):
         if len(descripcion) < 1:
             messages.add_message(request, messages.ERROR, 'El nombre del material debe ser mayor a 1 digito')
             return redirect('materiales_crear')
-
-        if not(re.match('\d', ks)):
+            
+        if not(re.match('\d', str(ks))):
             messages.add_message(request, messages.ERROR, 'ks invalido, debe ser numerico')
             return redirect('materiales_crear')
 
@@ -67,7 +67,7 @@ class MaterialesUpdateView(generic.View):
             messages.add_message(request, messages.ERROR, 'El nombre del material debe ser mayor a 1 digito')
             return redirect('materiales_editar', pk=id_material)
 
-        if not(re.match('\d', ks)):
+        if not(re.match('\d', str(ks))):
             messages.add_message(request, messages.ERROR, 'ks invalido, debe ser numerico')
             return redirect('materiales_editar', pk=id_material)
 

@@ -1,7 +1,4 @@
 from django.shortcuts import render
-
-# Create your views here.
-from django.shortcuts import render
 from fluidos.models import Fluido
 from django.views import generic
 from django.contrib import messages
