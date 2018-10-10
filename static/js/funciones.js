@@ -3,21 +3,21 @@ $(document).ready(function () {
 });
 
 // Active user
-function ConfirmDesBlock(pk){
+function borrarProyecto(pk){
     swal({
-        title: "Deshabilitar Beneficiario",
-        text: "¿Seguro que desea borrar este beneficiario?",
+        title: "Eliminar proyecto",
+        text: "¿Seguro que desea borrar este proyecto?",
         icon: "warning",
         buttons: true,
         dangerMode: true,
     })
     .then((willDelete) => {
         if (willDelete) {
-        request_url = '/beneficiarios/eliminar/' + pk
+        request_url = '/proyectos/eliminar/' + pk
           $.ajax({
                 url: request_url,
                 success: function(data){
-                    swal({title: "OK", text: 'Beneficiario deshabilitado', type: "success", timer: 6000, allowEscapeKey:true});
+                    swal({title: "OK", text: 'Proyecto borrado', type: "success", timer: 6000, allowEscapeKey:true});
                     location.reload();
                 }
               })

@@ -4,12 +4,7 @@
         <h1 class="h2">Lista de proyectos</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group mr-2">
-                <a type="button" href="#" class="btn btn-sm btn-primary">Crear</a>
-            </div>
-            <div class="btn-group mr-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary">Activos</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">Inactivos</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">Todos</button>
+                <a type="button" href="{% url 'proyectos_crear' %}" class="btn btn-sm btn-outline-primary">Crear</a>
             </div>
         </div>
     </div>
@@ -30,11 +25,14 @@
                     <td>{{proyecto.nombre}}</td>
                     <td class="text-dark">{{proyecto.fluido}}</td>
                     <td>{{proyecto.material}}</td>
-                    <td style="width: 100px">
-                        <a href="#" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
+                    <td style="width: 150px">
+                        <a href="#" class="btn btn-sm btn-success" data-toggle="tooltip" data-placement="top">
+                            <span data-feather="eye"></span>
+                        </a>
+                        <a href="{% url 'proyectos_editar' proyecto.id %}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
                             <span data-feather="edit"></span>
                         </a>
-                        <a href="#" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                        <a href="#" onclick="borrarProyecto({{ proyecto.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
                             <span data-feather="trash-2"></span>
                         </a>
                     </td>
