@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from .models import Proyecto, Fluido, Material
+from .models import Proyecto
+from materiales.models import Material
+from fluidos.models import Fluido
 from django.views import generic
 from django.contrib import messages
 from django.shortcuts import redirect

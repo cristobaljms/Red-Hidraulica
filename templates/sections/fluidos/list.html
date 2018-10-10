@@ -1,0 +1,42 @@
+{% extends 'base.html' %} {% block content %}
+<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Lista de fluidos</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group mr-2">
+                <a type="button" href="{% url 'fluidos_crear' %}" class="btn btn-sm btn-outline-primary">Crear</a>
+            </div>
+        </div>
+    </div>
+    {% include 'partials/messages.html' %}
+    <div class="table-responsive">
+        <table id="beneficiarios_tabla">
+            <thead>
+                <tr>
+                    <th style="padding: 10px 10px;">Descripcion</th>
+                    <th style="padding: 10px 10px;">Viscosidad cinematica</th>
+                    <th style="padding: 10px 10px;">Valor viscosidad</th>
+                    <th style="width: 100px">Accion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if object_list %} {% for fluido in object_list %}
+                <tr>
+                    <td>{{fluido.descripcion}}</td>
+                    <td>{{fluido.viscosidad_cinematica}}</td>
+                    <td>{{fluido.valor_viscocidad}}</td>
+                    <td style="width: 100px">
+                        <a href="{% url 'fluidos_editar' fluido.id %}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
+                            <span data-feather="edit"></span>
+                        </a>
+                        <a href="#" onclick="borrarFluido({{ fluido.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                            <span data-feather="trash-2"></span>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %} {% endif %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}
