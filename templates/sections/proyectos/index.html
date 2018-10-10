@@ -1,0 +1,47 @@
+{% extends 'base.html' %} {% block content %}
+<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Lista de proyectos</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group mr-2">
+                <a type="button" href="#" class="btn btn-sm btn-primary">Crear</a>
+            </div>
+            <div class="btn-group mr-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary">Activos</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Inactivos</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Todos</button>
+            </div>
+        </div>
+    </div>
+    {% include 'partials/messages.html' %}
+    <div class="table-responsive">
+        <table id="beneficiarios_tabla">
+            <thead>
+                <tr>
+                    <th style="padding: 10px 10px;">Nombre</th>
+                    <th style="padding: 10px 10px;">Fluido</th>
+                    <th style="padding: 10px 10px;">Material</th>
+                    <th style="width: 100px">Accion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if object_list %} {% for proyecto in object_list %}
+                <tr>
+                    <td>{{proyecto.nombre}}</td>
+                    <td class="text-dark">{{proyecto.fluido}}</td>
+                    <td>{{proyecto.material}}</td>
+                    <td style="width: 100px">
+                        <a href="#" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
+                            <span data-feather="edit"></span>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                            <span data-feather="trash-2"></span>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %} {% endif %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}
