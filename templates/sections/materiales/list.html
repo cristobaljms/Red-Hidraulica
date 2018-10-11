@@ -1,40 +1,78 @@
-{% extends 'base.html' %} {% block content %}
-<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Lista de materiales</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group mr-2">
-                <a type="button" href="{% url 'materiales_crear' %}" class="btn btn-sm btn-outline-primary">Crear</a>
+{% extends 'base.html' %} {% load static from staticfiles%} {% block content %}
+<div class="page-wrapper">
+    <!-- Bread crumb -->
+    <div class="row page-titles">
+        <div class="col-md-5 align-self-center">
+            <h3 class="text-primary">Listado de materiales |
+                <a href="#" class="btn btn-sm btn-primary">Nuevo
+                    <i class="fa fa-fw fa-users"></i>
+                </a>
+            </h3>
+        </div>
+        <div class="col-md-7 align-self-center">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="#">Home</a>
+                </li>
+                <li class="breadcrumb-item active">Materiales</li>
+            </ol>
+        </div>
+    </div>
+    <!-- End Bread crumb -->
+    <!-- Container fluid  -->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        {% include 'partials/messages.html' %}
+                        <div class="table-responsive ">
+                            <table id="myTable" class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 10px 10px;">Descripcion</th>
+                                        <th style="padding: 10px 10px;">ks</th>
+                                        <th style="width: 100px">Accion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if object_list %} {% for material in object_list %}
+                                    <tr>
+                                        <td>{{material.descripcion}}</td>
+                                        <td>{{material.ks}}</td>
+                                        <td style="width: 150px">
+                                            <a href="{% url 'materiales_editar' material.id%}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
+                                                <span data-feather="edit"></span>
+                                            </a>
+                                            <a href="#" onclick="borrarMaterial({{ material.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                                                <span data-feather="trash-2"></span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %} {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    {% include 'partials/messages.html' %}
-    <div class="table-responsive">
-        <table id="beneficiarios_tabla">
-            <thead>
-                <tr>
-                    <th style="padding: 10px 10px;">Descripcion</th>
-                    <th style="padding: 10px 10px;">ks</th>
-                    <th style="width: 100px">Accion</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if object_list %} {% for material in object_list %}
-                <tr>
-                    <td>{{material.descripcion}}</td>
-                    <td>{{material.ks}}</td>
-                    <td style="width: 150px">
-                        <a href="{% url 'materiales_editar' material.id%}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
-                            <span data-feather="edit"></span>
-                        </a>
-                        <a href="#" onclick="borrarMaterial({{ material.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
-                            <span data-feather="trash-2"></span>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %} {% endif %}
-            </tbody>
-        </table>
-    </div>
-</main>
-{% endblock %}
+    <!-- End Container fluid  -->
+</div>
+{% endblock %} {% block extra_js %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+
+<script src="{% static 'admin/js/lib/datatables/datatables.min.js' %}"></script>
+<script src="http://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+<script src="http://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+<script src="http://cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
+<script src="http://cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js"></script>
+<script src="http://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+<script src="http://cdn.datatables.net/buttons/1.2.2/js/buttons.print.min.js"></script>
+<script src="{% static 'admin/js/lib/datatables/datatables-init.js' %}"></script> {% endblock %}
