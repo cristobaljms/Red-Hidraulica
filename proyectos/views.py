@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect
 
 def DeleteProyecto(request, pk):
     Proyecto.objects.filter(pk=pk).delete()
+    messages.add_message(request, messages.SUCCESS, 'Proyecto eliminado')
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 # Create your views here.

@@ -4,8 +4,7 @@
     <div class="row page-titles">
         <div class="col-md-5 align-self-center">
             <h3 class="text-primary">Listado de materiales |
-                <a href="#" class="btn btn-sm btn-primary">Nuevo
-                    <i class="fa fa-fw fa-users"></i>
+                <a href="{% url 'materiales_crear' %}" class="btn btn-sm btn-primary">Nuevo
                 </a>
             </h3>
         </div>
@@ -25,14 +24,14 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        {% include 'partials/messages.html' %}
+                        
                         <div class="table-responsive ">
                             <table id="myTable" class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th style="padding: 10px 10px;">Descripcion</th>
                                         <th style="padding: 10px 10px;">ks</th>
-                                        <th style="width: 100px">Accion</th>
+                                        <th style="width: 100px; text-align:center">Accion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -40,12 +39,12 @@
                                     <tr>
                                         <td>{{material.descripcion}}</td>
                                         <td>{{material.ks}}</td>
-                                        <td style="width: 150px">
+                                        <td style="width: 150px; text-align:center">
                                             <a href="{% url 'materiales_editar' material.id%}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
-                                                <span data-feather="edit"></span>
+                                                <i class="fa fa-edit"></i>
                                             </a>
                                             <a href="#" onclick="borrarMaterial({{ material.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
-                                                <span data-feather="trash-2"></span>
+                                                <i class="fa fa-trash-alt"></i>
                                             </a>
                                         </td>
                                     </tr>
