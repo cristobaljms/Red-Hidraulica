@@ -3,32 +3,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Tell the browser to be responsive to screen width -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <!-- Favicon icon -->
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon.ico' %}">
-    <title>Dashboard - Fised4Good</title>
-    <!-- Bootstrap Core CSS -->
-    <link href="{% static 'admin/css/lib/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="{% static 'admin/css/helper.css' %}" rel="stylesheet">
-    <link href="{% static 'admin/css/style.css' %}" rel="stylesheet">
-    <link href="{% static 'admin/css/lib/sweetalert/sweetalert.css' %}" rel="stylesheet">
-    <link href="{% static 'admin/css/bootstrap-datepicker.min.css' %}" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:** -->
-    <!--[if lt IE 9]>
-    <script src="https:**oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    <script src="https:**oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
-</head>
+{% include 'layouts/header.html' %}
 
 <body class="fix-header fix-sidebar">
     <!-- Preloader - style you can find in spinners.css -->
@@ -36,6 +11,7 @@
         <svg class="circular" viewBox="25 25 50 50">
             <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" /> </svg>
     </div>
+
     <!-- Main wrapper  -->
     <div id="main-wrapper">
         <!-- header header  -->
@@ -89,22 +65,12 @@
                         <!-- Profile -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-muted  " href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="label label-info">username</span>
-                                <img src="{% static 'images/profile_default.png' %}" alt="user" class="profile-pic"
-                                />
+                                <span class="label label-info">{{request.user.username}}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right animated zoomIn">
                                 <ul class="dropdown-user">
                                     <li>
-                                        <a href="#">
-                                            <i class="ti-user"></i> Profile</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">
-                                            <i class="ti-settings"></i> Setting</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">
+                                        <a href="/logout">
                                             <i class="fa fa-power-off"></i> Logout</a>
                                     </li>
                                 </ul>
@@ -124,25 +90,7 @@
         <!-- End Page wrapper  -->
     </div>
     <!-- End Wrapper -->
-    <!-- All Jquery -->
-    <script src="{% static 'admin/js/lib/jquery/jquery.min.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
-
-    <!-- Bootstrap tether Core JavaScript -->
-    <script src="{% static 'admin/js/lib/bootstrap/js/popper.min.js' %}"></script>
-    <script src="{% static 'admin/js/lib/bootstrap/js/bootstrap.min.js' %}"></script>
-    <!-- slimscrollbar scrollbar JavaScript -->
-    <script src="{% static 'admin/js/jquery.slimscroll.js' %}"></script>
-    <!--Menu sidebar -->
-    <script src="{% static 'admin/js/sidebarmenu.js' %}"></script>
-    <!--stickey kit -->
-    <script src="{% static 'admin/js/lib/sticky-kit-master/dist/sticky-kit.min.js' %}"></script>
-    <script src="{% static 'admin/js/scripts.js' %}"></script>
-
-    <script src="{% static 'admin/js/lib/sweetalert/sweetalert.min.js' %}"></script>
-    <script src="{% static 'admin/js/lib/sweetalert/sweetalert.min.js' %}"></script>
-    <script src="{% static 'admin/js/bootstrap-datepicker.min.js' %}"></script>
-    <script src="{% static 'admin/js/base.js' %}"></script>
+    {% include 'layouts/scripts.html' %}
     {% block extra_js %} {% endblock %}
 </body>
 
