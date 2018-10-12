@@ -42,7 +42,7 @@
                                         <td class="text-dark">{{proyecto.fluido}}</td>
                                         <td>{{proyecto.material}}</td>
                                         <td style="width: 150px; text-Align:center">
-                                            <a href="#" class="btn btn-sm btn-success" data-toggle="tooltip" data-placement="top">
+                                            <a href="{% url 'proyecto_administrar' proyecto.id %}" class="btn btn-sm btn-success" data-toggle="tooltip" data-placement="top">
                                                 <i class="fa fa-eye"></i>
                                             </a>
                                             <a href="{% url 'proyectos_editar' proyecto.id %}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">

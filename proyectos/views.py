@@ -7,12 +7,20 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 
+class ProyectoView(generic.View):
+    template_name = "sections/proyectos/show.html"
+    def get(self, request, *args, **kwargs):
+        proyecto = Proyecto.objects.get(pk=kwargs['pk'])
+        context = {
+            'proyecto': proyecto
+        }
+        return render(request, self.template_name, context)
 
 # Create your views here.
 class ProyectosListView(generic.ListView):
     model = Proyecto
     template_name = 'sections/proyectos/index.html'  # Specify your own template name/location
-
+    return render(request, self.template_name, context)
 
 class ProyectosCreateView(generic.CreateView):
     template_name = "sections/proyectos/create.html"

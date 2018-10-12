@@ -1,23 +1,8 @@
-"""root URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/2.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import  login
-from proyectos.views import ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView
+from proyectos.views import ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoView
 from materiales.views import MaterialesListView, MaterialesCreateView, MaterialesUpdateView, MaterialesDeleteView
 from fluidos.views import FluidosListView, FluidosCreateView, FluidosUpdateView, FluidosDeleteView
 from django.contrib.auth.decorators import login_required
@@ -27,6 +12,7 @@ urlpatterns = [
     path('proyectos/crear/', login_required(ProyectosCreateView.as_view(), login_url='/login/'), name='proyectos_crear'),
     path('proyectos/editar/<int:pk>/', login_required(ProyectosUpdateView.as_view(), login_url='/login/'), name='proyectos_editar'),
     path('proyectos/eliminar/<int:pk>/', login_required(ProyectoDeleteView.as_view(), login_url='/login/'), name='proyecto_eliminar'),
+    path('proyectos/administrar/<int:pk>/', login_required(ProyectoView, login_url='/login/'), name='proyecto_administrar'),
 
     path('materiales/', login_required(MaterialesListView.as_view(), login_url='/login/'), name='materiales'),
     path('materiales/crear/', login_required(MaterialesCreateView.as_view(), login_url='/login/'), name='materiales_crear'),
