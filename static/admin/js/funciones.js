@@ -20,7 +20,7 @@ $(document).ready(function () {
 // Active user
 function borrarProyecto(pk){
     swal({
-        title: "Eliminar proyecto",
+        title: "Eliminar proyecto1",
         text: "¿Seguro que desea borrar este proyecto?",
         icon: "warning",
         buttons: true,

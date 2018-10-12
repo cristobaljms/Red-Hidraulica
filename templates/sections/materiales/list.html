@@ -24,7 +24,7 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        
+                            {% include 'partials/messages.html' %}
                         <div class="table-responsive ">
                             <table id="myTable" class="table table-bordered">
                                 <thead>
@@ -43,7 +43,7 @@
                                             <a href="{% url 'materiales_editar' material.id%}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
                                                 <i class="fa fa-edit"></i>
                                             </a>
-                                            <a href="#" onclick="borrarMaterial({{ material.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                                            <a href="{% url 'materiales_eliminar' material.id%}" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
                                                 <i class="fa fa-trash-alt"></i>
                                             </a>
                                         </td>

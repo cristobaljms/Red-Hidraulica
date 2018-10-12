@@ -143,21 +143,7 @@
     <script src="{% static 'admin/js/lib/sweetalert/sweetalert.min.js' %}"></script>
     <script src="{% static 'admin/js/bootstrap-datepicker.min.js' %}"></script>
     <script src="{% static 'admin/js/base.js' %}"></script>
-    <script src="{% static 'js/funciones.js' %}"></script>
-    <script type="text/javascript">
-        {% if messages %}
-        {% for message in messages %}
-        {% if 'error' in message.tags %}
-        var typeR = "error";
-        var Header = "Error";
-        {% else %}
-        var typeR = "success";
-        var Header = "Success";
-        {% endif %}
-        swal({ title: Header, text: '{{message}}', type: typeR, timer: 6000, allowEscapeKey: true });
-        {% endfor %}
-        {% endif %}
-    </script> {% block extra_js %} {% endblock %}
+    {% block extra_js %} {% endblock %}
 </body>
 
 </html>

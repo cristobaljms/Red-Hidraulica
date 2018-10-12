@@ -3,7 +3,7 @@
     <!-- Bread crumb -->
     <div class="row page-titles">
         <div class="col-md-5 align-self-center">
-            <h3 class="text-primary">Listado de materiales |
+            <h3 class="text-primary">Listado de fluidos |
                 <a href="{% url 'fluidos_crear' %}" class="btn btn-sm btn-primary">Nuevo
                 </a>
             </h3>
@@ -45,7 +45,7 @@
                                             <a href="{% url 'fluidos_editar' fluido.id %}" class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top">
                                                 <i class="fa fa-edit"></i>
                                             </a>
-                                            <a href="#" onclick="borrarFluido({{ fluido.id }})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                                            <a href="{% url 'fluidos_eliminar' fluido.id %}"  class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
                                                 <i class="fa fa-trash-alt"></i>
                                             </a>
                                         </td>

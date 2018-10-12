@@ -6,10 +6,6 @@ from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 import re
 
-def DeleteFluidos(request, pk):
-    Fluido.objects.filter(pk=pk).delete()
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
 # Create your views here.
 class FluidosListView(generic.ListView):
     model = Fluido
@@ -77,4 +73,20 @@ class FluidosUpdateView(generic.View):
         f.save()
         
         messages.add_message(request, messages.SUCCESS, 'Fluido editado con exito')
+        return redirect('fluidos')
+
+
+
+class FluidosDeleteView(generic.DeleteView):
+    template_name = "sections/fluidos/delete.html"
+    def get(self, request, *args, **kwargs):
+        fluido = Fluido.objects.get(pk=kwargs['pk'])
+        context = {
+            'fluido': fluido
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        Fluido.objects.filter(pk=kwargs['pk']).delete()
+        messages.add_message(request, messages.SUCCESS, 'Fluido eliminado')
         return redirect('fluidos')

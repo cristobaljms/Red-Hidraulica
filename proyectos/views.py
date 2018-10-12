@@ -7,10 +7,6 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 
-def DeleteProyecto(request, pk):
-    Proyecto.objects.filter(pk=pk).delete()
-    messages.add_message(request, messages.SUCCESS, 'Proyecto eliminado')
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 # Create your views here.
 class ProyectosListView(generic.ListView):
@@ -104,4 +100,18 @@ class ProyectosUpdateView(generic.View):
         p.save()
 
         messages.add_message(request, messages.SUCCESS, 'Proyecto editado con exito')
+        return redirect('proyectos')
+
+class ProyectoDeleteView(generic.DeleteView):
+    template_name = "sections/proyectos/delete.html"
+    def get(self, request, *args, **kwargs):
+        proyecto = Proyecto.objects.get(pk=kwargs['pk'])
+        context = {
+            'proyecto': proyecto
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        Proyecto.objects.filter(pk=kwargs['pk']).delete()
+        messages.add_message(request, messages.SUCCESS, 'Proyecto eliminado')
         return redirect('proyectos')
