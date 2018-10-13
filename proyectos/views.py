@@ -1,26 +1,114 @@
 from django.shortcuts import render
-from .models import Proyecto
+from .models import Proyecto, Nodo, Tuberia, Reservorio
 from materiales.models import Material
 from fluidos.models import Fluido
 from django.views import generic
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
+from django.core.serializers import serialize
+from django.core.serializers.json import DjangoJSONEncoder
+import re
 
-class ProyectoView(generic.View):
+
+class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
+
     def get(self, request, *args, **kwargs):
         proyecto = Proyecto.objects.get(pk=kwargs['pk'])
+        nodos = Nodo.objects.filter(proyecto=proyecto)
+        tuberias = Tuberia.objects.filter(proyecto=proyecto)
+        reservorios = Reservorio.objects.filter(proyecto=proyecto)
+
         context = {
-            'proyecto': proyecto
+            'proyecto': proyecto,
+            'nodos':nodos,
+            'tuberias':tuberias,
+            'reservorios': reservorios 
         }
+        
         return render(request, self.template_name, context)
 
-# Create your views here.
+    def post(self, request, *args, **kwargs):
+        tipo = request.POST.get('tipo')
+        id_proyecto = request.POST.get('id_proyecto')
+
+        if (tipo == 'nodo'):
+            numero = request.POST.get('numero')
+            demanda = request.POST.get('demanda')
+            cota = request.POST.get('cota')
+            if len(numero) > 4:
+                messages.add_message(request, messages.ERROR, 'Nombre del nodo no puede ser mayor de 4 caracteres')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            if not(re.match('\d', str(demanda))):
+                messages.add_message(request, messages.ERROR, 'demanda invalida, debe ser numerico')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            if not(re.match('\d', str(cota))):
+                messages.add_message(request, messages.ERROR, 'cota invalida, debe ser numerico')
+                return redirect('proyecto_administrar', id_proyecto)
+            proyecto = Proyecto.objects.get(pk=id_proyecto)
+
+            nodo = Nodo(proyecto=proyecto, numero=numero, cota=cota, demanda=demanda)
+            nodo.save()
+            messages.add_message(request, messages.SUCCESS, 'Nodo creado con exito')
+            return redirect('proyecto_administrar', id_proyecto)
+        elif (tipo == 'tuberia'):
+            numero = request.POST.get('numero')
+            longitud = request.POST.get('longitud')
+            diametro = request.POST.get('diametro')
+            start = request.POST.get('start')
+            end = request.POST.get('end')
+
+            if start == '0' or end == '0':
+                messages.add_message(request, messages.ERROR, 'Debe ingresar el nodo incial y el nodo final')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            if len(numero) > 4:
+                messages.add_message(request, messages.ERROR, 'Nombre del nodo no puede ser mayor de 4 caracteres')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            if not(re.match('\d', str(longitud))):
+                messages.add_message(request, messages.ERROR, 'longitud invalida, debe ser numerico')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            if not(re.match('\d', str(diametro))):
+                messages.add_message(request, messages.ERROR, 'diametro invalido, debe ser numerico')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            if start == end:
+                messages.add_message(request, messages.ERROR, 'El nodo de inicio no puede ser igual al nodo final')
+                return redirect('proyecto_administrar', id_proyecto)
+
+            nstart = Nodo.objects.get(pk = start)  
+            nend = Nodo.objects.get(pk = end)     
+            proyecto = Proyecto.objects.get(pk=id_proyecto)
+            tuberia = Tuberia(proyecto=proyecto, numero=numero, longitud=longitud, diametro=diametro, start=nstart.numero, end = nend.numero)
+            tuberia.save()
+            messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
+            return redirect('proyecto_administrar', id_proyecto)
+        else:
+            numero = request.POST.get('numero')
+            z = request.POST.get('z')
+            if len(numero) > 4:
+                messages.add_message(request, messages.ERROR, 'Nombre del reservorio no puede ser mayor de 4 caracteres')
+                return redirect('proyecto_administrar', id_proyecto)
+            
+            if not(re.match('\d', str(z))):
+                messages.add_message(request, messages.ERROR, 'z invalido, debe ser numerico')
+                return redirect('proyecto_administrar', id_proyecto)
+            
+            proyecto = Proyecto.objects.get(pk=id_proyecto)
+            reservorio = Reservorio(numero=numero, z=z, proyecto=proyecto)
+            reservorio.save()
+            messages.add_message(request, messages.SUCCESS, 'Reservorio creado con exito')
+            return redirect('proyecto_administrar', id_proyecto)
+
 class ProyectosListView(generic.ListView):
     model = Proyecto
-    template_name = 'sections/proyectos/index.html'  # Specify your own template name/location
-    return render(request, self.template_name, context)
+    template_name = 'sections/proyectos/index.html'
+
 
 class ProyectosCreateView(generic.CreateView):
     template_name = "sections/proyectos/create.html"
@@ -123,3 +211,16 @@ class ProyectoDeleteView(generic.DeleteView):
         Proyecto.objects.filter(pk=kwargs['pk']).delete()
         messages.add_message(request, messages.SUCCESS, 'Proyecto eliminado')
         return redirect('proyectos')
+
+
+def borrarTuberia(request, pk):
+    Tuberia.objects.filter(pk=pk).delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def borrarNodo(request, pk):
+    Nodo.objects.filter(pk=pk).delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+def borrarReservorio(request, pk):
+    Reservorio.objects.filter(pk=pk).delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

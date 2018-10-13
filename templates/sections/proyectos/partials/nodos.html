@@ -1,0 +1,76 @@
+{% load staticfiles %}
+<form method="post" class="form-inline">
+    {%csrf_token%}
+    <input type="hidden" value="nodo" id="tipo" name="tipo">
+    <input type="hidden" value="{{proyecto.id}}" id="id_proyecto" name="id_proyecto">
+    <div class="form-group col-md-3" style="padding-left: 0">
+        <input type="text" placeholder="Nombre del nodo" class="form-control" id="numero" name="numero" required>
+    </div>
+    <div class="form-group col-md-3" style="padding-left: 0">
+        <input type="text" placeholder="Demanda" class="form-control" id="demanda" name="demanda" required>
+    </div>
+    <div class="form-group col-md-3" style="padding-left: 0">
+        <input type="text" placeholder="Cota" class="form-control" id="cota" name="cota" required>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary ">Agregar</button>
+    </div>
+</form>
+<br>
+<div class="table-responsive ">
+    <table id="NodeTable" class="table table-bordered">
+        <thead>
+            <tr>
+                <th style="padding: 10px 10px;">Numero</th>
+                <th style="padding: 10px 10px;">Demanda</th>
+                <th style="padding: 10px 10px;">Cota</th>
+                <th style="width: 100px; text-Align:center">Accion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if nodos %} {% for nodo in nodos %}
+            <tr>
+                <td>{{nodo.numero}}</td>
+                <td class="text-dark">{{nodo.demanda}}</td>
+                <td>{{nodo.cota}}</td>
+                <td style="width: 150px; text-Align:center">
+                    <a href="#" onclick="borrarNodo({{nodo.id}})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+                        <i class="fa fa-trash-alt"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %} {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<script type="text/javascript" language="javascript" class="init">
+    $(document).ready(function() {
+        $('#NodeTable').dataTable( );
+    } );
+
+    function borrarNodo(pk){
+        swal({
+            title: "Borrar Nodo",
+            text: "¿Estas seguro de querer borrar este nodo?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+            if (willDelete) {
+                request_url =  '/nodo/eliminar/' + pk
+                $.ajax({
+                    url: request_url,
+                    success: function(data){
+                        swal("Nodo borrado", {
+                            icon: "success",
+                        }).then(()=>{ location.reload();});
+                    }
+                })
+            } else {
+                swal("Operacion cancelada");
+            }
+        });
+    }
+</script>
