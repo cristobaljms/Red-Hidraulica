@@ -1,7 +1,113 @@
-{% load staticfiles %}
+{% load staticfiles %} {% if proyecto%}
+<style>
+    .hidden-div {
+        display: none
+    }
+</style>
 
-{% if proyecto%}
-    <h4><b>Nombre: </b> {{proyecto.nombre}}</h4>
-    <h4><b>Material: </b> {{proyecto.material}}</h4>
-    <h4><b>Fluido: </b> {{proyecto.fluido}}</h4>
-{% endif %}
+<div class="row">
+
+    <div class="col-md-4">
+
+        <h4>
+            <b>Nombre: </b> {{proyecto.nombre}}</h4>
+        <h4>
+            <b>Material: </b> {{proyecto.material}}</h4>
+        <h4>
+            <b>Fluido: </b> {{proyecto.fluido}}</h4>
+        <br>
+
+        <a href="#" onclick="generarGrafo({{proyecto.id}})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
+            Generar grafo
+        </a>
+    </div>
+    <div id="sample" class="col-md-8">
+        <div id="myDiagramDiv" style="border: solid 1px black; width:600px; height:400px"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/1.8.31/go-debug.js"></script>
+<script type="text/javascript" language="javascript" class="init">
+
+    function generarGrafo(pk) {
+        request_url = '/proyecto/datos/' + pk
+        $.ajax({
+            url: request_url,
+            success: function (data) {
+                console.log(data)
+                if (window.goSamples) goSamples();
+                var $ = go.GraphObject.make;
+
+                myDiagram =
+                    $(go.Diagram, "myDiagramDiv",
+                        {
+                            initialAutoScale: go.Diagram.Uniform,
+                            contentAlignment: go.Spot.Center,
+                            layout:
+                                $(go.ForceDirectedLayout,
+                                    { maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 })
+                        });
+
+                myDiagram.nodeTemplate =
+                    $(go.Node, "Spot",
+                        { locationSpot: go.Spot.Center },
+                        new go.Binding("text", "text"),
+                        $(go.Shape, "Ellipse",
+                            {
+                                fill: "#00A9C9",
+                                stroke: null,
+                                desiredSize: new go.Size(40, 40)
+                            },
+                            new go.Binding("desiredSize", "size"),
+                            new go.Binding("fill", "fill")),
+                        $(go.TextBlock,
+                            new go.Binding("text", "text"))
+                    );
+
+
+                myDiagram.linkTemplate =
+                    $(go.Link,
+                        $(go.Shape,
+                            { stroke: "black" }),
+                        $(go.Shape,
+                            { toArrow: "standard", stroke: null }),
+                        $(go.Panel, "Auto",
+                            $(go.Shape,
+                                {
+                                    fill: $(go.Brush, "Radial", { 0: "rgb(240, 240, 240)", 0.3: "rgb(240, 240, 240)", 1: "rgba(240, 240, 240, 0)" }),
+                                    stroke: null
+                                }),
+                            $(go.TextBlock,
+                                {
+                                    textAlign: "center",
+                                    font: "10pt helvetica, arial, sans-serif",
+                                    stroke: "#555555",
+                                    margin: 4
+                                },
+                                new go.Binding("text", "text"))
+                        )
+                    );
+
+                var nodeDataArray = []
+                nodos = data.nodos;
+                nodos.map((nodo) => {
+                    nodeDataArray.push({
+                        key: nodo.numero,
+                        text: nodo.numero
+                    })
+                })
+                var linkDataArray = []
+                tuberias = data.tuberias
+                tuberias.map(nodo => {
+                    linkDataArray.push({
+                        from: nodo.start,
+                        to: nodo.end,
+                        text: nodo.numero
+                    })
+                })
+                myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+            }
+        })
+    }
+
+</script> {% endif %}

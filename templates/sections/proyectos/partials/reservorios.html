@@ -40,11 +40,11 @@
 </div>
 
 <script type="text/javascript" language="javascript" class="init">
-    $(document).ready(function() {
-        $('#ReservorioTable').dataTable( );
-    } );
+    //$(document).ready(function() {
+    //    $('#ReservorioTable').dataTable( );
+    //} );
 
-    function borrarReservorio(pk){
+    function borrarReservorio(pk) {
         swal({
             title: "Borrar Reservorio",
             text: "¿Estas seguro de querer borrar este reservorio?",
@@ -52,20 +52,20 @@
             buttons: true,
             dangerMode: true,
         })
-        .then((willDelete) => {
-            if (willDelete) {
-                request_url =  '/reservorio/eliminar/' + pk
-                $.ajax({
-                    url: request_url,
-                    success: function(data){
-                        swal("Reservorio borrado", {
-                            icon: "success",
-                        }).then(()=>{ location.reload();});
-                    }
-                })
-            } else {
-                swal("Operacion cancelada");
-            }
-        });
+            .then((willDelete) => {
+                if (willDelete) {
+                    request_url = '/reservorio/eliminar/' + pk
+                    $.ajax({
+                        url: request_url,
+                        success: function (data) {
+                            swal("Reservorio borrado", {
+                                icon: "success",
+                            }).then(() => { location.reload(); });
+                        }
+                    })
+                } else {
+                    swal("Operacion cancelada");
+                }
+            });
     }
 </script>

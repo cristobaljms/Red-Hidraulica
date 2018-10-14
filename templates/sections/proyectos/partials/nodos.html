@@ -45,11 +45,11 @@
 </div>
 
 <script type="text/javascript" language="javascript" class="init">
-    $(document).ready(function() {
-        $('#NodeTable').dataTable( );
-    } );
+    //$(document).ready(function() {
+    //    $('#NodeTable').dataTable( );
+    //} );
 
-    function borrarNodo(pk){
+    function borrarNodo(pk) {
         swal({
             title: "Borrar Nodo",
             text: "¿Estas seguro de querer borrar este nodo?",
@@ -57,20 +57,20 @@
             buttons: true,
             dangerMode: true,
         })
-        .then((willDelete) => {
-            if (willDelete) {
-                request_url =  '/nodo/eliminar/' + pk
-                $.ajax({
-                    url: request_url,
-                    success: function(data){
-                        swal("Nodo borrado", {
-                            icon: "success",
-                        }).then(()=>{ location.reload();});
-                    }
-                })
-            } else {
-                swal("Operacion cancelada");
-            }
-        });
+            .then((willDelete) => {
+                if (willDelete) {
+                    request_url = '/nodo/eliminar/' + pk
+                    $.ajax({
+                        url: request_url,
+                        success: function (data) {
+                            swal("Nodo borrado", {
+                                icon: "success",
+                            }).then(() => { location.reload(); });
+                        }
+                    })
+                } else {
+                    swal("Operacion cancelada");
+                }
+            });
     }
 </script>

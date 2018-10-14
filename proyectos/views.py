@@ -7,9 +7,9 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.core.serializers import serialize
-from django.core.serializers.json import DjangoJSONEncoder
 import re
-
+from django.http import JsonResponse
+import json
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -224,3 +224,32 @@ def borrarNodo(request, pk):
 def borrarReservorio(request, pk):
     Reservorio.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+
+
+def obtenerProyectoDatos(request, pk):
+
+    tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk)))
+    nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk)))
+    reservorios = json.loads(serialize("json", Reservorio.objects.filter(proyecto=pk)))
+    
+    tarray = []
+    for t in tuberias:
+        tarray.append(t['fields'])
+
+    narray = []
+    for n in nodos:
+        narray.append(n['fields'])
+
+    rarray = []
+    for r in reservorios:
+        rarray.append(r['fields'])
+
+    context = {
+        'tuberias' : tarray,
+        'nodos' : narray,
+        'reservorios' : rarray,
+    }
+
+    return JsonResponse(context, safe=False)

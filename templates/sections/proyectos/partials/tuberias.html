@@ -71,34 +71,34 @@
 </div>
 
 <script type="text/javascript" language="javascript" class="init">
-    $(document).ready(function() {
-        $('#TuberiaTable').dataTable( );
-    } );
+    //$(document).ready(function() {
+    //    $('#TuberiaTable').dataTable( );
+    //} );
 
 
-// Delete Competition
-function borrarTuberia(pk){
-    swal({
-        title: "Borrar tuberia",
-        text: "¿Estas seguro de querer borrar esta tuberia?",
-        icon: "warning",
-        buttons: true,
-        dangerMode: true,
-    })
-    .then((willDelete) => {
-        if (willDelete) {
-            request_url =  '/tuberia/eliminar/' + pk
-            $.ajax({
-                url: request_url,
-                success: function(data){
-                    swal("Tuberia borrada", {
-                        icon: "success",
-                    }).then(()=>{ location.reload();});
+    // Delete Competition
+    function borrarTuberia(pk) {
+        swal({
+            title: "Borrar tuberia",
+            text: "¿Estas seguro de querer borrar esta tuberia?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+            .then((willDelete) => {
+                if (willDelete) {
+                    request_url = '/tuberia/eliminar/' + pk
+                    $.ajax({
+                        url: request_url,
+                        success: function (data) {
+                            swal("Tuberia borrada", {
+                                icon: "success",
+                            }).then(() => { location.reload(); });
+                        }
+                    })
+                } else {
+                    swal("Operacion cancelada");
                 }
-            })
-        } else {
-            swal("Operacion cancelada");
-        }
-    });
-}
+            });
+    }
 </script>
