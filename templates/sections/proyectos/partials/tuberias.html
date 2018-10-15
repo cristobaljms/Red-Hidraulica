@@ -20,16 +20,16 @@
         <div class="form-group col-md-4">
             <select class="form-control" id="start" name="start">
                 <option value="0">Nodo inicial</option>
-                {% if nodos %} {% for n in nodos %}
-                <option value="{{n.id}}">{{n.numero}}</option>
+                {% if opciones_tuberia %} {% for n in opciones_tuberia %}
+                <option value="{{n.pktype}}">{{n.numero}}</option>
                 {% endfor %} {% endif %}
             </select>
         </div>
         <div class="form-group col-md-4">
             <select class="form-control" id="end" name="end">
                 <option value="0">Nodo final</option>
-                {% if nodos %} {% for n in nodos %}
-                <option value="{{n.id}}">{{n.numero}}</option>
+                {% if opciones_tuberia %} {% for n in opciones_tuberia %}
+                <option value="{{n.pktype}}">{{n.numero}}</option>
                 {% endfor %} {% endif %}
             </select>
         </div>

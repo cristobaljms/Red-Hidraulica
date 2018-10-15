@@ -20,11 +20,27 @@ class ProyectoAdminView(generic.CreateView):
         tuberias = Tuberia.objects.filter(proyecto=proyecto)
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
 
+        sreservorios = json.loads(serialize("json", reservorios))
+        snodos = json.loads(serialize("json", nodos))
+
+        rarray = []
+
+        for sr in sreservorios:
+            fields = sr['fields']
+            fields['pktype'] = 'r'+str(sr['pk'])
+            rarray.append(fields)
+
+        for sn in snodos:
+            fields = sn['fields']
+            fields['pktype'] = 'n'+str(sn['pk'])
+            rarray.append(fields)
+
         context = {
             'proyecto': proyecto,
             'nodos':nodos,
             'tuberias':tuberias,
-            'reservorios': reservorios 
+            'reservorios': reservorios,
+            'opciones_tuberia': rarray 
         }
         
         return render(request, self.template_name, context)
@@ -81,8 +97,21 @@ class ProyectoAdminView(generic.CreateView):
                 messages.add_message(request, messages.ERROR, 'El nodo de inicio no puede ser igual al nodo final')
                 return redirect('proyecto_administrar', id_proyecto)
 
-            nstart = Nodo.objects.get(pk = start)  
-            nend = Nodo.objects.get(pk = end)     
+            
+            if(re.match('n', start)):
+                patron = re.compile('n')
+                nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))  
+            else:
+                patron = re.compile('r')
+                nstart = Reservorio.objects.get(pk = int(patron.split(start)[1]))
+
+            if(re.match('n', end)):
+                patron = re.compile('n')
+                nend = Nodo.objects.get(pk = int(patron.split(end)[1]))  
+            else:
+                patron = re.compile('r')
+                nend = Reservorio.objects.get(pk = int(patron.split(end)[1]))
+
             proyecto = Proyecto.objects.get(pk=id_proyecto)
             tuberia = Tuberia(proyecto=proyecto, numero=numero, longitud=longitud, diametro=diametro, start=nstart.numero, end = nend.numero)
             tuberia.save()
@@ -224,9 +253,6 @@ def borrarNodo(request, pk):
 def borrarReservorio(request, pk):
     Reservorio.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
-
 
 def obtenerProyectoDatos(request, pk):
 
