@@ -1,12 +1,6 @@
 {% load staticfiles %} {% if proyecto%}
-<style>
-    .hidden-div {
-        display: none
-    }
-</style>
 
 <div class="row">
-
     <div class="col-md-4">
 
         <h4>
@@ -22,123 +16,70 @@
         </a>
     </div>
     <div id="sample" class="col-md-8">
-        <div id="myDiagramDiv" style="border: solid 1px black; width:600px; height:400px"></div>
+        <div id="mynetwork" style="border: solid 1px lightgray; width:600px; height:400px"></div>
     </div>
 </div>
+<script src="{% static 'admin/js/vis.min.js' %}"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/1.8.31/go-debug.js"></script>
-<script type="text/javascript" language="javascript" class="init">
-
-    function loop() {
-        var diagram = myDiagram;
-        setTimeout(function () {
-            var oldskips = diagram.skipsUndoManager;
-            diagram.skipsUndoManager = true;
-            diagram.links.each(function (link) {
-                var shape = link.findObject("PIPE");
-                var off = shape.strokeDashOffset - 2;
-                shape.strokeDashOffset = (off <= 0) ? 20 : off;
-            });
-            diagram.skipsUndoManager = oldskips;
-            loop();
-        }, 100);
-    }
-
-
+<script>
     function generarGrafo(pk) {
         request_url = '/proyecto/datos/' + pk
         $.ajax({
             url: request_url,
             success: function (data) {
-                if (window.goSamples) goSamples();
-                var $ = go.GraphObject.make;
-
-                myDiagram =
-                    $(go.Diagram, "myDiagramDiv",
-                        {
-                            initialAutoScale: go.Diagram.Uniform,
-                            contentAlignment: go.Spot.Center,
-                            layout:
-                                $(go.ForceDirectedLayout,
-                                    { maxIterations: 200, defaultSpringLength: 30, defaultElectricalCharge: 100 })
-                        });
-
-                var graygrad = $(go.Brush, "Linear", { 0: "#F5F5F5", 1: "#F1F1F1" });
-                var bluegrad = $(go.Brush, "Linear", { 0: "#CDDAF0", 1: "#91ADDD" });
-                var yellowgrad = $(go.Brush, "Linear", { 0: "#FEC901", 1: "#FEA200" });
-                var lavgrad = $(go.Brush, "Linear", { 0: "#EF9EFA", 1: "#A570AD" });
-
-                myDiagram.nodeTemplate =
-                    $(go.Node, "Auto",
-                        { isShadowed: true },
-                        $(go.Shape, "RoundedRectangle",
-                            { fill: graygrad, stroke: "#D8D8D8" },
-                            new go.Binding("fill", "color")),
-                        $(go.TextBlock,
-                            { margin: 5, font: "bold 11px Helvetica, bold Arial, sans-serif" },
-                            new go.Binding("text", "key"))
-                    );
-
-                myDiagram.linkTemplate =
-                    $(go.Link,
-                        { routing: go.Link.AvoidsNodes, curve: go.Link.JumpGap, corner: 10, reshapable: true, toShortLength: 7 },
-                        new go.Binding("points").makeTwoWay(),
-                        // mark each Shape to get the link geometry with isPanelMain: true
-                        $(go.Shape, { isPanelMain: true, stroke: "black", strokeWidth: 5 }),
-                        $(go.Shape, { isPanelMain: true, stroke: "gray", strokeWidth: 3 }),
-                        $(go.Shape, { isPanelMain: true, stroke: "white", strokeWidth: 1, name: "PIPE", strokeDashArray: [10, 10] }),
-                        $(go.Shape, { toArrow: "Triangle", fill: "black", stroke: null }),
-                        $(go.Panel, "Auto",
-                            $(go.Shape,  // the label background, which becomes transparent around the edges
-                                {
-                                    fill: $(go.Brush, "Radial",
-                                        { 0: "rgb(240, 240, 240)", 0.3: "rgb(240, 240, 240)", 1: "rgba(240, 240, 240, 0)" }),
-                                    stroke: null
-                                }),
-                            $(go.TextBlock, "transition",  // the label text
-                                {
-                                    textAlign: "center",
-                                    font: "bold 11px Helvetica, bold Arial, sans-serif",
-                                    margin: 4,
-                                    editable: true  // enable in-place editing
-                                },
-                                // editing the text automatically updates the model data
-                                new go.Binding("text").makeTwoWay())
-                        )
-
-                    );
-
-                var nodeDataArray = []
+                var nodes = []
                 reservorios = data.reservorios
                 reservorios.map((reservorio) => {
-                    nodeDataArray.push({
-                        key: reservorio.numero,
-                        text: reservorio.numero,
-                        color: yellowgrad
+                    nodes.push({
+                        id: reservorio.numero,
+                        label: reservorio.numero
                     })
                 })
 
                 nodos = data.nodos;
                 nodos.map((nodo) => {
-                    nodeDataArray.push({
-                        key: nodo.numero,
-                        text: nodo.numero
-                    })
-                })
-                var linkDataArray = []
-                tuberias = data.tuberias
-                tuberias.map(nodo => {
-                    linkDataArray.push({
-                        from: nodo.start,
-                        to: nodo.end,
-                        text: nodo.numero
+                    nodes.push({
+                        id: nodo.numero,
+                        label: nodo.numero
                     })
                 })
 
-                loop()
-                myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+                var links = []
+                tuberias = data.tuberias
+                tuberias.map(nodo => {
+                    links.push({
+                        from: nodo.start,
+                        to: nodo.end,
+                        label: nodo.numero
+                    })
+                })
+
+                var nodos = new vis.DataSet(nodes);
+
+                var edges = new vis.DataSet(links);
+
+                var container = document.getElementById('mynetwork');
+
+                var data = {
+                    nodes: nodos,
+                    edges: edges
+                };
+                var options = {
+                    edges: {
+
+                        inheritColors: false
+                    },
+                    nodes: {
+                        fixed: true,
+                        parseColor: false
+                    }
+                };
+
+                var network = new vis.Network(container, data, options);
+
             }
         })
     }
+
 
 </script> {% endif %}
