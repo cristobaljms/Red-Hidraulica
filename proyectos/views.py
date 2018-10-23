@@ -7,9 +7,10 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.core.serializers import serialize
-import re
 from django.http import JsonResponse
+import re
 import json
+import numpy as np
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -138,7 +139,6 @@ class ProyectosListView(generic.ListView):
     model = Proyecto
     template_name = 'sections/proyectos/index.html'
 
-
 class ProyectosCreateView(generic.CreateView):
     template_name = "sections/proyectos/create.html"
 
@@ -177,7 +177,6 @@ class ProyectosCreateView(generic.CreateView):
         messages.add_message(request, messages.SUCCESS, 'Proyecto creado con exito')
         return redirect('proyectos')
         
-
 class ProyectosUpdateView(generic.View):
     template_name = "sections/proyectos/edit.html"
 
@@ -241,7 +240,6 @@ class ProyectoDeleteView(generic.DeleteView):
         messages.add_message(request, messages.SUCCESS, 'Proyecto eliminado')
         return redirect('proyectos')
 
-
 def borrarTuberia(request, pk):
     Tuberia.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -254,8 +252,8 @@ def borrarReservorio(request, pk):
     Reservorio.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-def obtenerProyectoDatos(request, pk):
 
+def getProjectData(pk):
     tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk)))
     nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk)))
     reservorios = json.loads(serialize("json", Reservorio.objects.filter(proyecto=pk)))
@@ -277,5 +275,35 @@ def obtenerProyectoDatos(request, pk):
         'nodos' : narray,
         'reservorios' : rarray,
     }
+    return context
 
-    return JsonResponse(context, safe=False)
+def obtenerProyectoDatos(request, pk):
+    return JsonResponse(getProjectData(pk), safe=False)
+
+def CalculosGradiente(request, pk):
+    data = getProjectData(pk)
+    ntuberias = len(data['tuberias'])
+
+    array_longitud = []
+    for t in data['tuberias']:
+        array_longitud.append(t['longitud'])
+    
+    array_diametro = []
+    for t in data['tuberias']:
+        array_diametro.append(t['diametro'])
+
+    Qx = np.zeros(ntuberias) + 0.1
+    Lx = np.array(array_longitud)
+    Dx = np.array(array_diametro)
+    A = np.pi*np.sqrt(Dx)
+    V = Qx/A
+
+    f    = np.zeros(ntuberias).astype(int)
+    hf   = np.zeros(ntuberias).astype(int)
+    Km   = np.zeros(ntuberias).astype(int)
+    hm   = np.zeros(ntuberias).astype(int)
+    hfhm = np.zeros(ntuberias).astype(int)
+    a    = np.zeros(ntuberias).astype(int)
+    af   = np.zeros(ntuberias).astype(int)
+
+    return JsonResponse(getProjectData(pk), safe=False)
