@@ -8,6 +8,7 @@ from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.core.serializers import serialize
 from django.http import JsonResponse
+import math
 import re
 import json
 import numpy as np
@@ -280,8 +281,32 @@ def getProjectData(pk):
 def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
 
+
+def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
+    ban = False
+    if(Re<=2200):
+        f = 64/Re
+    else:
+        Xi = 1/math.sqrt(fhijo)
+        ban = True
+        while(ban):
+            fx = -2*np.log10((rf_D/3.7)+((2.51*Xi)/Re))
+            dividendo = 2.51/Re
+            divisor = ((rf_D/3.7)) + (( 2.51*Xi ) / Re )
+            Fx = ( -2/np.log(10) ) * (dividendo/divisor)
+            Xi_1 = Xi - (fx-Xi)/(Fx-1)
+            compare = abs(Xi_1-Xi)
+            if(compare<=error):
+                f = 1/pow(Xi,2)
+                ban = False
+            else:
+                Xi = Xi_1
+    return f
+
 def CalculosGradiente(request, pk):
     data = getProjectData(pk)
+    proyecto = Proyecto.objects.get(pk=pk)
+
     ntuberias = len(data['tuberias'])
 
     array_longitud = []
@@ -295,15 +320,42 @@ def CalculosGradiente(request, pk):
     Qx = np.zeros(ntuberias) + 0.1
     Lx = np.array(array_longitud)
     Dx = np.array(array_diametro)
-    A = np.pi*np.sqrt(Dx)
+    A = (np.pi*np.power(Dx,2))/4
     V = Qx/A
 
-    f    = np.zeros(ntuberias).astype(int)
-    hf   = np.zeros(ntuberias).astype(int)
-    Km   = np.zeros(ntuberias).astype(int)
-    hm   = np.zeros(ntuberias).astype(int)
-    hfhm = np.zeros(ntuberias).astype(int)
-    a    = np.zeros(ntuberias).astype(int)
-    af   = np.zeros(ntuberias).astype(int)
+    Ks   = np.zeros(ntuberias) + 0.00006
+    Re   = np.zeros(ntuberias) + V*Dx/proyecto.fluido.valor_viscocidad
+    Re = np.round(Re, 0)
+
+    #print("Re               |     Ks   |   Dx ")
+    f = []
+    for i in range(0,ntuberias):
+        #print(Re[i],'|', Ks[i],'|', Dx[i])
+        f.append(f_calculo(Re[i],Ks[i]/Dx[i]))
+
+    hf   = np.zeros(ntuberias) + f*(Lx/Dx)*(np.power(V,2)/(2*9.81))
+    Km   = np.zeros(ntuberias).astype(int) + [0,10,0,0,0,0,0]
+    hm   = np.zeros(ntuberias) + Km * (np.power(V,2)/(2*9.81))
+    hfhm = np.zeros(ntuberias) + (hf + hm)
+    a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
+    af   = np.zeros(ntuberias) + (a * Qx)
+
+    V = np.round(V, 4)
+    A = np.round(A, 4)
+    hf = np.round(hf, 4)
+    Km = np.round(Km, 4)
+    hm = np.round(hm, 4)
+    hfhm = np.round(hfhm, 4)
+    a = np.round(a, 4)
+    af = np.round(af, 4)
+    f = np.round(f,4)
+    print("T  | Qx  |  Lx   |    A   |    V   |   f    |    hf  |Km|  hm   |  hfhm   |   a   |     af")
+
+    for i in range(0,ntuberias):
+        #print("T"+str(i),'|', af[i])
+        print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
+
+
+
 
     return JsonResponse(getProjectData(pk), safe=False)
