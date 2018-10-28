@@ -3,14 +3,11 @@ from .models import Material
 from django.views import generic
 from django.contrib import messages
 from django.shortcuts import redirect
-from django.http import HttpResponseRedirect
-import re
 
-# Create your views here.
+# Create your views he
 class MaterialesListView(generic.ListView):
     model = Material
     template_name = 'sections/materiales/list.html'  # Specify your own template name/location
-
 
 class MaterialesCreateView(generic.CreateView):
     template_name = "sections/materiales/create.html"
@@ -33,7 +30,6 @@ class MaterialesCreateView(generic.CreateView):
         messages.add_message(request, messages.SUCCESS, 'Material creado con exito')
         return redirect('materiales')
         
-
 class MaterialesUpdateView(generic.View):
     template_name = "sections/materiales/edit.html"
 
@@ -65,11 +61,10 @@ class MaterialesUpdateView(generic.View):
         
         messages.add_message(request, messages.SUCCESS, 'Material editado con exito')
         return redirect('materiales')
-
-
         
 class MaterialesDeleteView(generic.DeleteView):
     template_name = "sections/materiales/delete.html"
+
     def get(self, request, *args, **kwargs):
         material = Material.objects.get(pk=kwargs['pk'])
         context = {

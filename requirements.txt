@@ -1,0 +1,6 @@
+Django==2.1.2
+fluids==0.1.73
+numpy==1.15.3
+psycopg2==2.7.5
+pytz==2018.5
+scipy==1.1.0
