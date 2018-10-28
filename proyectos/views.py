@@ -276,11 +276,29 @@ def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
                 Xi = Xi_1
     return f
 
+def printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
+        V = np.round(V, 4)
+        A = np.round(A, 4)
+        hf = np.round(hf, 4)
+        Km = np.round(Km, 4)
+        hm = np.round(hm, 4)
+        hfhm = np.round(hfhm, 4)
+        a = np.round(a, 4)
+        af = np.round(af, 4)
+        f = np.round(f,4)
+        print("T  | Qx  |  Lx   |    A   |    V   |   f    |    hf  |Km|  hm   |  hfhm   |   a   |     af")
+        for i in range(0,ntuberias):
+            #print("T"+str(i),'|', af[i])
+            print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
+
+
 def CalculosGradiente(request, pk):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
 
     ntuberias = len(data['tuberias'])
+    nnodos = len(data['nodos'])
+    nreservorios = len(data['reservorios'])
 
     array_longitud = []
     for t in data['tuberias']:
@@ -299,11 +317,8 @@ def CalculosGradiente(request, pk):
     Ks   = np.zeros(ntuberias) + 0.00006
     Re   = np.zeros(ntuberias) + V*Dx/proyecto.fluido.valor_viscocidad
     Re = np.round(Re, 0)
-
-    #print("Re               |     Ks   |   Dx ")
     f = []
     for i in range(0,ntuberias):
-        #print(Re[i],'|', Ks[i],'|', Dx[i])
         f.append(f_calculo(Re[i],Ks[i]/Dx[i]))
 
     hf   = np.zeros(ntuberias) + f*(Lx/Dx)*(np.power(V,2)/(2*9.81))
@@ -312,23 +327,33 @@ def CalculosGradiente(request, pk):
     hfhm = np.zeros(ntuberias) + (hf + hm)
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
+    
+    # Matriz de tuberias X nodos y que coloca 1 o -1 dependiendo si la posicion
+    # de la tuberia tiene un nodo inicial o final
+    A12 = []
+    for tuberia in data['tuberias']:
+        a = np.zeros(nnodos).astype(int)
+        for i in range(0, nnodos):
+            if(tuberia['start'] == data['nodos'][i]['numero']):
+                a[i] = -1
+        for i in range(0, nnodos):
+            if(tuberia['end'] == data['nodos'][i]['numero']):
+                a[i] = 1
+        A12.append(a)
+    
+    A12 = np.matrix(A12)
+    
+    # Matrix traspuesta de A12
+    A21 = A12.transpose()
 
-    V = np.round(V, 4)
-    A = np.round(A, 4)
-    hf = np.round(hf, 4)
-    Km = np.round(Km, 4)
-    hm = np.round(hm, 4)
-    hfhm = np.round(hfhm, 4)
-    a = np.round(a, 4)
-    af = np.round(af, 4)
-    f = np.round(f,4)
-    print("T  | Qx  |  Lx   |    A   |    V   |   f    |    hf  |Km|  hm   |  hfhm   |   a   |     af")
-
-    for i in range(0,ntuberias):
-        #print("T"+str(i),'|', af[i])
-        print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
-
-
-
+    # Matrix topologica
+    A10 = []
+    #for tuberia in data['tuberias']:
+        #a = np.zeros(nreservorios).astype(int)
+        #for
+    #print(data['tuberias'], data['nodos'])
+    #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
 
     return JsonResponse(getProjectData(pk), safe=False)
+
+    
