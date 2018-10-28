@@ -1,19 +1,29 @@
 {% load staticfiles %}
-<form method="post" class="form-inline">
+<form method="post">
     {%csrf_token%}
     <input type="hidden" value="nodo" id="tipo" name="tipo">
     <input type="hidden" value="{{proyecto.id}}" id="id_proyecto" name="id_proyecto">
-    <div class="form-group col-md-3" style="padding-left: 0">
-        <input type="text" placeholder="Nombre del nodo" class="form-control" id="numero" name="numero" required>
+    <div class="row">
+        <div class="form-group col-md-4">
+            <input type="text" maxlength="4" placeholder="Nombre del nodo" class="form-control" id="numero" name="numero" required>
+        </div>
+        <div class="form-group col-md-4">
+            <input type="number" step="any" placeholder="Demanda" class="form-control" id="demanda" name="demanda" required>
+        </div>
+        <div class="form-group col-md-4">
+            <input type="number" step="any" placeholder="Cota" class="form-control" id="cota" name="cota" required>
+        </div>
     </div>
-    <div class="form-group col-md-3" style="padding-left: 0">
-        <input type="text" placeholder="Demanda" class="form-control" id="demanda" name="demanda" required>
-    </div>
-    <div class="form-group col-md-3" style="padding-left: 0">
-        <input type="text" placeholder="Cota" class="form-control" id="cota" name="cota" required>
-    </div>
-    <div class="col-md-3">
-        <button type="submit" class="btn btn-primary ">Agregar</button>
+    <div class="row">
+        <div class="form-group col-md-4">
+            <input type="number" placeholder="Posicion Y" class="form-control" id="y_position" name="y_position" required>
+        </div>
+        <div class="form-group col-md-4">
+            <input type="number" placeholder="Posicion X" class="form-control" id="x_position" name="x_position" required>
+        </div>
+        <div class="form-group col-md-4">
+            <button type="submit" class="btn btn-primary ">Agregar</button>
+        </div>
     </div>
 </form>
 <br>

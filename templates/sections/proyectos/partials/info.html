@@ -32,7 +32,13 @@
                 reservorios.map((reservorio) => {
                     nodes.push({
                         id: reservorio.numero,
-                        label: reservorio.numero
+                        //label: reservorio.numero + " x: " + reservorio.x_position + " y: " + reservorio.y_position,
+                        label: reservorio.numero,
+                        x: reservorio.x_position,
+                        y: reservorio.y_position,
+                        color: {
+                            background: "#b0d4ff", border: " #1980ff", highlight: " #1980ff", hover: " #1980ff"
+                        },
                     })
                 })
 
@@ -40,17 +46,30 @@
                 nodos.map((nodo) => {
                     nodes.push({
                         id: nodo.numero,
-                        label: nodo.numero
+                        //label: nodo.numero + " x: " + nodo.x_position + " y: " + nodo.y_position,
+                        label: nodo.numero,
+                        x: nodo.x_position,
+                        y: nodo.y_position,
+                        color: {
+                            background: "#ffa2a2", border: "#ff3838", highlight: "#ff3838", hover: "#ff3838"
+                        },
                     })
                 })
+
 
                 var links = []
                 tuberias = data.tuberias
                 tuberias.map(nodo => {
                     links.push({
+                        arrows: {
+                            to: { enabled: true, scaleFactor: 1, type: 'arrow' },
+                            middle: { enabled: false, scaleFactor: 1, type: 'arrow' },
+                            from: { enabled: false, scaleFactor: 1, type: 'arrow' }
+                        },
                         from: nodo.start,
                         to: nodo.end,
-                        label: nodo.numero
+                        label: nodo.numero,
+                        type: 'arrow'
                     })
                 })
 
@@ -64,13 +83,28 @@
                     nodes: nodos,
                     edges: edges
                 };
+
                 var options = {
                     edges: {
-
-                        inheritColors: false
+                        inheritColors: false,
+                        font: {
+                            size: 20,
+                            color: '#111'
+                        },
                     },
                     nodes: {
-                        parseColor: false
+                        parseColor: false,
+                        font: {
+                            size: 20,
+                            color: '#111'
+                        },
+                        borderWidth: 2
+                    },
+                    physics: false,
+                    interaction: {
+                        dragNodes: false,// do not allow dragging nodes
+                        zoomView: true, // do not allow zooming
+                        dragView: true  // do not allow dragging
                     }
                 };
 

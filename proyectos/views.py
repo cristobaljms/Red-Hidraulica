@@ -55,23 +55,14 @@ class ProyectoAdminView(generic.CreateView):
             numero = request.POST.get('numero')
             demanda = request.POST.get('demanda')
             cota = request.POST.get('cota')
-            if len(numero) > 4:
-                messages.add_message(request, messages.ERROR, 'Nombre del nodo no puede ser mayor de 4 caracteres')
-                return redirect('proyecto_administrar', id_proyecto)
-
-            if not(re.match('\d', str(demanda))):
-                messages.add_message(request, messages.ERROR, 'demanda invalida, debe ser numerico')
-                return redirect('proyecto_administrar', id_proyecto)
-
-            if not(re.match('\d', str(cota))):
-                messages.add_message(request, messages.ERROR, 'cota invalida, debe ser numerico')
-                return redirect('proyecto_administrar', id_proyecto)
+            x_position = request.POST.get('x_position')
+            y_position = request.POST.get('y_position')
             proyecto = Proyecto.objects.get(pk=id_proyecto)
-
-            nodo = Nodo(proyecto=proyecto, numero=numero, cota=cota, demanda=demanda)
+            nodo = Nodo(proyecto=proyecto, numero=numero, cota=cota, demanda=demanda, x_position=x_position, y_position=y_position)
             nodo.save()
             messages.add_message(request, messages.SUCCESS, 'Nodo creado con exito')
             return redirect('proyecto_administrar', id_proyecto)
+
         elif (tipo == 'tuberia'):
             numero = request.POST.get('numero')
             longitud = request.POST.get('longitud')
@@ -83,23 +74,10 @@ class ProyectoAdminView(generic.CreateView):
                 messages.add_message(request, messages.ERROR, 'Debe ingresar el nodo incial y el nodo final')
                 return redirect('proyecto_administrar', id_proyecto)
 
-            if len(numero) > 4:
-                messages.add_message(request, messages.ERROR, 'Nombre del nodo no puede ser mayor de 4 caracteres')
-                return redirect('proyecto_administrar', id_proyecto)
-
-            if not(re.match('\d', str(longitud))):
-                messages.add_message(request, messages.ERROR, 'longitud invalida, debe ser numerico')
-                return redirect('proyecto_administrar', id_proyecto)
-
-            if not(re.match('\d', str(diametro))):
-                messages.add_message(request, messages.ERROR, 'diametro invalido, debe ser numerico')
-                return redirect('proyecto_administrar', id_proyecto)
-
             if start == end:
                 messages.add_message(request, messages.ERROR, 'El nodo de inicio no puede ser igual al nodo final')
                 return redirect('proyecto_administrar', id_proyecto)
 
-            
             if(re.match('n', start)):
                 patron = re.compile('n')
                 nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))  
@@ -122,16 +100,11 @@ class ProyectoAdminView(generic.CreateView):
         else:
             numero = request.POST.get('numero')
             z = request.POST.get('z')
-            if len(numero) > 4:
-                messages.add_message(request, messages.ERROR, 'Nombre del reservorio no puede ser mayor de 4 caracteres')
-                return redirect('proyecto_administrar', id_proyecto)
-            
-            if not(re.match('\d', str(z))):
-                messages.add_message(request, messages.ERROR, 'z invalido, debe ser numerico')
-                return redirect('proyecto_administrar', id_proyecto)
+            x_position = request.POST.get('x_position')
+            y_position = request.POST.get('y_position')
             
             proyecto = Proyecto.objects.get(pk=id_proyecto)
-            reservorio = Reservorio(numero=numero, z=z, proyecto=proyecto)
+            reservorio = Reservorio(numero=numero, z=z, proyecto=proyecto, y_position=y_position, x_position=x_position)
             reservorio.save()
             messages.add_message(request, messages.SUCCESS, 'Reservorio creado con exito')
             return redirect('proyecto_administrar', id_proyecto)

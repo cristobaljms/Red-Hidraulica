@@ -16,6 +16,8 @@ class Nodo(models.Model):
     numero = models.CharField(max_length=4, default='')
     demanda = models.FloatField()
     cota = models.FloatField()
+    x_position = models.IntegerField(default=0)
+    y_position = models.IntegerField(default=0)
 
 class Tuberia(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
@@ -29,3 +31,5 @@ class Reservorio(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
     numero = models.CharField(max_length=4, default='')
     z = models.FloatField()
+    x_position = models.IntegerField(default=0)
+    y_position = models.IntegerField(default=0)
