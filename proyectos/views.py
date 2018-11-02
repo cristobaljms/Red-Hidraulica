@@ -328,8 +328,7 @@ def CalculosGradiente(request, pk):
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
     
-    # Matriz de tuberias X nodos y que coloca 1 o -1 dependiendo si la posicion
-    # de la tuberia tiene un nodo inicial o final
+    # 1.- Matriz de conectividad
     A12 = []
     for tuberia in data['tuberias']:
         a = np.zeros(nnodos).astype(int)
@@ -347,10 +346,42 @@ def CalculosGradiente(request, pk):
     A21 = A12.transpose()
 
     # Matrix topologica
+    # A10 = np.zeros((ntuberias, nreservorios)).astype(int)
     A10 = []
-    #for tuberia in data['tuberias']:
-        #a = np.zeros(nreservorios).astype(int)
-        #for
+    for tuberia in data['tuberias']:
+        a = np.zeros(nreservorios).astype(int)
+        for i in range(0, nreservorios):
+            if(tuberia['start'] == data['reservorios'][i]['numero'] or tuberia['end'] == data['reservorios'][i]['numero']):
+                a[i] = -1
+        A10.append(a)
+    A10 = np.matrix(A10)
+    
+    # Matriz diagonal 
+    A11 = np.zeros((ntuberias, ntuberias))
+    for i in range(0, len(af)):
+        A11[i][i] = af[i]
+    
+    # Arreglo alturas de reservorios
+    H0 = []
+    for reservorio in data['reservorios']:
+        H0.append(reservorio['z'])
+    
+    H0 = np.array(H0)
+
+    # Arreglo caudal de salida
+    q = []
+    for nodo in data['nodos']:
+        q.append(nodo['demanda'])
+    
+    q = np.array(q)
+
+    # Matriz diagonal del 2 y matriz identidad
+    N = np.zeros((ntuberias, ntuberias)).astype(int)
+    I = np.zeros((ntuberias, ntuberias)).astype(int)
+    for i in range(0, ntuberias):
+        N[i][i] = 2
+        I[i][i] = 1
+        
     #print(data['tuberias'], data['nodos'])
     #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
 
