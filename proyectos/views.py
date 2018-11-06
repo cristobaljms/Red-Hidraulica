@@ -12,6 +12,7 @@ import math
 import re
 import json
 import numpy as np
+from numpy import inf
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -292,6 +293,13 @@ def printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
             print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
 
 
+def infToZeros(arreglo, x, y):
+    for i in range(0, x):
+        for j in range(0, y):
+            if(arreglo[i,j] == inf):
+                arreglo[i,j] = 0
+    return arreglo
+
 def CalculosGradiente(request, pk):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
@@ -381,10 +389,24 @@ def CalculosGradiente(request, pk):
     for i in range(0, ntuberias):
         N[i][i] = 2
         I[i][i] = 1
-        
+    
+    H_calculos = N*A11
+    H_calculos = np.power(H_calculos, -1)
+    H_calculos = infToZeros(H_calculos, ntuberias, ntuberias)
+    # for i in range(0, ntuberias):
+    #     for j in range(0, ntuberias):
+    #         if(H_calculos[i,j] == inf):
+    #             H_calculos[i,j] = 0
+
+    H_calculos = A21* H_calculos
+    H_calculos = H_calculos*A12
+    H_calculos = np.power(H_calculos,-1)
+
+    H1_calculos = Qx*A11
+    print(H1_calculos)
     #print(data['tuberias'], data['nodos'])
     #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
-
+    #-(([A21]([N][A11])^-1)*([A12])^-1
     return JsonResponse(getProjectData(pk), safe=False)
 
-    
+
