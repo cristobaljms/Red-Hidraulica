@@ -293,12 +293,46 @@ def printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
             print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
 
 
-def infToZeros(arreglo, x, y):
-    for i in range(0, x):
-        for j in range(0, y):
+def infToZeros(arreglo):
+    dimension = arreglo.shape
+    for i in range(0, dimension[0]):
+        for j in range(0, dimension[1]):
             if(arreglo[i,j] == inf):
                 arreglo[i,j] = 0
     return arreglo
+
+
+def H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
+    step1 = N*A11
+    step2 = np.power(step1, -1)
+    step2 = infToZeros(step2)
+    step3 = A21*step2
+    step4 = step3*A12
+    step5 = np.power(step4,-1)
+    step5 = infToZeros(step5)
+    dimension = step5.shape
+    for i in range(0, dimension[0]):
+        for j in range(0, dimension[1]):
+            if(step5[i,j] > 0):
+                step5[i,j] = step5[i,j]*-1
+    step6 = Qx.dot(A11) + A10.dot(H0)
+    step6 = np.reshape(step6, (ntuberias,1))
+    step7 = step3 * step6
+    Qx = np.reshape(Qx, (ntuberias,1))
+    step8 = A21*Qx
+    step9 = step8 - q 
+
+    print(step7-step9)
+
+def Q_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
+    step1 = N*A11
+    step1 = infToZeros(np.power(step1, -1))
+    step1 = step1*A11
+    step1 = I - step1
+    Qx = np.reshape(Qx, (ntuberias,1))
+    step1 = step1.dot(Qx)
+    step2 = A10 * H0
+    print(step2)
 
 def CalculosGradiente(request, pk):
     data = getProjectData(pk)
@@ -382,6 +416,7 @@ def CalculosGradiente(request, pk):
         q.append(nodo['demanda'])
     
     q = np.array(q)
+    q = np.reshape(q, (nnodos,1))
 
     # Matriz diagonal del 2 y matriz identidad
     N = np.zeros((ntuberias, ntuberias)).astype(int)
@@ -390,23 +425,8 @@ def CalculosGradiente(request, pk):
         N[i][i] = 2
         I[i][i] = 1
     
-    H_calculos = N*A11
-    H_calculos = np.power(H_calculos, -1)
-    H_calculos = infToZeros(H_calculos, ntuberias, ntuberias)
-    # for i in range(0, ntuberias):
-    #     for j in range(0, ntuberias):
-    #         if(H_calculos[i,j] == inf):
-    #             H_calculos[i,j] = 0
-
-    H_calculos = A21* H_calculos
-    H_calculos = H_calculos*A12
-    H_calculos = np.power(H_calculos,-1)
-
-    H1_calculos = Qx*A11
-    print(H1_calculos)
-    #print(data['tuberias'], data['nodos'])
+    #H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
+    Q_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
     #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
-    #-(([A21]([N][A11])^-1)*([A12])^-1
     return JsonResponse(getProjectData(pk), safe=False)
-
 
