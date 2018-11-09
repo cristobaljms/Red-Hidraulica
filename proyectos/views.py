@@ -20,7 +20,7 @@ class ProyectoAdminView(generic.CreateView):
     def get(self, request, *args, **kwargs):
         proyecto = Proyecto.objects.get(pk=kwargs['pk'])
         nodos = Nodo.objects.filter(proyecto=proyecto)
-        tuberias = Tuberia.objects.filter(proyecto=proyecto)
+        tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('numero')
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
 
         sreservorios = json.loads(serialize("json", reservorios))
@@ -229,7 +229,7 @@ def borrarReservorio(request, pk):
 
 
 def getProjectData(pk):
-    tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk)))
+    tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk).order_by('numero')))
     nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk)))
     reservorios = json.loads(serialize("json", Reservorio.objects.filter(proyecto=pk)))
     
@@ -301,38 +301,123 @@ def infToZeros(arreglo):
                 arreglo[i,j] = 0
     return arreglo
 
-
+from numpy.linalg import inv
 def H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
-    step1 = N*A11
-    step2 = np.power(step1, -1)
-    step2 = infToZeros(step2)
-    step3 = A21*step2
-    step4 = step3*A12
-    step5 = np.power(step4,-1)
-    step5 = infToZeros(step5)
-    dimension = step5.shape
-    for i in range(0, dimension[0]):
-        for j in range(0, dimension[1]):
-            if(step5[i,j] > 0):
-                step5[i,j] = step5[i,j]*-1
-    step6 = Qx.dot(A11) + A10.dot(H0)
-    step6 = np.reshape(step6, (ntuberias,1))
-    step7 = step3 * step6
-    Qx = np.reshape(Qx, (ntuberias,1))
-    step8 = A21*Qx
-    step9 = step8 - q 
-
-    print(step7-step9)
-
-def Q_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
-    step1 = N*A11
-    step1 = infToZeros(np.power(step1, -1))
-    step1 = step1*A11
-    step1 = I - step1
-    Qx = np.reshape(Qx, (ntuberias,1))
-    step1 = step1.dot(Qx)
-    step2 = A10 * H0
+    
+    step1 = inv(N*A11)
+    print("inv(N*A11)")
+    print(step1)
+    step2 = A21*step1
+    print("A21*inv(N*A11)")
     print(step2)
+    step3 = step2*A12
+    print("(A21*inv(N*A11))*A12")
+    print(step3)
+    step4 = inv(step3) * -1
+    print("inv(A21*inv(N*A11)*A12)*-1")
+    print(step4)
+
+    step5 = Qx.dot(A11) + A10.dot(H0)
+    print("[A11][Q]+[A10][H0]")
+    print(step5)
+    step5 = np.reshape(step5, (ntuberias,1))
+    
+    #print(step5)
+    step6 = step2.dot(step5)
+    print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
+    print(step6)
+    #print(step2)
+    Qx = np.reshape(Qx, (ntuberias,1))
+    step7 = A21.dot(Qx)
+    print("A21*Q")
+    print(step7)
+    step8 = step7 - q 
+    print("(A21*Q)-q")
+    print(step8)
+
+    step9 = step6 - step8
+    print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])-([A21][Q]-[q])")
+    print(step9)
+    
+    step10 = step4.dot(step9)
+    print("todas las H")
+    print(step10)
+
+    Qstep1 = inv(N*A11)
+    print("Qstep1 inv(N*A11)")
+    print(Qstep1)
+    Qstep2 = Qstep1*A11
+    print("Qstep2 inv(N*A11)*A11")
+    print(Qstep2)
+    Qstep3 = I - Qstep2
+    print("Qstep3 I - inv(N*A11)*A11")
+    print(Qstep3)
+    Qx = np.reshape(Qx, (ntuberias,1))
+    Qstep4 = Qstep3.dot(Qx)
+    print("Qstep4 (I - inv(N*A11)*A11) * Q")
+    print(Qstep4)
+    Qstep5 = A10 * H0
+    print("Qstep5 A10 * H0")
+    print(Qstep5)
+    Qstep6 = A12 * step10
+    print("Qstep6 [A12][Hi+1]")
+    print(Qstep6)
+    Qstep7 = Qstep6 + Qstep5
+    print("Qstep7 [A10][H0]+[A12][Hi+1]")
+
+    print("________________________")
+    print(Qstep1)
+    print(Qstep7)
+    Qstep8 = Qstep1.dot(Qstep7)
+
+    print("Qstep8 (([N][A11])^-1)*([A10][H0]+[A12][Hi+1])")
+    print(Qstep8)
+    Qstep9 = Qstep4 - Qstep8
+
+    print("todas las Q")
+    print(Qstep9)
+
+    # print(A12)
+    # print("A21")
+    # print(A21)
+    # print("A10")
+    # print(A10)
+    # print("A11")
+    # print(A11)
+    # print("H0")
+    # print(H0)
+    # print("q")
+    # print(q)
+    # print("N")
+    # print(N)
+    # print("I")
+    # print(I)
+    # print("Qx")
+    # print(Qx)
+
+def Q_calculo(step, Hs, A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
+    Qstep1 = inv(N*A11)
+    print("inv(N*A11)")
+    print(Qstep1)
+    Qstep1 = Qstep1*A11
+    print("inv(N*A11)*A11")
+    print(Qstep1)
+    Qstep1 = I - Qstep1
+    print("I - inv(N*A11)*A11")
+    print(Qstep1)
+    Qx = np.reshape(Qx, (ntuberias,1))
+    Qstep1 = Qstep1.dot(Qx)
+    print("(I - inv(N*A11)*A11) * Q")
+    print(Qstep1)
+    Qstep2 = A10 * H0
+    print("A10 * H0")
+    print(Qstep2)
+    Qstep3 = A12 * Hs
+    print("[A12][Hi+1]")
+    print(Qstep3)
+    Qstep4 = Qstep2 + Qstep3
+    print("[A10][H0]+[A12][Hi+1]")
+    print(Qstep4)
 
 def CalculosGradiente(request, pk):
     data = getProjectData(pk)
@@ -369,9 +454,10 @@ def CalculosGradiente(request, pk):
     hfhm = np.zeros(ntuberias) + (hf + hm)
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
-    
+    printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
     # 1.- Matriz de conectividad
     A12 = []
+
     for tuberia in data['tuberias']:
         a = np.zeros(nnodos).astype(int)
         for i in range(0, nnodos):
@@ -425,8 +511,10 @@ def CalculosGradiente(request, pk):
         N[i][i] = 2
         I[i][i] = 1
     
-    #H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
-    Q_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
+
+    H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
+
+    #Q_calculo(Hs, A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
     #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
     return JsonResponse(getProjectData(pk), safe=False)
 
