@@ -302,131 +302,25 @@ def infToZeros(arreglo):
     return arreglo
 
 from numpy.linalg import inv
-def H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
-    
-    step1 = inv(N*A11)
-    print("inv(N*A11)")
-    print(step1)
-    step2 = A21*step1
-    print("A21*inv(N*A11)")
-    print(step2)
-    step3 = step2*A12
-    print("(A21*inv(N*A11))*A12")
-    print(step3)
-    step4 = inv(step3) * -1
-    print("inv(A21*inv(N*A11)*A12)*-1")
-    print(step4)
 
-    step5 = Qx.dot(A11) + A10.dot(H0)
-    print("[A11][Q]+[A10][H0]")
-    print(step5)
-    step5 = np.reshape(step5, (ntuberias,1))
-    
-    #print(step5)
-    step6 = step2.dot(step5)
-    print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
-    print(step6)
-    #print(step2)
-    Qx = np.reshape(Qx, (ntuberias,1))
-    step7 = A21.dot(Qx)
-    print("A21*Q")
-    print(step7)
-    step8 = step7 - q 
-    print("(A21*Q)-q")
-    print(step8)
+def validateError(Error):
+    flag = False
+    dimension = Error.shape
+    for i in range(0, dimension[0]):
+        for j in range(0, dimension[1]):
+            if(Error[i,j] > 0.0001):
+                flag = True
+    return flag
 
-    step9 = step6 - step8
-    print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])-([A21][Q]-[q])")
-    print(step9)
-    
-    step10 = step4.dot(step9)
-    print("todas las H")
-    print(step10)
 
-    Qstep1 = inv(N*A11)
-    print("Qstep1 inv(N*A11)")
-    print(Qstep1)
-    Qstep2 = Qstep1*A11
-    print("Qstep2 inv(N*A11)*A11")
-    print(Qstep2)
-    Qstep3 = I - Qstep2
-    print("Qstep3 I - inv(N*A11)*A11")
-    print(Qstep3)
-    Qx = np.reshape(Qx, (ntuberias,1))
-    Qstep4 = Qstep3.dot(Qx)
-    print("Qstep4 (I - inv(N*A11)*A11) * Q")
-    print(Qstep4)
-    Qstep5 = A10 * H0
-    print("Qstep5 A10 * H0")
-    print(Qstep5)
-    Qstep6 = A12 * step10
-    print("Qstep6 [A12][Hi+1]")
-    print(Qstep6)
-    Qstep7 = Qstep6 + Qstep5
-    print("Qstep7 [A10][H0]+[A12][Hi+1]")
-
-    print("________________________")
-    print(Qstep1)
-    print(Qstep7)
-    Qstep8 = Qstep1.dot(Qstep7)
-
-    print("Qstep8 (([N][A11])^-1)*([A10][H0]+[A12][Hi+1])")
-    print(Qstep8)
-    Qstep9 = Qstep4 - Qstep8
-
-    print("todas las Q")
-    print(Qstep9)
-
-    # print(A12)
-    # print("A21")
-    # print(A21)
-    # print("A10")
-    # print(A10)
-    # print("A11")
-    # print(A11)
-    # print("H0")
-    # print(H0)
-    # print("q")
-    # print(q)
-    # print("N")
-    # print(N)
-    # print("I")
-    # print(I)
-    # print("Qx")
-    # print(Qx)
-
-def Q_calculo(step, Hs, A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios):
-    Qstep1 = inv(N*A11)
-    print("inv(N*A11)")
-    print(Qstep1)
-    Qstep1 = Qstep1*A11
-    print("inv(N*A11)*A11")
-    print(Qstep1)
-    Qstep1 = I - Qstep1
-    print("I - inv(N*A11)*A11")
-    print(Qstep1)
-    Qx = np.reshape(Qx, (ntuberias,1))
-    Qstep1 = Qstep1.dot(Qx)
-    print("(I - inv(N*A11)*A11) * Q")
-    print(Qstep1)
-    Qstep2 = A10 * H0
-    print("A10 * H0")
-    print(Qstep2)
-    Qstep3 = A12 * Hs
-    print("[A12][Hi+1]")
-    print(Qstep3)
-    Qstep4 = Qstep2 + Qstep3
-    print("[A10][H0]+[A12][Hi+1]")
-    print(Qstep4)
-
-def CalculosGradiente(request, pk):
+def calculos(cont, pk, Qx, H):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
 
     ntuberias = len(data['tuberias'])
     nnodos = len(data['nodos'])
     nreservorios = len(data['reservorios'])
-
+    
     array_longitud = []
     for t in data['tuberias']:
         array_longitud.append(t['longitud'])
@@ -435,7 +329,6 @@ def CalculosGradiente(request, pk):
     for t in data['tuberias']:
         array_diametro.append(t['diametro'])
 
-    Qx = np.zeros(ntuberias) + 0.1
     Lx = np.array(array_longitud)
     Dx = np.array(array_diametro)
     A = (np.pi*np.power(Dx,2))/4
@@ -454,7 +347,7 @@ def CalculosGradiente(request, pk):
     hfhm = np.zeros(ntuberias) + (hf + hm)
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
-    printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
+    #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
     # 1.- Matriz de conectividad
     A12 = []
 
@@ -511,10 +404,105 @@ def CalculosGradiente(request, pk):
         N[i][i] = 2
         I[i][i] = 1
     
+    step1 = inv(N*A11)
+    #print("inv(N*A11)")
+    #print(step1)
+    step2 = A21*step1
+    #print("A21*inv(N*A11)")
+    #print(step2)
+    step3 = step2*A12
+    #print("(A21*inv(N*A11))*A12")
+    #print(step3)
+    step4 = inv(step3) * -1
+    #print("inv(A21*inv(N*A11)*A12)*-1")
+    #print(step4)
 
-    H_calculo(A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
+    Qx = np.reshape(Qx, ntuberias)
+    step5 = Qx.dot(A11) + A10.dot(H0)
 
-    #Q_calculo(Hs, A12, A21, A10, A11, H0, q, N, I, Qx, ntuberias, nnodos, nreservorios)
-    #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
+    #print("[A11][Q]+[A10][H0]")
+    #print(step5)
+    step5 = np.reshape(step5, (ntuberias,1))
+    
+    #print(step5)
+    step6 = step2.dot(step5)
+    #print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
+    #print(step6)
+    #print(step2)
+
+    Qx = np.reshape(Qx, (ntuberias,1))
+    step7 = A21.dot(Qx)
+    #print("A21*Q")
+    #print(step7)
+    step8 = step7 - q 
+    #print("(A21*Q)-q")
+    #print(step8)
+
+    step9 = step6 - step8
+    #print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])-([A21][Q]-[q])")
+    #print(step9)
+    
+    step10 = step4.dot(step9)
+    #print("todas las H")
+    #print(step10)
+
+    Qstep1 = inv(N*A11)
+    #print("Qstep1 inv(N*A11)")
+    #print(Qstep1)
+    Qstep2 = Qstep1*A11
+    #print("Qstep2 inv(N*A11)*A11")
+    #print(Qstep2)
+    Qstep3 = I - Qstep2
+    #print("Qstep3 I - inv(N*A11)*A11")
+    #print(Qstep3)
+    Qx = np.reshape(Qx, (ntuberias,1))
+    Qstep4 = Qstep3.dot(Qx)
+    #print("Qstep4 (I - inv(N*A11)*A11) * Q")
+    #print(Qstep4)
+    Qstep5 = A10 * H0
+    #print("Qstep5 A10 * H0")
+    #print(Qstep5)
+    Qstep6 = A12 * step10
+    #print("Qstep6 [A12][Hi+1]")
+    #print(Qstep6)
+    Qstep7 = Qstep6 + Qstep5
+    #print("Qstep7 [A10][H0]+[A12][Hi+1]")
+
+    #print(Qstep1)
+    #print(Qstep7)
+    Qstep8 = Qstep1.dot(Qstep7)
+
+    #print("Qstep8 (([N][A11])^-1)*([A10][H0]+[A12][Hi+1])")
+    #print(Qstep8)
+    Qstep9 = Qstep4 - Qstep8
+
+    #print("todas las Q")
+    #print(Qstep9)
+
+    if(len(H) > 0):
+        error = np.absolute(H-step10)
+        print("Error")
+        print(error)
+        if (validateError(error)):
+            Qstep9 = np.squeeze(np.asarray(Qstep9))
+            calculos(cont, pk, Qstep9, step10)
+        else:
+            print("Finalizado")
+    else:
+        Qstep9 = np.squeeze(np.asarray(Qstep9))
+        calculos(cont, pk, Qstep9, step10)
+
+
+def CalculosGradiente(request, pk):
+    data = getProjectData(pk)
+    proyecto = Proyecto.objects.get(pk=pk)
+
+    ntuberias = len(data['tuberias'])
+    nnodos = len(data['nodos'])
+    nreservorios = len(data['reservorios'])
+
+    Qx = np.zeros(ntuberias) + 0.1
+    calculos(1, pk, Qx, [])
+
     return JsonResponse(getProjectData(pk), safe=False)
 
