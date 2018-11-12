@@ -8,11 +8,13 @@ from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.core.serializers import serialize
 from django.http import JsonResponse
+from json_tricks import dump, dumps
 import math
 import re
 import json
 import numpy as np
 from numpy import inf
+from numpy.linalg import inv
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -190,7 +192,6 @@ class ProyectosUpdateView(generic.View):
             messages.add_message(request, messages.ERROR, 'El material no es valido')
             return redirect('proyectos_editar', pk=id_proyecto)
 
-
         f = Fluido.objects.get(pk=fluido)
         m = Material.objects.get(pk=material)
         p.nombre = nombre
@@ -227,7 +228,6 @@ def borrarReservorio(request, pk):
     Reservorio.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-
 def getProjectData(pk):
     tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk).order_by('numero')))
     nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk)))
@@ -254,7 +254,6 @@ def getProjectData(pk):
 
 def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
-
 
 def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
     ban = False
@@ -292,6 +291,34 @@ def printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
             #print("T"+str(i),'|', af[i])
             print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
 
+def TableFormatter(ntuberias, Qx, Dx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
+        V = np.round(V, 4)
+        A = np.round(A, 4)
+        Qx = np.round(Qx, 4)
+        hf = np.round(hf, 4)
+        Km = np.round(Km, 4)
+        hm = np.round(hm, 4)
+        hfhm = np.round(hfhm, 4)
+        a = np.round(a, 4)
+        af = np.round(af, 4)
+        f = np.round(f,4)
+        tabla = []
+        for i in range(0,ntuberias):
+            tabla.append({
+                'Qx':Qx[i], 
+                'Lx': Lx[i], 
+                'Dx': Dx[i],
+                'A': A[i], 
+                'V': V[i], 
+                'f': f[i], 
+                'hf': hf[i], 
+                'Km': Km[i], 
+                'hm': hm[i], 
+                'hfhm': hfhm[i], 
+                'a': a[i],   
+                'af': af[i]
+            })
+        return tabla
 
 def infToZeros(arreglo):
     dimension = arreglo.shape
@@ -301,22 +328,24 @@ def infToZeros(arreglo):
                 arreglo[i,j] = 0
     return arreglo
 
-from numpy.linalg import inv
-
 def validateError(Error):
     flag = False
     dimension = Error.shape
     for i in range(0, dimension[0]):
         for j in range(0, dimension[1]):
-            if(Error[i,j] > 0.0001):
+            if(Error[i,j] > 0.0002):
                 flag = True
     return flag
 
-
-def calculos(cont, pk, Qx, H):
+def calculosGradiente(iteracion, pk, Qx, H, response):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
-
+    
+    iteracionRow = { "iteracion": iteracion }
+    #response['nodos'] = data['nodos']
+    #response['tuberias'] = data['tuberias']
+    #response['reservorios'] = data['reservorios']
+    #print(response)
     ntuberias = len(data['tuberias'])
     nnodos = len(data['nodos'])
     nreservorios = len(data['reservorios'])
@@ -328,12 +357,11 @@ def calculos(cont, pk, Qx, H):
     array_diametro = []
     for t in data['tuberias']:
         array_diametro.append(t['diametro'])
-
+    
     Lx = np.array(array_longitud)
     Dx = np.array(array_diametro)
     A = (np.pi*np.power(Dx,2))/4
     V = Qx/A
-
     Ks   = np.zeros(ntuberias) + 0.00006
     Re   = np.zeros(ntuberias) + V*Dx/proyecto.fluido.valor_viscocidad
     Re = np.round(Re, 0)
@@ -347,10 +375,15 @@ def calculos(cont, pk, Qx, H):
     hfhm = np.zeros(ntuberias) + (hf + hm)
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
+
     #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
+    table = TableFormatter(ntuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af)
+    iteracionRow['tabla'] = table
+    
     # 1.- Matriz de conectividad
     A12 = []
 
+    i = 0
     for tuberia in data['tuberias']:
         a = np.zeros(nnodos).astype(int)
         for i in range(0, nnodos):
@@ -359,6 +392,8 @@ def calculos(cont, pk, Qx, H):
         for i in range(0, nnodos):
             if(tuberia['end'] == data['nodos'][i]['numero']):
                 a[i] = 1
+        if (Qx[i] < 0):
+            a = a * -1
         A12.append(a)
     
     A12 = np.matrix(A12)
@@ -404,105 +439,65 @@ def calculos(cont, pk, Qx, H):
         N[i][i] = 2
         I[i][i] = 1
     
+    # Calculamos las H
     step1 = inv(N*A11)
-    #print("inv(N*A11)")
-    #print(step1)
     step2 = A21*step1
-    #print("A21*inv(N*A11)")
-    #print(step2)
     step3 = step2*A12
-    #print("(A21*inv(N*A11))*A12")
-    #print(step3)
     step4 = inv(step3) * -1
-    #print("inv(A21*inv(N*A11)*A12)*-1")
-    #print(step4)
-
     Qx = np.reshape(Qx, ntuberias)
     step5 = Qx.dot(A11) + A10.dot(H0)
-
-    #print("[A11][Q]+[A10][H0]")
-    #print(step5)
     step5 = np.reshape(step5, (ntuberias,1))
-    
-    #print(step5)
     step6 = step2.dot(step5)
-    #print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
-    #print(step6)
-    #print(step2)
-
     Qx = np.reshape(Qx, (ntuberias,1))
     step7 = A21.dot(Qx)
-    #print("A21*Q")
-    #print(step7)
     step8 = step7 - q 
-    #print("(A21*Q)-q")
-    #print(step8)
-
     step9 = step6 - step8
-    #print("[A21]([N][A11])^-1*([A11][Q]+[A10][H0])-([A21][Q]-[q])")
-    #print(step9)
-    
     step10 = step4.dot(step9)
+    
     #print("todas las H")
     #print(step10)
+    iteracionRow['H'] = np.squeeze(np.asarray(step10)).tolist()
 
+    # Calculamos las Q
     Qstep1 = inv(N*A11)
-    #print("Qstep1 inv(N*A11)")
-    #print(Qstep1)
     Qstep2 = Qstep1*A11
-    #print("Qstep2 inv(N*A11)*A11")
-    #print(Qstep2)
     Qstep3 = I - Qstep2
-    #print("Qstep3 I - inv(N*A11)*A11")
-    #print(Qstep3)
     Qx = np.reshape(Qx, (ntuberias,1))
     Qstep4 = Qstep3.dot(Qx)
-    #print("Qstep4 (I - inv(N*A11)*A11) * Q")
-    #print(Qstep4)
     Qstep5 = A10 * H0
-    #print("Qstep5 A10 * H0")
-    #print(Qstep5)
     Qstep6 = A12 * step10
-    #print("Qstep6 [A12][Hi+1]")
-    #print(Qstep6)
     Qstep7 = Qstep6 + Qstep5
-    #print("Qstep7 [A10][H0]+[A12][Hi+1]")
-
-    #print(Qstep1)
-    #print(Qstep7)
     Qstep8 = Qstep1.dot(Qstep7)
-
-    #print("Qstep8 (([N][A11])^-1)*([A10][H0]+[A12][Hi+1])")
-    #print(Qstep8)
     Qstep9 = Qstep4 - Qstep8
-
+    iteracionRow['Qx'] = np.squeeze(np.asarray(Qstep9)).tolist()
+    
     #print("todas las Q")
     #print(Qstep9)
-
+    response.append(iteracionRow)
     if(len(H) > 0):
         error = np.absolute(H-step10)
-        print("Error")
-        print(error)
         if (validateError(error)):
+            iteracion = iteracion + 1
             Qstep9 = np.squeeze(np.asarray(Qstep9))
-            calculos(cont, pk, Qstep9, step10)
+            calculosGradiente(iteracion, pk, Qstep9, step10, response)
         else:
-            print("Finalizado")
+            return 1
     else:
         Qstep9 = np.squeeze(np.asarray(Qstep9))
-        calculos(cont, pk, Qstep9, step10)
+        calculosGradiente(iteracion, pk, Qstep9, step10, response)
 
 
-def CalculosGradiente(request, pk):
-    data = getProjectData(pk)
-    proyecto = Proyecto.objects.get(pk=pk)
+class GradienteView(generic.View):
+    template_name = "sections/calculos/gradiente.html"
 
-    ntuberias = len(data['tuberias'])
-    nnodos = len(data['nodos'])
-    nreservorios = len(data['reservorios'])
+    def get(self, request, *args, **kwargs):
+        data = getProjectData(kwargs['pk'])
+        ntuberias = len(data['tuberias'])
+        Qx = np.zeros(ntuberias) + 0.1
+        context = calculosGradiente(1, kwargs['pk'], Qx, [], [])
+        print(context)
+        return JsonResponse(context, safe=False)
+        #return render(request, self.template_name, context)
 
-    Qx = np.zeros(ntuberias) + 0.1
-    calculos(1, pk, Qx, [])
 
-    return JsonResponse(getProjectData(pk), safe=False)
 

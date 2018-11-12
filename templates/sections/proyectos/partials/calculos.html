@@ -1,26 +1,15 @@
 {% load staticfiles %} {% if proyecto%}
 
 <div class="row">
-    <div class="col-md-4">
-        <a href="#" onclick="Gradiente({{proyecto.id}})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
-            Metodo de la gradiente
-        </a>
-    </div>
+  <div class="col-md-4">
+    <a
+      href="{% url 'calculo_gradiente' proyecto.id %}"
+      class="btn btn-sm btn-danger"
+      data-toggle="tooltip"
+      data-placement="top"
+    >
+      Metodo de la gradiente
+    </a>
+  </div>
 </div>
-
-<script>
-    function Gradiente(pk) {
-        request_url = '/calculos/gradiente/' + pk
-        $.ajax({
-            url: request_url,
-            success: function (data) {
-                reservorios = data.reservorios
-                nodos = data.nodos;
-                tuberias = data.tuberias
-                console.log(reservorios, nodos, tuberias)
-            }
-        })
-    }
-
-
-</script> {% endif %}
+{% endif %}
