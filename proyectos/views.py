@@ -291,7 +291,7 @@ def printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
             #print("T"+str(i),'|', af[i])
             print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
 
-def TableFormatter(ntuberias, Qx, Dx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
+def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af):
         V = np.round(V, 4)
         A = np.round(A, 4)
         Qx = np.round(Qx, 4)
@@ -305,6 +305,7 @@ def TableFormatter(ntuberias, Qx, Dx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
         tabla = []
         for i in range(0,ntuberias):
             tabla.append({
+                'tuberia': "{}-{}".format(tuberias[i]['start'],tuberias[i]['end']),
                 'Qx':Qx[i], 
                 'Lx': Lx[i], 
                 'Dx': Dx[i],
@@ -341,12 +342,8 @@ def validateError(Error):
 def calculosGradiente(iteracion, pk, Qx, H, response):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
-    
     iteracionRow = { "iteracion": iteracion }
-    #response['nodos'] = data['nodos']
-    #response['tuberias'] = data['tuberias']
-    #response['reservorios'] = data['reservorios']
-    #print(response)
+
     ntuberias = len(data['tuberias'])
     nnodos = len(data['nodos'])
     nreservorios = len(data['reservorios'])
@@ -377,8 +374,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
 
-    #printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af)
-    table = TableFormatter(ntuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af)
+    table = TableFormatter(ntuberias,data['tuberias'], Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af)
     iteracionRow['tabla'] = table
     
     # 1.- Matriz de conectividad
@@ -455,9 +451,9 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     step9 = step6 - step8
     step10 = step4.dot(step9)
     
+    iteracionRow['H'] = np.squeeze(np.asarray(np.round(step10,4))).tolist()
     #print("todas las H")
     #print(step10)
-    iteracionRow['H'] = np.squeeze(np.asarray(step10)).tolist()
 
     # Calculamos las Q
     Qstep1 = inv(N*A11)
@@ -470,21 +466,23 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     Qstep7 = Qstep6 + Qstep5
     Qstep8 = Qstep1.dot(Qstep7)
     Qstep9 = Qstep4 - Qstep8
-    iteracionRow['Qx'] = np.squeeze(np.asarray(Qstep9)).tolist()
     
+    iteracionRow['Qx'] = np.squeeze(np.asarray(np.round(Qstep9, 4))).tolist()
     #print("todas las Q")
     #print(Qstep9)
+    
+    iteracion = iteracion + 1
     if(len(H) > 0):
         error = np.absolute(H-step10)
-        iteracionRow['error'] = np.squeeze(np.asarray(error)).tolist()
+        iteracionRow['error'] = np.squeeze(np.asarray(np.round(error,4))).tolist()
         response.append(iteracionRow)
         if (validateError(error)):
-            iteracion = iteracion + 1
             Qstep9 = np.squeeze(np.asarray(Qstep9))
             return calculosGradiente(iteracion, pk, Qstep9, step10, response)
         else:
             return response
     else:
+        response.append(iteracionRow)
         Qstep9 = np.squeeze(np.asarray(Qstep9))
         return calculosGradiente(iteracion, pk, Qstep9, step10, response)
 
@@ -497,9 +495,9 @@ class GradienteView(generic.View):
         ntuberias = len(data['tuberias'])
         Qx = np.zeros(ntuberias) + 0.1
         context = {
-            'data': calculosGradiente(1, kwargs['pk'], Qx, [], [])
+            'data': calculosGradiente(1, kwargs['pk'], Qx, [], []),
+            'project_pk': kwargs['pk']
         }
-        #print(context)
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
 

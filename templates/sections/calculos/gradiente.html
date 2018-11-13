@@ -4,58 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
+    <title>Metodo Gradiente</title>
     {% include 'layouts/header.html' %}
   </head>
   <body>
     <div id="container" class="container">
-      <div class="row">
-        <div class="col-md-3">
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-md-3">
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="col-md-3">
-              <table class="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>Error</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-      </div>
+      <b><h1 style="text-align: center;">METODO DE LA GRADIENTE</h1></b>
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
@@ -69,14 +23,10 @@
                 title=""
                 id="autre"
               >
-                <i class="material-icons">
-                  <svg style="width:24px;height:24px" viewBox="0 0 24 24">
-                    <path
-                      fill="#000000"
-                      d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
-                    />
-                  </svg>
-                </i>
+                <img
+                  style="width:24px;height:24px"
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAH0SURBVFhH7ZdNS0JBFIb9bwoF0qKMyCgIwkWRqwJBBEkIgqBNtK8/YBREizaChllplklZloso+1QQLDP1jTOcjVAwdc+4ug8cuHOGO/MwH3fmOmxMkXQ6IRWp/v4ENysHNSwBtZPxejvikpKCzXRaXlJSEIWCvKS0oLikCUFRSVOCYpImBUUkTQtSWJKUFNQJ7lYfeqlX2ILE9eIi0iMjaJTLnNHHuODH/b3q5G5jA0+7u5zVx7hg4+FBdVJaXcVbIsFZfYwLdr6+cNDXh5OJCdRvbzmrj3FB4iIQwOHAADrtNmf06Yng4/Y2crOzXPobPREsra0h6XKhXipxRh/jgrQGjz0eFJeXUQiHOauPcUHaufm5ObQbDWTGxlBJJrlGD+OC534/3uJx9VxNpXA8PIxmpaLKOhgVJKHs1JQavVo+j3I0iqOhIbqlIDs5icz4OHIzM7hZWVEf9J8wJtisVnE2PY306CguQyF1krzGYqgXi2rTpNxuPG5t4WVvD1eRCC6CQX6zG3HBz+dnXC8t0f8u7tbX0Wm1uKYbmnaa/vz8PAoLCyhvbnJNN6KCtVwOR4ODakRo5Frv71zzOzT9tNN/Q1SQpJ52dnDq86Gyv89Za4gK0pFG1ypaV1KICprAFrSKLWgVW9Aq/xbsZXC3NsI4HN+SR91peiRN2QAAAABJRU5ErkJggg=="
+                />
               </a>
               <a
                 href="#"
@@ -87,17 +37,13 @@
                 title=""
                 id="sms"
               >
-                <i class="material-icons">
-                  <svg style="width:24px;height:24px" viewBox="0 0 24 24">
-                    <path
-                      fill="#000000"
-                      d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9Z"
-                    />
-                  </svg>
-                </i>
+                <img
+                  style="width:24px;height:24px"
+                  src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjBweCIgeT0iMHB4IgogICAgIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIKICAgICB2aWV3Qm94PSIwIDAgNDggNDgiCiAgICAgc3R5bGU9ImZpbGw6IzAwMDAwMDsiPjxnIGlkPSJzdXJmYWNlMSI+PHBhdGggc3R5bGU9IiBmaWxsOiM0Q0FGNTA7IiBkPSJNIDQxIDEwIEwgMjUgMTAgTCAyNSAzOCBMIDQxIDM4IEMgNDEuNTU0Njg4IDM4IDQyIDM3LjU1NDY4OCA0MiAzNyBMIDQyIDExIEMgNDIgMTAuNDQ1MzEzIDQxLjU1NDY4OCAxMCA0MSAxMCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAxNSBMIDM5IDE1IEwgMzkgMTggTCAzMiAxOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAyNSBMIDM5IDI1IEwgMzkgMjggTCAzMiAyOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAzMCBMIDM5IDMwIEwgMzkgMzMgTCAzMiAzMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAyMCBMIDM5IDIwIEwgMzkgMjMgTCAzMiAyMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAxNSBMIDMwIDE1IEwgMzAgMTggTCAyNSAxOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAyNSBMIDMwIDI1IEwgMzAgMjggTCAyNSAyOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAzMCBMIDMwIDMwIEwgMzAgMzMgTCAyNSAzMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAyMCBMIDMwIDIwIEwgMzAgMjMgTCAyNSAyMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojMkU3RDMyOyIgZD0iTSAyNyA0MiBMIDYgMzggTCA2IDEwIEwgMjcgNiBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAxOS4xMjg5MDYgMzEgTCAxNi43MTg3NSAyNi40Mzc1IEMgMTYuNjI1IDI2LjI2OTUzMSAxNi41MzEyNSAyNS45NTcwMzEgMTYuNDMzNTk0IDI1LjUgTCAxNi4zOTg0MzggMjUuNSBDIDE2LjM1MTU2MyAyNS43MTQ4NDQgMTYuMjQyMTg4IDI2LjA0Mjk2OSAxNi4wNzQyMTkgMjYuNDgwNDY5IEwgMTMuNjUyMzQ0IDMxIEwgOS44OTQ1MzEgMzEgTCAxNC4zNTU0NjkgMjQgTCAxMC4yNzM0MzggMTcgTCAxNC4xMDkzNzUgMTcgTCAxNi4xMTMyODEgMjEuMTk1MzEzIEMgMTYuMjY5NTMxIDIxLjUyNzM0NCAxNi40MDYyNSAyMS45MjE4NzUgMTYuNTMxMjUgMjIuMzc1IEwgMTYuNTcwMzEzIDIyLjM3NSBDIDE2LjY0ODQzOCAyMi4xMDU0NjkgMTYuNzk2ODc1IDIxLjY5NTMxMyAxNy4wMTE3MTkgMjEuMTU2MjUgTCAxOS4yMzgyODEgMTcgTCAyMi43NTM5MDYgMTcgTCAxOC41NTQ2ODggMjMuOTM3NSBMIDIyLjg2NzE4OCAzMC45OTYwOTQgTCAxOS4xMjg5MDYgMzAuOTk2MDk0IFogIj48L3BhdGg+PC9nPjwvc3ZnPg=="
+                />
               </a>
               <a
-                href="#"
+                href="{% url 'proyecto_administrar' project_pk %}"
                 class="btn btn-danger btn-fab"
                 data-toggle="tooltip"
                 data-placement="left"
@@ -105,14 +51,10 @@
                 title=""
                 id="mail"
               >
-                <i class="material-icons">
-                  <svg style="width:24px;height:24px" viewBox="0 0 24 24">
-                    <path
-                      fill="#000000"
-                      d="M4,8L12,13L20,8V8L12,3L4,8V8M22,8V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V8C2,7.27 2.39,6.64 2.97,6.29L12,0.64L21.03,6.29C21.61,6.64 22,7.27 22,8Z"
-                    />
-                  </svg>
-                </i>
+                <img
+                  style="width:24px;height:24px"
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAANOSURBVFhH5ZhJqI5RGMevMWMyiw0LJENkyoKQqcRGESVjppKSeWMslDKUaWFIVmKHhVgQG8qQzHNZIFNEken3O999u8M33u9738/i/utX73Pu+53z3POec57nORX1QV1gDMyARbAApsFgaA1lV0MYB0fhFfzNwS+4DpuhFySqxuDsPAUH/wmXYSvMhFHgrMkEWAwH4CFEDp+H4RC7hsFtcJDnsBzaQaHqD/vgG/yB49AeYtEqcLY+wTJwJotVJzgCOunyKGk2G8F+cNauQDeISy6Bd/AdpthQjFw/OncCmtgQs7rDI/gB422oi1aCzp2EBjYkJI+oJ+Da7GNDIXJdRDu0qQ0Jqzd8gXvQzIZccgO4W90QXW0ok2aDX2xjsHJoIfji0mCVV5fATeNnzygjhOvhGdTlKBkKzVOPJcl+nJydwcogw5cvrAhWYdoA/sYYHIdc928h46nhAeqW7xCs/FoPOmenLWyIQfPAPicFq5Y82R2sEK2DyLmWNsQkI41RZlewqskd64DbgpVbayEJ5yLdh6upxyqNBgedFazsWgNJOqfOwIfUY5V0zIFHBiuzVkPSzqk94Dg1goS70MaBwUqX2bJ/l6/wsUReQLZ0aws4To10Lto9nkWZpONGF9+5A6dKxNwwWxjdDo7TJliVmg42jg1WZg2Bz/AeBtmQkA7Cb6iRpJim6+CSYGWXM5y0kxfgZeqxSlZfFjjmgPmUpJPO2hs4G6xaugEPUo95ZUqWhJN9wS/pcZamaPcMCFZ+VXcyrpJyE+iDRVaaeoJhZm+wCtMIcL1MDlZpMoMy3N4KVhadA9NvY2K5NRecvfnByiJnxFk0symnWsFr8FIgb4FmUa2TE4NVHh0CZ6+gpWKIcS2YOPawIWFF9Yh3PQXLqw7XoiVA1hohBpmYmiRbqNU56Z0K/tgaJYmbqTlg/4+how3FyCsKsxfrVjuMQ26Iw+BnvQklfyEr/rtghxfBz1+MPOf8J92t9nUM4qplQllpUW3daucmraZohZyX/cALTHNAf+u6juNgz6jOYN3qDncwjyNriNOwG7zM3AGmTGYlBn7fE/NI/6kkLqLS5CDuQKuva2A8jhwR8zlnzKzEwO8s/nfpdNtK6osqKv4BCJ3oDfft8w0AAAAASUVORK5CYII="
+                />
               </a>
             </div>
             <div class="btn-group">
@@ -121,24 +63,20 @@
                 class="btn btn-success btn-fab"
                 id="main"
               >
-                <i class="material-icons">
-                  <svg style="width:24px;height:24px" viewBox="0 0 24 24">
-                    <path
-                      fill="#000000"
-                      d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"
-                    />
-                  </svg>
-                </i>
+                <img
+                  style="width:24px;height:24px"
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEtSURBVGhD7daxSgNREIXhJe8gFhY+hwimUou8u0Ww9SEUIljFOeycZrMhzt25O/fG+eFAAiE7X7dDlmVZdq096roOgE9dtxgijrouMVNEl5gp4kfXFWYOsdN1gzmHYF1gLiFY05i/IliTGCuCNYUpRbAmMBbEi26uUIwV8a1rClOC4G+bweCPv2R8mAXBWTB4ljtmCeKg4/cwzFLEky4U44FgYRhPBFsds5HtZfwTDwRbgsFNuM3UvexD5olgJRjcgpuKupM9jx9PKkUwCwY34Bb3liKYBeOeF4KFYLwRbFXMq6wGgs1h8EzXaiNYVcxaCFYFM4fYymqHZ7hhohDMBYPXgDdZFIJNMbjJ/IpyK3uXRSEYMbgFNxV1I3sYP4aGG3BLlmVZlmX/oGH4BQxKPnDHqXUbAAAAAElFTkSuQmCC"
+                />
               </a>
             </div>
           </div>
         </div>
       </div>
     </div>
-    
+
     {% include 'layouts/scripts.html' %}
     <script type="text/javascript">
-  
+
       //alert("habla claro malandro")
       {% if data %}
       var data = "{{data}}"
@@ -151,6 +89,7 @@
           var tbody = $('<tbody></tbody>');
           table.append(theader);
         {% for row in iteracion.tabla %}
+          var tuberia = "{{row.tuberia}}";
           var Qx = "{{row.Qx}}";
           var Lx = "{{row.Lx}}";
           var Dx = "{{row.Dx}}";
@@ -163,19 +102,82 @@
           var hfhm = "{{row.hfhm}}";
           var a = "{{row.a}}";
           var af = "{{row.af}}";
-          var row = $('<tr><td>1-2</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+Km+'</td><td>'+hm+'</td><td>'+hfhm+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
+          var row = $('<tr><td>'+tuberia+'</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+Km+'</td><td>'+hm+'</td><td>'+hfhm+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
           tbody.append(row)
         {% endfor %}
         table.append(tbody);
-        
 
-        $('#container').append( $('<div class="row">'));
-        $('#container').append( $('<h2>Iteracion {{iteracion.iteracion}}</h2>'));
-        $('#container').append(table);
-        $('#container').append( $('<div class="col-md-3"><table class="table table-bordered"></table>'));
+
+        var div_row = $('<div class="row"></div>')
+        $('#container').append(div_row);
+        div_row.append($('<h2>Iteracion {{iteracion.iteracion}}</h2>'));
+        div_row.append(table);
+        var div_col_h = $('<div class="col-md-4"></div>')
+        var div_col_qx = $('<div class="col-md-4"></div>')
+        var div_col_terror = $('<div class="col-md-4"></div>')
+        div_row.append(div_col_h);
+        div_row.append(div_col_qx);
+        div_row.append(div_col_terror);
+
+        // tabla error
+        var table_error = $('<table class="table table-bordered"></table>');
+        var theader_error = $('<thead><tr><th>Error</th></tr></thead>');
+        var tbody_error = $('<tbody></tbody>');
+        table_error.append(theader_error);
+        table_error.append(tbody_error);
+        div_col_terror.append(table_error);
+
+        {%if iteracion.error%}
+          {% for e in iteracion.error %}
+            var row = $('<tr><td>{{e}}</td></tr>');
+            tbody_error.append(row)
+          {% endfor %}
+        {%endif%}
+
+        // tabla error
+        var table_H = $('<table class="table table-bordered"></table>');
+        var theader_H = $('<thead><tr><th>H</th></tr></thead>');
+        var tbody_H = $('<tbody></tbody>');
+        table_H.append(theader_H);
+        table_H.append(tbody_H);
+        div_col_h.append(table_H);
+
+        {% for h in iteracion.H %}
+          var row = $('<tr><td>{{h}}</td></tr>');
+          tbody_H.append(row)
+        {% endfor %}
+
+        // tabla error
+        var table_Qx = $('<table class="table table-bordered"></table>');
+        var theader_Qx = $('<thead><tr><th>Qx</th></tr></thead>');
+        var tbody_Qx = $('<tbody></tbody>');
+        table_Qx.append(theader_Qx);
+        table_Qx.append(tbody_Qx);
+        div_col_qx.append(table_Qx);
+
+        {% for qx in iteracion.Qx %}
+          var row = $('<tr><td>{{qx}}</td></tr>');
+          tbody_Qx.append(row)
+        {% endfor %}
+
+        //$('#container').append( $('<h2>Iteracion {{iteracion.iteracion}}</h2>'));
+        //$('#container').append(table);
+
+        // $('#container').append( $('<div class="col-md-3">'));
+        // var table = $('<table class="table table-bordered"></table>');
+        // var theader = $('<thead><tr><th>Error</th></tr></thead>');
+        // var tbody = $('<tbody></tbody>');
+        // table.append(theader);
+        // // {% for e in iteracion.error %}
+        // //   var row = $('<tr><td>'+e+'</td></tr>');
+        // //   tbody.append(row)
+        // // {% endfor %}
+        // table.append(tbody);
+        // $('#container').append(table);
+        // $('#container').append( $('</div>'));
         $('#container').append( $('</div></br>'));
       {%endfor%}
       {% endif %}
-      </script>
+    </script>
   </body>
 </html>
