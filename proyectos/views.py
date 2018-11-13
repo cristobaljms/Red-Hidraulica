@@ -312,12 +312,13 @@ def TableFormatter(ntuberias, Qx, Dx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
                 'V': V[i], 
                 'f': f[i], 
                 'hf': hf[i], 
-                'Km': Km[i], 
+                #'Km': Km[i], 
                 'hm': hm[i], 
                 'hfhm': hfhm[i], 
                 'a': a[i],   
                 'af': af[i]
             })
+        #print(json.dumps(tabla))
         return tabla
 
 def infToZeros(arreglo):
@@ -473,18 +474,19 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     
     #print("todas las Q")
     #print(Qstep9)
-    response.append(iteracionRow)
     if(len(H) > 0):
         error = np.absolute(H-step10)
+        iteracionRow['error'] = np.squeeze(np.asarray(error)).tolist()
+        response.append(iteracionRow)
         if (validateError(error)):
             iteracion = iteracion + 1
             Qstep9 = np.squeeze(np.asarray(Qstep9))
-            calculosGradiente(iteracion, pk, Qstep9, step10, response)
+            return calculosGradiente(iteracion, pk, Qstep9, step10, response)
         else:
-            return 1
+            return response
     else:
         Qstep9 = np.squeeze(np.asarray(Qstep9))
-        calculosGradiente(iteracion, pk, Qstep9, step10, response)
+        return calculosGradiente(iteracion, pk, Qstep9, step10, response)
 
 
 class GradienteView(generic.View):
@@ -494,10 +496,12 @@ class GradienteView(generic.View):
         data = getProjectData(kwargs['pk'])
         ntuberias = len(data['tuberias'])
         Qx = np.zeros(ntuberias) + 0.1
-        context = calculosGradiente(1, kwargs['pk'], Qx, [], [])
-        print(context)
-        return JsonResponse(context, safe=False)
-        #return render(request, self.template_name, context)
+        context = {
+            'data': calculosGradiente(1, kwargs['pk'], Qx, [], [])
+        }
+        #print(context)
+        #return JsonResponse(context, safe=False)
+        return render(request, self.template_name, context)
 
 
 

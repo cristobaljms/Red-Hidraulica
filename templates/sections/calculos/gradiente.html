@@ -8,36 +8,54 @@
     {% include 'layouts/header.html' %}
   </head>
   <body>
-    <div class="container">
+    <div id="container" class="container">
       <div class="row">
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Firstname</th>
-              <th>Lastname</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>John</td>
-              <td>Doe</td>
-              <td>john@example.com</td>
-            </tr>
-            <tr>
-              <td>Mary</td>
-              <td>Moe</td>
-              <td>mary@example.com</td>
-            </tr>
-            <tr>
-              <td>July</td>
-              <td>Dooley</td>
-              <td>july@example.com</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="col-md-3">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-3">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="col-md-3">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
       </div>
-
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
@@ -117,7 +135,47 @@
         </div>
       </div>
     </div>
-    <script></script>
+    
     {% include 'layouts/scripts.html' %}
+    <script type="text/javascript">
+  
+      //alert("habla claro malandro")
+      {% if data %}
+      var data = "{{data}}"
+      {%for iteracion in data %}
+        //console.log("{{iteracion.iteracion}}")
+        //console.log("{{iteracion.error}}")
+        //console.log("{{iteracion.Qx}}")
+          var table = $('<table class="table table-bordered"></table>');
+          var theader = $('<thead><tr><th>Tuberia</th><th>Qx</th><th>Lx</th><th>Dx</th><th>A</th><th>V</th><th>f</th><th>hf</th><th>Km</th><th>hm</th><th>hf+hm</th><th>a</th><th>af</th></tr></thead>');
+          var tbody = $('<tbody></tbody>');
+          table.append(theader);
+        {% for row in iteracion.tabla %}
+          var Qx = "{{row.Qx}}";
+          var Lx = "{{row.Lx}}";
+          var Dx = "{{row.Dx}}";
+          var A = "{{row.A}}";
+          var V = "{{row.V}}";
+          var f = "{{row.f}}";
+          var hf = "{{row.hf}}";
+          var Km = "error";
+          var hm = "{{row.hm}}";
+          var hfhm = "{{row.hfhm}}";
+          var a = "{{row.a}}";
+          var af = "{{row.af}}";
+          var row = $('<tr><td>1-2</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+Km+'</td><td>'+hm+'</td><td>'+hfhm+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
+          tbody.append(row)
+        {% endfor %}
+        table.append(tbody);
+        
+
+        $('#container').append( $('<div class="row">'));
+        $('#container').append( $('<h2>Iteracion {{iteracion.iteracion}}</h2>'));
+        $('#container').append(table);
+        $('#container').append( $('<div class="col-md-3"><table class="table table-bordered"></table>'));
+        $('#container').append( $('</div></br>'));
+      {%endfor%}
+      {% endif %}
+      </script>
   </body>
 </html>
