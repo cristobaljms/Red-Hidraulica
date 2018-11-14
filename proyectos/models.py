@@ -24,8 +24,10 @@ class Tuberia(models.Model):
     numero = models.CharField(max_length=4, default='')
     longitud = models.FloatField()
     diametro = models.FloatField()
+    km = models.FloatField(default=0)
     start = models.CharField(max_length=4, default='')
     end =  models.CharField(max_length=4, default='')
+
 
 class Reservorio(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)

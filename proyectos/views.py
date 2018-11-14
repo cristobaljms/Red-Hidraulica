@@ -8,13 +8,22 @@ from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.core.serializers import serialize
 from django.http import JsonResponse
-from json_tricks import dump, dumps
 import math
 import re
 import json
 import numpy as np
 from numpy import inf
 from numpy.linalg import inv
+
+from django.core.files.storage import FileSystemStorage
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus.tables import Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import A4, landscape, portrait
+from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT, TA_RIGHT
+
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -70,6 +79,7 @@ class ProyectoAdminView(generic.CreateView):
             numero = request.POST.get('numero')
             longitud = request.POST.get('longitud')
             diametro = request.POST.get('diametro')
+            km = request.POST.get('km')
             start = request.POST.get('start')
             end = request.POST.get('end')
 
@@ -96,7 +106,7 @@ class ProyectoAdminView(generic.CreateView):
                 nend = Reservorio.objects.get(pk = int(patron.split(end)[1]))
 
             proyecto = Proyecto.objects.get(pk=id_proyecto)
-            tuberia = Tuberia(proyecto=proyecto, numero=numero, longitud=longitud, diametro=diametro, start=nstart.numero, end = nend.numero)
+            tuberia = Tuberia(proyecto=proyecto, numero=numero, longitud=longitud, diametro=diametro, km=km, start=nstart.numero, end = nend.numero)
             tuberia.save()
             messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
             return redirect('proyecto_administrar', id_proyecto)
@@ -276,21 +286,6 @@ def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
                 Xi = Xi_1
     return f
 
-def printTabla(ntuberias, Qx, Lx, A,V,f,hf,Km,hm,hfhm,a, af):
-        V = np.round(V, 4)
-        A = np.round(A, 4)
-        hf = np.round(hf, 4)
-        Km = np.round(Km, 4)
-        hm = np.round(hm, 4)
-        hfhm = np.round(hfhm, 4)
-        a = np.round(a, 4)
-        af = np.round(af, 4)
-        f = np.round(f,4)
-        print("T  | Qx  |  Lx   |    A   |    V   |   f    |    hf  |Km|  hm   |  hfhm   |   a   |     af")
-        for i in range(0,ntuberias):
-            #print("T"+str(i),'|', af[i])
-            print("T"+str(i),'|', Qx[i],'|', Lx[i],'|', A[i],'|', V[i], '|', f[i], '|', hf[i], '|', Km[i],'|', hm[i],'|', hfhm[i], '|', a[i],'|', af[i],)
-
 def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af):
         V = np.round(V, 4)
         A = np.round(A, 4)
@@ -313,13 +308,12 @@ def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af):
                 'V': V[i], 
                 'f': f[i], 
                 'hf': hf[i], 
-                #'Km': Km[i], 
+                'Km': Km[i], 
                 'hm': hm[i], 
                 'hfhm': hfhm[i], 
                 'a': a[i],   
                 'af': af[i]
             })
-        #print(json.dumps(tabla))
         return tabla
 
 def infToZeros(arreglo):
@@ -356,6 +350,10 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     for t in data['tuberias']:
         array_diametro.append(t['diametro'])
     
+    array_km = []
+    for t in data['tuberias']:
+        array_km.append(t['km'])
+
     Lx = np.array(array_longitud)
     Dx = np.array(array_diametro)
     A = (np.pi*np.power(Dx,2))/4
@@ -368,7 +366,9 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         f.append(f_calculo(Re[i],Ks[i]/Dx[i]))
 
     hf   = np.zeros(ntuberias) + f*(Lx/Dx)*(np.power(V,2)/(2*9.81))
-    Km   = np.zeros(ntuberias).astype(int) + [0,10,0,0,0,0,0]
+    Km = np.array(array_km)
+
+    #Km   = np.zeros(ntuberias).astype(int) + [0,10,0,0,0,0,0]
     hm   = np.zeros(ntuberias) + Km * (np.power(V,2)/(2*9.81))
     hfhm = np.zeros(ntuberias) + (hf + hm)
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
@@ -501,5 +501,133 @@ class GradienteView(generic.View):
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
 
+from django.http import HttpResponse
+from io import BytesIO
+
+def GradienteToPDFView(request, pk):
+    data = getProjectData(pk)
+    ntuberias = len(data['tuberias'])
+    Qx = np.zeros(ntuberias) + 0.1
+    calculos = calculosGradiente(1, pk, Qx, [], [])
+
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
+    Story = []
+
+    ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 14, fontName="Times-Roman")
+    ps_iteracion = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 12, fontName="Times-Roman")
+    ps_tabla = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
+
+    text = "<b>METODO DE LA GRADIENTE</b>"
+    p = Paragraph(text, ps_head)
+    Story.append(p)
+    Story.append(Spacer(1,0.5*inch))
+
+    titles = [
+        Paragraph('Tuberia', ps_tabla),
+        Paragraph('Qx', ps_tabla),
+        Paragraph('Lx', ps_tabla),
+        Paragraph('Dx', ps_tabla),
+        Paragraph('A', ps_tabla),
+        Paragraph('V', ps_tabla),
+        Paragraph('f', ps_tabla),
+        Paragraph('hf+hm', ps_tabla),
+        Paragraph('a', ps_tabla),
+        Paragraph('af', ps_tabla)
+    ]
+    
+    for iteracion in calculos:
+        text = "<b>Iteracion {}</b>".format(iteracion['iteracion'])
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+
+        table_formatted = [titles]
+        for i in iteracion['tabla']:
+            tuberia = i['tuberia']
+            Qx = i['Qx']
+            Lx = i['Lx']
+            Dx = i['Dx']
+            A = i['A']
+            V = i['V']
+            f = i['f']
+            hfhm = i['hfhm']
+            a = i['a']
+            af = i['af']
+            row = [ tuberia, Qx, Lx, Dx, A, V, f, hfhm, a, af ]
+            table_formatted.append(row)
+
+        t=Table(table_formatted, (40,40,40,40,40,40,40,70,70,70))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(9,0),colors.lightgrey),
+            ('INNERGRID',(0,0),(9,0), 0.25, colors.gray),
+            ('BOX',(0,0),(9,0), 0.25, colors.gray)
+        ]))
+
+        Story.append(t)
+        Story.append(Spacer(1,0.2*inch))
+
+        THtitles = [ 
+            Paragraph('H', ps_tabla)
+        ]
+        table_formatted = [THtitles]
+        for value in iteracion['H']:
+            table_formatted.append([value])
+
+        t=Table(table_formatted, (40))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
+            ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
+            ('BOX',(0,0),(1,0), 0.25, colors.gray)
+        ]))
+        Story.append(t)
+        Story.append(Spacer(1,0.2*inch))
+
+        TQxtitles = [ 
+            Paragraph('Qx', ps_tabla)
+        ]
+
+        table_formatted = [TQxtitles]
+        for value in iteracion['Qx']:
+            table_formatted.append([value])
+
+        t=Table(table_formatted, (40))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
+            ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
+            ('BOX',(0,0),(1,0), 0.25, colors.gray)
+        ]))
+        Story.append(t)
+        Story.append(Spacer(1,0.2*inch))
 
 
+        TErrortitles = [ 
+            Paragraph('Error', ps_tabla)
+        ]
+
+        table_formatted = [TErrortitles]
+
+        if 'error' in iteracion:
+            for value in iteracion['error']:
+                table_formatted.append([value])
+
+            t=Table(table_formatted, (40))
+            t.setStyle(TableStyle([
+                ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
+                ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
+                ('BOX',(0,0),(1,0), 0.25, colors.gray)
+            ]))
+            Story.append(t)
+            Story.append(Spacer(1,0.2*inch))
+
+        table_formatted = [titles]
+        Story.append(Spacer(1,0.2*inch))
+
+
+    doc.build(Story)
+    pdf_value = pdf_buffer.getvalue()
+    pdf_buffer.close()
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reportgradient.pdf"'
+    response.write(pdf_value)
+    return response
