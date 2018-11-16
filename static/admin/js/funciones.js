@@ -1,21 +1,21 @@
-$(document).ready(function () {
-    $('#beneficiarios_tabla').DataTable(
-        {"language": {
-            "lengthMenu": "Mostrar _MENU_ registros por pagina",
-            "zeroRecords": "No hay registros",
-            "info": "Mostrando pagina _PAGE_ de _PAGES_",
-            "infoEmpty": "No records available",
-            "infoFiltered": "(filtrado de _MAX_ registros totales)",
-            "search":         "Buscar:",
-            "paginate": {
-                "first":      "Primero",
-                "last":       "Ultimo",
-                "next":       "Siguiente",
-                "previous":   "Anterior"
-            },
-        }}
-    );
-});
+// $(document).ready(function () {
+//     $('#beneficiarios_tabla').DataTable(
+//         {"language": {
+//             "lengthMenu": "Mostrar _MENU_ registros por pagina",
+//             "zeroRecords": "No hay registros",
+//             "info": "Mostrando pagina _PAGE_ de _PAGES_",
+//             "infoEmpty": "No records available",
+//             "infoFiltered": "(filtrado de _MAX_ registros totales)",
+//             "search":         "Buscar:",
+//             "paginate": {
+//                 "first":      "Primero",
+//                 "last":       "Ultimo",
+//                 "next":       "Siguiente",
+//                 "previous":   "Anterior"
+//             },
+//         }}
+//     );
+// });
 
 // Active user
 function borrarProyecto(pk){
@@ -102,4 +102,3 @@ function borrarFluido(pk){
   $(document).ready(function() {
     $('[data-toggle="tooltip"]').tooltip();
   });
-  $.material.init();

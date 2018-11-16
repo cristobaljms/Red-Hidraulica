@@ -1,81 +1,128 @@
 {% load staticfiles %}
 <form method="post">
-    {%csrf_token%}
-    <input type="hidden" value="reservorio" id="tipo" name="tipo">
-    <input type="hidden" value="{{proyecto.id}}" id="id_proyecto" name="id_proyecto">
-    <div class="row">
-        <div class="form-group col-md-6">
-            <input type="text" maxlength="4" placeholder="Numero del reservorio" class="form-control" id="numero" name="numero" required>
-        </div>
-        <div class="form-group col-md-6">
-            <input type="number" step="any" type="text" placeholder="Z" class="form-control" id="z" name="z" required>
-        </div>
+  {%csrf_token%}
+  <input type="hidden" value="reservorio" id="tipo" name="tipo" />
+  <input
+    type="hidden"
+    value="{{proyecto.id}}"
+    id="id_proyecto"
+    name="id_proyecto"
+  />
+  <div class="row">
+    <div class="form-group col-md-6">
+      <input
+        type="text"
+        maxlength="4"
+        placeholder="Numero del reservorio"
+        class="form-control"
+        id="numero"
+        name="numero"
+        required
+      />
     </div>
-    <div class="row">
-        <div class="form-group col-md-4">
-            <input type="number" placeholder="Posicion Y" class="form-control" id="y_position" name="y_position" required>
-        </div>
-        <div class="form-group col-md-4">
-            <input type="number" placeholder="Posicion X" class="form-control" id="x_position" name="x_position" required>
-        </div>
-        <div class="col-md-4">
-            <button type="submit" class="btn btn-primary ">Agregar</button>
-        </div>
+    <div class="form-group col-md-6">
+      <input
+        type="number"
+        step="any"
+        type="text"
+        placeholder="Z"
+        class="form-control"
+        id="z"
+        name="z"
+        required
+      />
     </div>
+  </div>
+  <div class="row">
+    <div class="form-group col-md-4">
+      <input
+        type="number"
+        placeholder="Posicion Y"
+        class="form-control"
+        id="y_position"
+        name="y_position"
+        required
+      />
+    </div>
+    <div class="form-group col-md-4">
+      <input
+        type="number"
+        placeholder="Posicion X"
+        class="form-control"
+        id="x_position"
+        name="x_position"
+        required
+      />
+    </div>
+    <div class="col-md-4">
+      <button type="submit" class="btn btn-primary ">Agregar</button>
+    </div>
+  </div>
 </form>
-<br>
+<br />
 <div class="table-responsive ">
-    <table id="ReservorioTable" class="table table-bordered">
-        <thead>
-            <tr>
-                <th style="padding: 10px 10px;">Numero</th>
-                <th style="padding: 10px 10px;">Z</th>
-                <th style="width: 100px; text-Align:center">Accion</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if reservorios %} {% for reservorio in reservorios %}
-            <tr>
-                <td>{{reservorio.numero}}</td>
-                <td class="text-dark">{{reservorio.z}}</td>
-                <td style="width: 150px; text-Align:center">
-                    <a href="#" onclick="borrarReservorio({{reservorio.id}})" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top">
-                        <i class="fa fa-trash-alt"></i>
-                    </a>
-                </td>
-            </tr>
-            {% endfor %} {% endif %}
-        </tbody>
-    </table>
+  <table id="ReservorioTable" class="table table-bordered">
+    <thead>
+      <tr>
+        <th style="padding: 10px 10px;">Numero</th>
+        <th style="padding: 10px 10px;">Z</th>
+        <th style="padding: 10px 10px;">Y pos</th>
+        <th style="padding: 10px 10px;">X pos</th>
+        <th style="width: 100px; text-Align:center">Accion</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if reservorios %} {% for reservorio in reservorios %}
+      <tr>
+        <td>{{ reservorio.numero }}</td>
+        <td class="text-dark">{{ reservorio.z }}</td>
+        <td class="text-dark">{{ reservorio.y_position }}</td>
+        <td class="text-dark">{{ reservorio.x_position }}</td>
+        <td style="width: 150px; text-Align:center">
+          <a
+            href="#"
+            onclick="borrarReservorio({{reservorio.id}})"
+            class="btn btn-sm btn-danger"
+            data-toggle="tooltip"
+            data-placement="top"
+          >
+            <i class="fa fa-trash-alt"></i>
+          </a>
+        </td>
+      </tr>
+      {% endfor %} {% endif %}
+    </tbody>
+  </table>
 </div>
 
 <script type="text/javascript" language="javascript" class="init">
-    //$(document).ready(function() {
-    //    $('#ReservorioTable').dataTable( );
-    //} );
+  //$(document).ready(function() {
+  //    $('#ReservorioTable').dataTable( );
+  //} );
 
-    function borrarReservorio(pk) {
-        swal({
-            title: "Borrar Reservorio",
-            text: "¿Estas seguro de querer borrar este reservorio?",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-        })
-            .then((willDelete) => {
-                if (willDelete) {
-                    request_url = '/reservorio/eliminar/' + pk
-                    $.ajax({
-                        url: request_url,
-                        success: function (data) {
-                            swal("Reservorio borrado", {
-                                icon: "success",
-                            }).then(() => { location.reload(); });
-                        }
-                    })
-                } else {
-                    swal("Operacion cancelada");
-                }
+  function borrarReservorio(pk) {
+    swal({
+      title: "Borrar Reservorio",
+      text: "¿Estas seguro de querer borrar este reservorio?",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true
+    }).then(willDelete => {
+      if (willDelete) {
+        request_url = "/reservorio/eliminar/" + pk;
+        $.ajax({
+          url: request_url,
+          success: function(data) {
+            swal("Reservorio borrado", {
+              icon: "success"
+            }).then(() => {
+              location.reload();
             });
-    }
+          }
+        });
+      } else {
+        swal("Operacion cancelada");
+      }
+    });
+  }
 </script>

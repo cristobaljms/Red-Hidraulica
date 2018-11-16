@@ -31,7 +31,7 @@ class ProyectoAdminView(generic.CreateView):
     def get(self, request, *args, **kwargs):
         proyecto = Proyecto.objects.get(pk=kwargs['pk'])
         nodos = Nodo.objects.filter(proyecto=proyecto)
-        tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('numero')
+        tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('orden')
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
 
         sreservorios = json.loads(serialize("json", reservorios))
@@ -49,10 +49,15 @@ class ProyectoAdminView(generic.CreateView):
             fields['pktype'] = 'n'+str(sn['pk'])
             rarray.append(fields)
 
+        torden = 1
+        for t in tuberias:
+            torden = t.orden
+
         context = {
             'proyecto': proyecto,
             'nodos':nodos,
             'tuberias':tuberias,
+            'torden': torden + 1,
             'reservorios': reservorios,
             'opciones_tuberia': rarray 
         }
@@ -80,6 +85,7 @@ class ProyectoAdminView(generic.CreateView):
             longitud = request.POST.get('longitud')
             diametro = request.POST.get('diametro')
             km = request.POST.get('km')
+            orden = request.POST.get('orden')
             start = request.POST.get('start')
             end = request.POST.get('end')
 
@@ -106,7 +112,7 @@ class ProyectoAdminView(generic.CreateView):
                 nend = Reservorio.objects.get(pk = int(patron.split(end)[1]))
 
             proyecto = Proyecto.objects.get(pk=id_proyecto)
-            tuberia = Tuberia(proyecto=proyecto, numero=numero, longitud=longitud, diametro=diametro, km=km, start=nstart.numero, end = nend.numero)
+            tuberia = Tuberia(proyecto=proyecto, numero=numero, orden=orden, longitud=longitud, diametro=diametro, km=km, start=nstart.numero, end = nend.numero)
             tuberia.save()
             messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
             return redirect('proyecto_administrar', id_proyecto)
@@ -239,7 +245,7 @@ def borrarReservorio(request, pk):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def getProjectData(pk):
-    tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk).order_by('numero')))
+    tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk).order_by('orden')))
     nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk)))
     reservorios = json.loads(serialize("json", Reservorio.objects.filter(proyecto=pk)))
     

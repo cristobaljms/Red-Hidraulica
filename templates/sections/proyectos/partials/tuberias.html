@@ -10,6 +10,7 @@
   <div class="row">
     <div class="form-group col-md-3">
       <input
+        value="T{{torden}}"
         type="text"
         maxlength="4"
         placeholder="Nombre de la tuberia"
@@ -45,7 +46,6 @@
       <input
         type="number"
         step="any"
-        type="text"
         placeholder="Diametro"
         class="form-control"
         id="diametro"
@@ -55,7 +55,18 @@
     </div>
   </div>
   <div class="row">
-    <div class="form-group col-md-4">
+    <div class="form-group col-md-3">
+      <input
+        value="{{torden}}"
+        type="number"
+        placeholder="Orden"
+        class="form-control"
+        id="orden"
+        name="orden"
+        required
+      />
+    </div>
+    <div class="form-group col-md-3">
       <select class="form-control" id="start" name="start">
         <option value="0">Nodo inicial</option>
         {% if opciones_tuberia %} {% for n in opciones_tuberia %}
@@ -63,7 +74,7 @@
         {% endfor %} {% endif %}
       </select>
     </div>
-    <div class="form-group col-md-4">
+    <div class="form-group col-md-3">
       <select class="form-control" id="end" name="end">
         <option value="0">Nodo final</option>
         {% if opciones_tuberia %} {% for n in opciones_tuberia %}
@@ -71,7 +82,7 @@
         {% endfor %} {% endif %}
       </select>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <button type="submit" class="btn btn-primary ">Agregar</button>
     </div>
   </div>
@@ -100,6 +111,14 @@
         <td>{{ tuberia.start }}</td>
         <td>{{ tuberia.end }}</td>
         <td style="width: 150px; text-Align:center">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-toggle="modal"
+            data-target="#myModal"
+          >
+            <i class="fa fa-edit"></i>
+          </button>
           <a
             href="#"
             onclick="borrarTuberia({{tuberia.id}})"
@@ -115,7 +134,118 @@
     </tbody>
   </table>
 </div>
+<!-- Button to Open the Modal -->
 
+<!-- The Modal -->
+<div class="modal" id="myModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header"><h4 class="modal-title">Modal Heading</h4></div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        <form method="post">
+          {%csrf_token%}
+          <input type="hidden" value="tuberia" id="tipo" name="tipo" />
+          <input
+            type="hidden"
+            value="{{proyecto.id}}"
+            id="id_proyecto"
+            name="id_proyecto"
+          />
+          <div class="row">
+            <div class="form-group col-md-3">
+              <input
+                value="T{{torden}}"
+                type="text"
+                maxlength="4"
+                placeholder="Nombre de la tuberia"
+                class="form-control"
+                id="numero"
+                name="numero"
+                required
+              />
+            </div>
+            <div class="form-group col-md-3">
+              <input
+                type="number"
+                step="any"
+                placeholder="Longitud"
+                class="form-control"
+                id="longitud"
+                name="longitud"
+                required
+              />
+            </div>
+            <div class="form-group col-md-3">
+              <input
+                type="number"
+                step="any"
+                placeholder="Km"
+                class="form-control"
+                id="km"
+                name="km"
+                required
+              />
+            </div>
+            <div class="form-group col-md-3">
+              <input
+                type="number"
+                step="any"
+                placeholder="Diametro"
+                class="form-control"
+                id="diametro"
+                name="diametro"
+                required
+              />
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group col-md-3">
+              <input
+                value="{{torden}}"
+                type="number"
+                placeholder="Orden"
+                class="form-control"
+                id="orden"
+                name="orden"
+                required
+              />
+            </div>
+            <div class="form-group col-md-3">
+              <select class="form-control" id="start" name="start">
+                <option value="0">Nodo inicial</option>
+                {% if opciones_tuberia %} {% for n in opciones_tuberia %}
+                <option value="{{n.pktype}}">{{ n.numero }}</option>
+                {% endfor %} {% endif %}
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <select class="form-control" id="end" name="end">
+                <option value="0">Nodo final</option>
+                {% if opciones_tuberia %} {% for n in opciones_tuberia %}
+                <option value="{{n.pktype}}">{{ n.numero }}</option>
+                {% endfor %} {% endif %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn btn-primary ">Agregar</button>
+            </div>
+          </div>
+          <br />
+        </form>
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript" language="javascript" class="init">
   //$(document).ready(function() {
   //    $('#TuberiaTable').dataTable( );
