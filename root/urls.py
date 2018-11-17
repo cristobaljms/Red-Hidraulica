@@ -13,7 +13,7 @@ urlpatterns = [
     path('proyectos/crear/', login_required(ProyectosCreateView.as_view(), login_url='/login/'), name='proyectos_crear'),
     path('proyectos/editar/<int:pk>/', login_required(ProyectosUpdateView.as_view(), login_url='/login/'), name='proyectos_editar'),
     path('proyectos/eliminar/<int:pk>/', login_required(ProyectoDeleteView.as_view(), login_url='/login/'), name='proyecto_eliminar'),
-    path('proyectos/administrar/<int:pk>/', login_required(ProyectoAdminView.as_view(), login_url='/login/'), name='proyecto_administrar'),
+    path('proyectos/administrar/<int:pk>/<slug:active_tab>', login_required(ProyectoAdminView.as_view(), login_url='/login/'), name='proyecto_administrar'),
     path('proyecto/datos/<int:pk>/', login_required(obtenerProyectoDatos, login_url='/login/'), name='get_project_data'),
     path('tuberia/eliminar/<int:pk>/', login_required(borrarTuberia, login_url='/login/'), name='tuberia_eliminar'),
     path('reservorio/eliminar/<int:pk>/', login_required(borrarReservorio, login_url='/login/'), name='nodo_eliminar'),

@@ -59,7 +59,8 @@ class ProyectoAdminView(generic.CreateView):
             'tuberias':tuberias,
             'torden': torden + 1,
             'reservorios': reservorios,
-            'opciones_tuberia': rarray 
+            'opciones_tuberia': rarray,
+            'active_tab': kwargs['active_tab'], 
         }
         
         return render(request, self.template_name, context)
@@ -69,6 +70,7 @@ class ProyectoAdminView(generic.CreateView):
         id_proyecto = request.POST.get('id_proyecto')
 
         if (tipo == 'nodo'):
+            active_tab = 'nodo'
             numero = request.POST.get('numero')
             demanda = request.POST.get('demanda')
             cota = request.POST.get('cota')
@@ -78,9 +80,10 @@ class ProyectoAdminView(generic.CreateView):
             nodo = Nodo(proyecto=proyecto, numero=numero, cota=cota, demanda=demanda, x_position=x_position, y_position=y_position)
             nodo.save()
             messages.add_message(request, messages.SUCCESS, 'Nodo creado con exito')
-            return redirect('proyecto_administrar', id_proyecto)
+            return redirect('proyecto_administrar', id_proyecto, active_tab)
 
         elif (tipo == 'tuberia'):
+            active_tab = 'tuberia'
             numero = request.POST.get('numero')
             longitud = request.POST.get('longitud')
             diametro = request.POST.get('diametro')
@@ -91,11 +94,11 @@ class ProyectoAdminView(generic.CreateView):
 
             if start == '0' or end == '0':
                 messages.add_message(request, messages.ERROR, 'Debe ingresar el nodo incial y el nodo final')
-                return redirect('proyecto_administrar', id_proyecto)
+                return redirect('proyecto_administrar', id_proyecto, active_tab)
 
             if start == end:
                 messages.add_message(request, messages.ERROR, 'El nodo de inicio no puede ser igual al nodo final')
-                return redirect('proyecto_administrar', id_proyecto)
+                return redirect('proyecto_administrar', id_proyecto, active_tab)
 
             if(re.match('n', start)):
                 patron = re.compile('n')
@@ -115,8 +118,9 @@ class ProyectoAdminView(generic.CreateView):
             tuberia = Tuberia(proyecto=proyecto, numero=numero, orden=orden, longitud=longitud, diametro=diametro, km=km, start=nstart.numero, end = nend.numero)
             tuberia.save()
             messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
-            return redirect('proyecto_administrar', id_proyecto)
+            return redirect('proyecto_administrar', id_proyecto, active_tab)
         else:
+            active_tab = 'reservorio'
             numero = request.POST.get('numero')
             z = request.POST.get('z')
             x_position = request.POST.get('x_position')
@@ -126,7 +130,7 @@ class ProyectoAdminView(generic.CreateView):
             reservorio = Reservorio(numero=numero, z=z, proyecto=proyecto, y_position=y_position, x_position=x_position)
             reservorio.save()
             messages.add_message(request, messages.SUCCESS, 'Reservorio creado con exito')
-            return redirect('proyecto_administrar', id_proyecto)
+            return redirect('proyecto_administrar', id_proyecto, active_tab)
 
 class ProyectosListView(generic.ListView):
     model = Proyecto
@@ -335,7 +339,7 @@ def validateError(Error):
     dimension = Error.shape
     for i in range(0, dimension[0]):
         for j in range(0, dimension[1]):
-            if(Error[i,j] > 0.0002):
+            if(Error[i,j] > 0.001):
                 flag = True
     return flag
 
@@ -359,6 +363,11 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     array_km = []
     for t in data['tuberias']:
         array_km.append(t['km'])
+
+    aux_qx = Qx
+    for i in range(0,ntuberias):
+        if (Qx[i] < 0):
+            Qx[i] = Qx[i] * -1
 
     Lx = np.array(array_longitud)
     Dx = np.array(array_diametro)
@@ -395,7 +404,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         for i in range(0, nnodos):
             if(tuberia['end'] == data['nodos'][i]['numero']):
                 a[i] = 1
-        if (Qx[i] < 0):
+        if (aux_qx[i] < 0):
             a = a * -1
         A12.append(a)
     
@@ -499,7 +508,10 @@ class GradienteView(generic.View):
     def get(self, request, *args, **kwargs):
         data = getProjectData(kwargs['pk'])
         ntuberias = len(data['tuberias'])
-        Qx = np.zeros(ntuberias) + 0.1
+        qx = 0
+        for nodo in data['nodos']:
+            qx = qx + nodo['demanda']
+        Qx = np.zeros(ntuberias) + (qx/ntuberias)
         context = {
             'data': calculosGradiente(1, kwargs['pk'], Qx, [], []),
             'project_pk': kwargs['pk']
@@ -513,7 +525,11 @@ from io import BytesIO
 def GradienteToPDFView(request, pk):
     data = getProjectData(pk)
     ntuberias = len(data['tuberias'])
-    Qx = np.zeros(ntuberias) + 0.1
+    qx = 0
+    for nodo in data['nodos']:
+        qx = qx + nodo['demanda']
+    Qx = np.zeros(ntuberias) + (qx/ntuberias)
+
     calculos = calculosGradiente(1, pk, Qx, [], [])
 
     pdf_buffer = BytesIO()
