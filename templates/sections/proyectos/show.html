@@ -24,7 +24,7 @@
             <ul class="nav nav-tabs" role="tablist">
               <li role="presentation" class="nav-item">
                 <a
-                  class="nav-link {% if active_tab == 'info' %} active{% endif %}"
+                  class="nav-link {% if active_tab == 'i' %} active{% endif %}"
                   href="#info"
                   aria-controls="info"
                   role="tab"
@@ -34,7 +34,7 @@
               </li>
               <li role="presentation" class="nav-item">
                 <a
-                  class="nav-link {% if active_tab == 'reservorio' %} active{% endif %}"
+                  class="nav-link {% if active_tab == 'r' %} active{% endif %}"
                   href="#reservorios"
                   aria-controls="reservorios"
                   role="tab"
@@ -44,7 +44,7 @@
               </li>
               <li role="presentation" class="nav-item">
                 <a
-                  class="nav-link {% if active_tab == 'nodo' %} active{% endif %}"
+                  class="nav-link {% if active_tab == 'n' %} active{% endif %}"
                   href="#nodos"
                   aria-controls="nodos"
                   role="tab"
@@ -54,7 +54,7 @@
               </li>
               <li role="presentation" class="nav-item">
                 <a
-                  class="nav-link {% if active_tab == 'tuberia' %} active{% endif %}"
+                  class="nav-link {% if active_tab == 't' %} active{% endif %}"
                   href="#tuberias"
                   aria-controls="tuberias"
                   role="tab"
@@ -78,28 +78,28 @@
             <div class="tab-content">
               <div
                 role="tabpanel"
-                class="tab-pane {% if active_tab == 'info' %} active{% endif %}"
+                class="tab-pane {% if active_tab == 'i' %} active{% endif %}"
                 id="info"
               >
                 {% include 'sections/proyectos/partials/info.html' %}
               </div>
               <div
                 role="tabpanel"
-                class="tab-pane {% if active_tab == 'reservorio' %} active{% endif %}"
+                class="tab-pane {% if active_tab == 'r' %} active{% endif %}"
                 id="reservorios"
               >
                 {% include 'sections/proyectos/partials/reservorios.html' %}
               </div>
               <div
                 role="tabpanel"
-                class="tab-pane {% if active_tab == 'nodo' %} active{% endif %}"
+                class="tab-pane {% if active_tab == 'n' %} active{% endif %}"
                 id="nodos"
               >
                 {% include 'sections/proyectos/partials/nodos.html' %}
               </div>
               <div
                 role="tabpanel "
-                class="tab-pane {% if active_tab == 'tuberia' %} active{% endif %}"
+                class="tab-pane {% if active_tab == 't' %} active{% endif %}"
                 id="tuberias"
               >
                 {% include 'sections/proyectos/partials/tuberias.html' %}

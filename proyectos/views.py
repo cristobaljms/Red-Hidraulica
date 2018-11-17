@@ -5,16 +5,13 @@ from fluidos.models import Fluido
 from django.views import generic
 from django.contrib import messages
 from django.shortcuts import redirect
-from django.http import HttpResponseRedirect
 from django.core.serializers import serialize
+from django.http import HttpResponseRedirect
 from django.http import JsonResponse
-import math
-import re
-import json
-import numpy as np
+from django.http import HttpResponse
+from io import BytesIO
 from numpy import inf
 from numpy.linalg import inv
-
 from django.core.files.storage import FileSystemStorage
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -23,7 +20,10 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4, landscape, portrait
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT, TA_RIGHT
-
+import numpy as np
+import math
+import re
+import json
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -70,7 +70,7 @@ class ProyectoAdminView(generic.CreateView):
         id_proyecto = request.POST.get('id_proyecto')
 
         if (tipo == 'nodo'):
-            active_tab = 'nodo'
+            active_tab = 'n'
             numero = request.POST.get('numero')
             demanda = request.POST.get('demanda')
             cota = request.POST.get('cota')
@@ -83,7 +83,7 @@ class ProyectoAdminView(generic.CreateView):
             return redirect('proyecto_administrar', id_proyecto, active_tab)
 
         elif (tipo == 'tuberia'):
-            active_tab = 'tuberia'
+            active_tab = 't'
             numero = request.POST.get('numero')
             longitud = request.POST.get('longitud')
             diametro = request.POST.get('diametro')
@@ -120,7 +120,7 @@ class ProyectoAdminView(generic.CreateView):
             messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
             return redirect('proyecto_administrar', id_proyecto, active_tab)
         else:
-            active_tab = 'reservorio'
+            active_tab = 'r'
             numero = request.POST.get('numero')
             z = request.POST.get('z')
             x_position = request.POST.get('x_position')
@@ -236,6 +236,55 @@ class ProyectoDeleteView(generic.DeleteView):
         messages.add_message(request, messages.SUCCESS, 'Proyecto eliminado')
         return redirect('proyectos')
 
+class TuberiaUpdateView(generic.View):
+
+    def post(self, request, *args, **kwargs):
+        active_tab = 't'
+        id_tuberia = kwargs['pk']
+        id_proyecto = request.POST.get('id_proyecto')
+        numero = request.POST.get('numero')
+        longitud = request.POST.get('longitud')
+        diametro = request.POST.get('diametro')
+        km = request.POST.get('km')
+        orden = request.POST.get('orden')
+        start = request.POST.get('mstart')
+        end = request.POST.get('mend')
+
+        if start == '0' or end == '0':
+            messages.add_message(request, messages.ERROR, 'Debe ingresar el nodo incial y el nodo final')
+            return redirect('proyecto_administrar', id_proyecto, active_tab)
+
+        if start == end:
+            messages.add_message(request, messages.ERROR, 'El nodo de inicio no puede ser igual al nodo final')
+            return redirect('proyecto_administrar', id_proyecto, active_tab)
+
+        if(re.match('n', start)):
+            patron = re.compile('n')
+            nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))  
+        else:
+            patron = re.compile('r')
+            nstart = Reservorio.objects.get(pk = int(patron.split(start)[1]))
+
+        if(re.match('n', end)):
+            patron = re.compile('n')
+            nend = Nodo.objects.get(pk = int(patron.split(end)[1]))  
+        else:
+            patron = re.compile('r')
+            nend = Reservorio.objects.get(pk = int(patron.split(end)[1]))
+
+        tuberia = Tuberia.objects.get(pk=id_tuberia)
+        tuberia.numero=numero
+        tuberia.orden=orden
+        tuberia.longitud=longitud
+        tuberia.diametro=diametro
+        tuberia.km=km
+        tuberia.start=nstart.numero
+        tuberia.end = nend.numero
+        tuberia.save()
+
+        messages.add_message(request, messages.SUCCESS, 'Tuberia actualizada con exito')
+        return redirect('proyecto_administrar', id_proyecto, active_tab)
+
 def borrarTuberia(request, pk):
     Tuberia.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -296,7 +345,7 @@ def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
                 Xi = Xi_1
     return f
 
-def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af):
+def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af):
         V = np.round(V, 4)
         A = np.round(A, 4)
         Qx = np.round(Qx, 4)
@@ -315,7 +364,8 @@ def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af):
                 'Lx': Lx[i], 
                 'Dx': Dx[i],
                 'A': A[i], 
-                'V': V[i], 
+                'V': V[i],
+                'Re': Re[i],  
                 'f': f[i], 
                 'hf': hf[i], 
                 'Km': Km[i], 
@@ -373,7 +423,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     Dx = np.array(array_diametro)
     A = (np.pi*np.power(Dx,2))/4
     V = Qx/A
-    Ks   = np.zeros(ntuberias) + 0.00006
+    Ks   = np.zeros(ntuberias) + proyecto.material.ks
     Re   = np.zeros(ntuberias) + V*Dx/proyecto.fluido.valor_viscocidad
     Re = np.round(Re, 0)
     f = []
@@ -389,7 +439,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
     af   = np.zeros(ntuberias) + (a * Qx)
 
-    table = TableFormatter(ntuberias,data['tuberias'], Qx, Lx, Dx, A,V,f,hf,Km,hm,hfhm,a, af)
+    table = TableFormatter(ntuberias,data['tuberias'], Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af)
     iteracionRow['tabla'] = table
     
     # 1.- Matriz de conectividad
@@ -501,7 +551,6 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         Qstep9 = np.squeeze(np.asarray(Qstep9))
         return calculosGradiente(iteracion, pk, Qstep9, step10, response)
 
-
 class GradienteView(generic.View):
     template_name = "sections/calculos/gradiente.html"
 
@@ -519,12 +568,11 @@ class GradienteView(generic.View):
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
 
-from django.http import HttpResponse
-from io import BytesIO
-
+from slugify import slugify
 def GradienteToPDFView(request, pk):
     data = getProjectData(pk)
     ntuberias = len(data['tuberias'])
+    
     qx = 0
     for nodo in data['nodos']:
         qx = qx + nodo['demanda']
@@ -533,7 +581,7 @@ def GradienteToPDFView(request, pk):
     calculos = calculosGradiente(1, pk, Qx, [], [])
 
     pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
     Story = []
 
     ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 14, fontName="Times-Roman")
@@ -546,16 +594,17 @@ def GradienteToPDFView(request, pk):
     Story.append(Spacer(1,0.5*inch))
 
     titles = [
-        Paragraph('Tuberia', ps_tabla),
-        Paragraph('Qx', ps_tabla),
-        Paragraph('Lx', ps_tabla),
-        Paragraph('Dx', ps_tabla),
-        Paragraph('A', ps_tabla),
-        Paragraph('V', ps_tabla),
-        Paragraph('f', ps_tabla),
-        Paragraph('hf+hm', ps_tabla),
-        Paragraph('a', ps_tabla),
-        Paragraph('af', ps_tabla)
+        Paragraph('<b>Tuberia</b>', ps_tabla),
+        Paragraph('<b>Caudal</b>', ps_tabla),
+        Paragraph('<b>Longitud</b>', ps_tabla),
+        Paragraph('<b>Diametro</b>', ps_tabla),
+        Paragraph('<b>Area</b>', ps_tabla),
+        Paragraph('<b>Velocidad</b>', ps_tabla),
+        Paragraph('<b>Re</b>', ps_tabla),
+        Paragraph('<b>f</b>', ps_tabla),
+        Paragraph('<b>hf+hm</b>', ps_tabla),
+        Paragraph('<b>a</b>', ps_tabla),
+        Paragraph('<b>af</b>', ps_tabla)
     ]
     
     for iteracion in calculos:
@@ -572,16 +621,24 @@ def GradienteToPDFView(request, pk):
             Dx = i['Dx']
             A = i['A']
             V = i['V']
+            Re = i['Re']
             f = i['f']
             hfhm = i['hfhm']
             a = i['a']
             af = i['af']
-            row = [ tuberia, Qx, Lx, Dx, A, V, f, hfhm, a, af ]
+            row = [ tuberia, Qx, Lx, Dx, A, V,Re, f, hfhm, a, af ]
             table_formatted.append(row)
 
-        t=Table(table_formatted, (40,40,40,40,40,40,40,70,70,70))
+
+        t=Table(table_formatted, (60,40,60,60,60,60,50,40,100,100,100))
+        for each in range(len(iteracion['tabla'])):
+            if each % 2 == 0:
+                bg_color = colors.white
+            else:
+                bg_color = '#c9c9c9'
+            t.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
         t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(9,0),colors.lightgrey),
+            ('BACKGROUND',(0,0),(9,0),'#878787'),
             ('INNERGRID',(0,0),(9,0), 0.25, colors.gray),
             ('BOX',(0,0),(9,0), 0.25, colors.gray)
         ]))
@@ -645,11 +702,12 @@ def GradienteToPDFView(request, pk):
         table_formatted = [titles]
         Story.append(Spacer(1,0.2*inch))
 
+    proyecto = Proyecto.objects.get(pk=pk)
 
     doc.build(Story)
     pdf_value = pdf_buffer.getvalue()
     pdf_buffer.close()
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="reportgradient.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="{}.pdf"'.format(slugify(proyecto.nombre))
     response.write(pdf_value)
     return response

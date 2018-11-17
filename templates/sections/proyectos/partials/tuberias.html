@@ -113,12 +113,13 @@
         <td style="width: 150px; text-Align:center">
           <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-sm btn-primary"
             data-toggle="modal"
-            data-target="#myModal"
+            data-target="#myModal{{ tuberia.numero }}"
           >
             <i class="fa fa-edit"></i>
           </button>
+
           <a
             href="#"
             onclick="borrarTuberia({{tuberia.id}})"
@@ -136,18 +137,20 @@
 </div>
 <!-- Button to Open the Modal -->
 
+{% if tuberias %} {% for tuberia in tuberias %}
 <!-- The Modal -->
-<div class="modal" id="myModal">
-  <div class="modal-dialog">
+<div class="modal" id="myModal{{ tuberia.numero }}">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <!-- Modal Header -->
-      <div class="modal-header"><h4 class="modal-title">Modal Heading</h4></div>
+      <div class="modal-header">
+        <h4 class="modal-title">{{ tuberia.numero }}</h4>
+      </div>
 
       <!-- Modal body -->
       <div class="modal-body">
-        <form method="post">
+        <form action="{% url 'tuberia_editar' tuberia.id %}" method="post">
           {%csrf_token%}
-          <input type="hidden" value="tuberia" id="tipo" name="tipo" />
           <input
             type="hidden"
             value="{{proyecto.id}}"
@@ -157,7 +160,7 @@
           <div class="row">
             <div class="form-group col-md-3">
               <input
-                value="T{{torden}}"
+                value="{{ tuberia.numero }}"
                 type="text"
                 maxlength="4"
                 placeholder="Nombre de la tuberia"
@@ -169,6 +172,7 @@
             </div>
             <div class="form-group col-md-3">
               <input
+                value="{{ tuberia.longitud }}"
                 type="number"
                 step="any"
                 placeholder="Longitud"
@@ -180,6 +184,7 @@
             </div>
             <div class="form-group col-md-3">
               <input
+                value="{{ tuberia.km }}"
                 type="number"
                 step="any"
                 placeholder="Km"
@@ -191,6 +196,7 @@
             </div>
             <div class="form-group col-md-3">
               <input
+                value="{{ tuberia.diametro }}"
                 type="number"
                 step="any"
                 placeholder="Diametro"
@@ -204,7 +210,7 @@
           <div class="row">
             <div class="form-group col-md-3">
               <input
-                value="{{torden}}"
+                value="{{tuberia.orden}}"
                 type="number"
                 placeholder="Orden"
                 class="form-control"
@@ -213,24 +219,23 @@
                 required
               />
             </div>
+
             <div class="form-group col-md-3">
-              <select class="form-control" id="start" name="start">
-                <option value="0">Nodo inicial</option>
+              <select class="form-control" id="mstart" name="mstart">
                 {% if opciones_tuberia %} {% for n in opciones_tuberia %}
-                <option value="{{n.pktype}}">{{ n.numero }}</option>
+                <option {%if n.numero == tuberia.start %}selected{%endif%}  value="{{n.pktype}}">{{ n.numero }}</option>
                 {% endfor %} {% endif %}
               </select>
             </div>
             <div class="form-group col-md-3">
-              <select class="form-control" id="end" name="end">
-                <option value="0">Nodo final</option>
+              <select class="form-control" id="mend" name="mend">
                 {% if opciones_tuberia %} {% for n in opciones_tuberia %}
-                <option value="{{n.pktype}}">{{ n.numero }}</option>
+                <option {%if n.numero == tuberia.end %}selected{%endif%}  value="{{n.pktype}}">{{ n.numero }}</option>
                 {% endfor %} {% endif %}
               </select>
             </div>
             <div class="col-md-3">
-              <button type="submit" class="btn btn-primary ">Agregar</button>
+              <button type="submit" class="btn btn-primary ">Guardar</button>
             </div>
           </div>
           <br />
@@ -246,6 +251,8 @@
     </div>
   </div>
 </div>
+{% endfor %} {% endif %}
+
 <script type="text/javascript" language="javascript" class="init">
   //$(document).ready(function() {
   //    $('#TuberiaTable').dataTable( );
