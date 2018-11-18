@@ -433,7 +433,6 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     hf   = np.zeros(ntuberias) + f*(Lx/Dx)*(np.power(V,2)/(2*9.81))
     Km = np.array(array_km)
 
-    #Km   = np.zeros(ntuberias).astype(int) + [0,10,0,0,0,0,0]
     hm   = np.zeros(ntuberias) + Km * (np.power(V,2)/(2*9.81))
     hfhm = np.zeros(ntuberias) + (hf + hm)
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
@@ -459,10 +458,13 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         A12.append(a)
     
     A12 = np.matrix(A12)
-    
+    print("\n\n------------------Iteracion {}--------------------".format(iteracion))
+    print("Matriz A12")
+    print(A12)
     # Matrix traspuesta de A12
     A21 = A12.transpose()
-
+    print("\nMatriz A21 Matriz traspuesta de A12")
+    print(A21)
     # Matrix topologica
     # A10 = np.zeros((ntuberias, nreservorios)).astype(int)
     A10 = []
@@ -473,12 +475,15 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
                 a[i] = -1
         A10.append(a)
     A10 = np.matrix(A10)
-    
+    print("\nMatriz topologica A10")
+    print(A10)
     # Matriz diagonal 
     A11 = np.zeros((ntuberias, ntuberias))
     for i in range(0, len(af)):
         A11[i][i] = af[i]
     
+    print("\nMatriz diagonal A11")
+    print(np.round(A11,4))
     # Arreglo alturas de reservorios
     H0 = []
     for reservorio in data['reservorios']:
@@ -493,7 +498,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     
     q = np.array(q)
     q = np.reshape(q, (nnodos,1))
-
+    print("\nArreglo caudal de salida q")
+    print(q)
     # Matriz diagonal del 2 y matriz identidad
     N = np.zeros((ntuberias, ntuberias)).astype(int)
     I = np.zeros((ntuberias, ntuberias)).astype(int)
@@ -501,15 +507,36 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         N[i][i] = 2
         I[i][i] = 1
     
+    print("\nMatriz diagonal del 2 y matriz identidad")
+    print(N)
+    print(I)
     # Calculamos las H
     step1 = inv(N*A11)
+    print("\n([N][A11])^-1")
+    print(np.round(step1,4))
+
     step2 = A21*step1
+    print("\n[A21]([N][A11])^-1")
+    print(np.round(step2,4))
+
     step3 = step2*A12
+    print("\n([A21]([N][A11])^-1)*([A12]")
+    print(np.round(step3,4))
+
     step4 = inv(step3) * -1
+    print("\n-(([A21]([N][A11])^-1)*([A12])^-1")
+    print(np.round(step4,4))
+
     Qx = np.reshape(Qx, ntuberias)
     step5 = Qx.dot(A11) + A10.dot(H0)
     step5 = np.reshape(step5, (ntuberias,1))
+    print("\n[A11][Q]+[A10][H0]")
+    print(np.round(step5,4))
+
     step6 = step2.dot(step5)
+    print("\n[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
+    print(np.round(step6,4))
+
     Qx = np.reshape(Qx, (ntuberias,1))
     step7 = A21.dot(Qx)
     step8 = step7 - q 
@@ -517,8 +544,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     step10 = step4.dot(step9)
     
     iteracionRow['H'] = np.squeeze(np.asarray(np.round(step10,4))).tolist()
-    #print("todas las H")
-    #print(step10)
+    print("\ntodas las H")
+    print(np.round(step10,4))
 
     # Calculamos las Q
     Qstep1 = inv(N*A11)
@@ -568,7 +595,6 @@ class GradienteView(generic.View):
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
 
-from slugify import slugify
 def GradienteToPDFView(request, pk):
     data = getProjectData(pk)
     ntuberias = len(data['tuberias'])
@@ -708,6 +734,6 @@ def GradienteToPDFView(request, pk):
     pdf_value = pdf_buffer.getvalue()
     pdf_buffer.close()
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="{}.pdf"'.format(slugify(proyecto.nombre))
+    response['Content-Disposition'] = 'attachment; filename="gradientmethod.pdf"'
     response.write(pdf_value)
     return response
