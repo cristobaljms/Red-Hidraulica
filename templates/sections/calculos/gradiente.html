@@ -77,7 +77,7 @@
       var data = "{{data}}"
       {%for iteracion in data %}
           var table = $('<table class="table table-bordered"></table>');
-          var theader = $('<thead><tr><th>Tuberia</th><th>Qx</th><th>Lx</th><th>Dx</th><th>A</th><th>V</th><th>f</th><th>hf</th><th>Km</th><th>hm</th><th>hf+hm</th><th>a</th><th>af</th></tr></thead>');
+          var theader = $('<thead><tr><th>Tuberia</th><th>Qx</th><th>Lx</th><th>Dx</th><th>A</th><th>V</th><th>f</th><th>hf</th><th>a</th><th>a*Qx</th></tr></thead>');
           var tbody = $('<tbody></tbody>');
           table.append(theader);
         {% for row in iteracion.tabla %}
@@ -89,12 +89,9 @@
           var V = "{{row.V}}";
           var f = "{{row.f}}";
           var hf = "{{row.hf}}";
-          var Km = "{{row.Km}}";
-          var hm = "{{row.hm}}";
-          var hfhm = "{{row.hfhm}}";
           var a = "{{row.a}}";
           var af = "{{row.af}}";
-          var row = $('<tr><td>'+tuberia+'</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+Km+'</td><td>'+hm+'</td><td>'+hfhm+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
+          var row = $('<tr><td>'+tuberia+'</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
           tbody.append(row)
         {% endfor %}
         table.append(tbody);

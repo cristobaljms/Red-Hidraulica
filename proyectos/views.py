@@ -30,7 +30,7 @@ class ProyectoAdminView(generic.CreateView):
 
     def get(self, request, *args, **kwargs):
         proyecto = Proyecto.objects.get(pk=kwargs['pk'])
-        nodos = Nodo.objects.filter(proyecto=proyecto)
+        nodos = Nodo.objects.filter(proyecto=proyecto).order_by('orden')
         tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('orden')
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
 
@@ -49,14 +49,14 @@ class ProyectoAdminView(generic.CreateView):
             fields['pktype'] = 'n'+str(sn['pk'])
             rarray.append(fields)
 
-        torden = 1
-        for t in tuberias:
-            torden = t.orden
-
+        torden = len(tuberias)
+        norden = len(nodos)
+        
         context = {
             'proyecto': proyecto,
             'nodos':nodos,
             'tuberias':tuberias,
+            'norden': norden + 1,
             'torden': torden + 1,
             'reservorios': reservorios,
             'opciones_tuberia': rarray,
@@ -74,10 +74,11 @@ class ProyectoAdminView(generic.CreateView):
             numero = request.POST.get('numero')
             demanda = request.POST.get('demanda')
             cota = request.POST.get('cota')
+            orden = request.POST.get('orden')
             x_position = request.POST.get('x_position')
             y_position = request.POST.get('y_position')
             proyecto = Proyecto.objects.get(pk=id_proyecto)
-            nodo = Nodo(proyecto=proyecto, numero=numero, cota=cota, demanda=demanda, x_position=x_position, y_position=y_position)
+            nodo = Nodo(proyecto=proyecto, numero=numero, cota=cota, demanda=demanda, orden=orden, x_position=x_position, y_position=y_position)
             nodo.save()
             messages.add_message(request, messages.SUCCESS, 'Nodo creado con exito')
             return redirect('proyecto_administrar', id_proyecto, active_tab)
@@ -285,6 +286,30 @@ class TuberiaUpdateView(generic.View):
         messages.add_message(request, messages.SUCCESS, 'Tuberia actualizada con exito')
         return redirect('proyecto_administrar', id_proyecto, active_tab)
 
+class NodoUpdateView(generic.View):
+
+    def post(self, request, *args, **kwargs):
+        active_tab = 'n'
+        numero = request.POST.get('numero')
+        demanda = request.POST.get('demanda')
+        cota = request.POST.get('cota')
+        orden = request.POST.get('orden')
+        x_position = request.POST.get('x_position')
+        y_position = request.POST.get('y_position')
+        id_proyecto = request.POST.get('id_proyecto')
+
+        nodo = Nodo.objects.get(pk=kwargs['pk'])
+        nodo.numero=numero
+        nodo.cota=cota
+        nodo.demanda=demanda
+        nodo.orden=orden
+        nodo.x_position=x_position
+        nodo.y_position=y_position
+        nodo.save()
+
+        messages.add_message(request, messages.SUCCESS, 'Nodo actualizado con exito')
+        return redirect('proyecto_administrar', id_proyecto, active_tab)
+
 def borrarTuberia(request, pk):
     Tuberia.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -299,7 +324,7 @@ def borrarReservorio(request, pk):
 
 def getProjectData(pk):
     tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk).order_by('orden')))
-    nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk)))
+    nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk).order_by('orden')))
     reservorios = json.loads(serialize("json", Reservorio.objects.filter(proyecto=pk)))
     
     tarray = []
@@ -397,7 +422,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
     iteracionRow = { "iteracion": iteracion }
-
+    print(data['tuberias'])
     ntuberias = len(data['tuberias'])
     nnodos = len(data['nodos'])
     nreservorios = len(data['reservorios'])
@@ -455,6 +480,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
                 a[i] = 1
         if (aux_qx[i] < 0):
             a = a * -1
+        print(tuberia['numero'])
+        print(a)
         A12.append(a)
     
     A12 = np.matrix(A12)
@@ -463,8 +490,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     print(A12)
     # Matrix traspuesta de A12
     A21 = A12.transpose()
-    print("\nMatriz A21 Matriz traspuesta de A12")
-    print(A21)
+    #print("\nMatriz A21 Matriz traspuesta de A12")
+    #print(A21)
     # Matrix topologica
     # A10 = np.zeros((ntuberias, nreservorios)).astype(int)
     A10 = []
@@ -475,15 +502,15 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
                 a[i] = -1
         A10.append(a)
     A10 = np.matrix(A10)
-    print("\nMatriz topologica A10")
-    print(A10)
+    #print("\nMatriz topologica A10")
+    #print(A10)
     # Matriz diagonal 
     A11 = np.zeros((ntuberias, ntuberias))
     for i in range(0, len(af)):
         A11[i][i] = af[i]
     
-    print("\nMatriz diagonal A11")
-    print(np.round(A11,4))
+    #print("\nMatriz diagonal A11")
+    #print(np.round(A11,4))
     # Arreglo alturas de reservorios
     H0 = []
     for reservorio in data['reservorios']:
@@ -498,8 +525,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     
     q = np.array(q)
     q = np.reshape(q, (nnodos,1))
-    print("\nArreglo caudal de salida q")
-    print(q)
+    #print("\nArreglo caudal de salida q")
+    #print(q)
     # Matriz diagonal del 2 y matriz identidad
     N = np.zeros((ntuberias, ntuberias)).astype(int)
     I = np.zeros((ntuberias, ntuberias)).astype(int)
@@ -507,35 +534,35 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         N[i][i] = 2
         I[i][i] = 1
     
-    print("\nMatriz diagonal del 2 y matriz identidad")
-    print(N)
-    print(I)
+    #print("\nMatriz diagonal del 2 y matriz identidad")
+    #print(N)
+    #print(I)
     # Calculamos las H
     step1 = inv(N*A11)
-    print("\n([N][A11])^-1")
-    print(np.round(step1,4))
+    #print("\n([N][A11])^-1")
+    #print(np.round(step1,4))
 
     step2 = A21*step1
-    print("\n[A21]([N][A11])^-1")
-    print(np.round(step2,4))
+    #print("\n[A21]([N][A11])^-1")
+    #print(np.round(step2,4))
 
     step3 = step2*A12
-    print("\n([A21]([N][A11])^-1)*([A12]")
-    print(np.round(step3,4))
+    #print("\n([A21]([N][A11])^-1)*([A12]")
+    #print(np.round(step3,4))
 
     step4 = inv(step3) * -1
-    print("\n-(([A21]([N][A11])^-1)*([A12])^-1")
-    print(np.round(step4,4))
+    #print("\n-(([A21]([N][A11])^-1)*([A12])^-1")
+    #print(np.round(step4,4))
 
     Qx = np.reshape(Qx, ntuberias)
     step5 = Qx.dot(A11) + A10.dot(H0)
     step5 = np.reshape(step5, (ntuberias,1))
-    print("\n[A11][Q]+[A10][H0]")
-    print(np.round(step5,4))
+    #print("\n[A11][Q]+[A10][H0]")
+    #print(np.round(step5,4))
 
     step6 = step2.dot(step5)
-    print("\n[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
-    print(np.round(step6,4))
+    #print("\n[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
+    #print(np.round(step6,4))
 
     Qx = np.reshape(Qx, (ntuberias,1))
     step7 = A21.dot(Qx)
@@ -544,8 +571,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     step10 = step4.dot(step9)
     
     iteracionRow['H'] = np.squeeze(np.asarray(np.round(step10,4))).tolist()
-    print("\ntodas las H")
-    print(np.round(step10,4))
+    #print("\ntodas las H")
+    #print(np.round(step10,4))
 
     # Calculamos las Q
     Qstep1 = inv(N*A11)

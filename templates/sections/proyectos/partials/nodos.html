@@ -10,6 +10,7 @@
   <div class="row">
     <div class="form-group col-md-4">
       <input
+        value="N{{norden}}"
         type="text"
         maxlength="4"
         placeholder="Nombre del nodo"
@@ -43,7 +44,18 @@
     </div>
   </div>
   <div class="row">
-    <div class="form-group col-md-4">
+      <div class="form-group col-md-3">
+          <input
+            value="{{norden}}"
+            type="number"
+            placeholder="Orden"
+            class="form-control"
+            id="orden"
+            name="orden"
+            required
+          />
+        </div>
+    <div class="form-group col-md-3">
       <input
         type="number"
         placeholder="Posicion Y"
@@ -53,7 +65,7 @@
         required
       />
     </div>
-    <div class="form-group col-md-4">
+    <div class="form-group col-md-3">
       <input
         type="number"
         placeholder="Posicion X"
@@ -63,17 +75,18 @@
         required
       />
     </div>
-    <div class="form-group col-md-4">
+    <div class="form-group col-md-3">
       <button type="submit" class="btn btn-primary ">Agregar</button>
     </div>
   </div>
 </form>
-<br />
+
 <div class="table-responsive ">
   <table id="NodeTable" class="table table-bordered">
     <thead>
       <tr>
-        <th style="padding: 10px 10px;">Numero</th>
+        <th style="width: 50px; text-Align:center; padding: 10px 10px;">Posicion</th>
+        <th style="width: 50px; text-Align:center; padding: 10px 10px;">Etiqueta</th>
         <th style="padding: 10px 10px;">Demanda</th>
         <th style="padding: 10px 10px;">Cota</th>
         <th style="padding: 10px 10px;">Y pos</th>
@@ -84,12 +97,21 @@
     <tbody>
       {% if nodos %} {% for nodo in nodos %}
       <tr>
-        <td>{{ nodo.numero }}</td>
+        <td style="width: 50px; text-Align:center;">{{ nodo.orden }}</td>
+        <td style="width: 50px; text-Align:center;">{{ nodo.numero }}</td>
         <td class="text-dark">{{ nodo.demanda }}</td>
         <td>{{ nodo.cota }}</td>
         <td>{{ nodo.y_position }}</td>
         <td>{{ nodo.x_position }}</td>
         <td style="width: 150px; text-Align:center">
+            <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            data-toggle="modal"
+            data-target="#myModal{{ nodo.numero }}"
+          >
+            <i class="fa fa-edit"></i>
+          </button>
           <a
             href="#"
             onclick="borrarNodo({{nodo.id}})"
@@ -105,6 +127,115 @@
     </tbody>
   </table>
 </div>
+
+{% if nodos %} {% for nodo in nodos %}
+<div class="modal" id="myModal{{ nodo.numero }}">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">{{ nodo.numero }}</h4>
+        </div>
+  
+        <!-- Modal body -->
+        <div class="modal-body">
+          <form action="{%url 'nodo_editar' nodo.id %}" method="post">
+            {%csrf_token%}
+            <input
+              type="hidden"
+              value="{{proyecto.id}}"
+              id="id_proyecto"
+              name="id_proyecto"
+            />
+            <div class="row">
+              <div class="form-group col-md-4">
+                <input
+                  value="{{ nodo.numero }}"
+                  type="text"
+                  maxlength="4"
+                  placeholder="Nombre del nodo"
+                  class="form-control"
+                  id="numero"
+                  name="numero"
+                  required
+                />
+              </div>
+              <div class="form-group col-md-4">
+                <input
+                value="{{ nodo.demanda }}"
+                  type="number"
+                  step="any"
+                  placeholder="Demanda"
+                  class="form-control"
+                  id="demanda"
+                  name="demanda"
+                  required
+                />
+              </div>
+              <div class="form-group col-md-4">
+                <input
+                value="{{ nodo.cota }}"
+                  type="number"
+                  step="any"
+                  placeholder="Cota"
+                  class="form-control"
+                  id="cota"
+                  name="cota"
+                  required
+                />
+              </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-3">
+                    <input
+                    value="{{ nodo.orden }}"
+                      type="number"
+                      placeholder="Orden"
+                      class="form-control"
+                      id="orden"
+                      name="orden"
+                      required
+                    />
+                  </div>
+              <div class="form-group col-md-3">
+                <input
+                value="{{ nodo.y_position }}"
+                  type="number"
+                  placeholder="Posicion Y"
+                  class="form-control"
+                  id="y_position"
+                  name="y_position"
+                  required
+                />
+              </div>
+              <div class="form-group col-md-3">
+                <input
+                value="{{ nodo.x_position }}"
+                  type="number"
+                  placeholder="Posicion X"
+                  class="form-control"
+                  id="x_position"
+                  name="x_position"
+                  required
+                />
+              </div>
+              <div class="form-group col-md-3">
+                <button type="submit" class="btn btn-primary ">Guardar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+  
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+      {% endfor %} {% endif %}
 
 <script type="text/javascript" language="javascript" class="init">
   //$(document).ready(function() {

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import  login
-from proyectos.views import TuberiaUpdateView, GradienteToPDFView, GradienteView, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
+from proyectos.views import NodoUpdateView, TuberiaUpdateView, GradienteToPDFView, GradienteView, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
 from materiales.views import MaterialesListView, MaterialesCreateView, MaterialesUpdateView, MaterialesDeleteView
 from fluidos.views import FluidosListView, FluidosCreateView, FluidosUpdateView, FluidosDeleteView
 from django.contrib.auth.decorators import login_required
@@ -19,6 +19,7 @@ urlpatterns = [
     path('tuberia/actualizar/<int:pk>/', login_required(TuberiaUpdateView.as_view(), login_url='/login/'), name='tuberia_editar'),
     path('reservorio/eliminar/<int:pk>/', login_required(borrarReservorio, login_url='/login/'), name='nodo_eliminar'),
     path('nodo/eliminar/<int:pk>/', login_required(borrarNodo, login_url='/login/'), name='nodo_eliminar'),
+    path('nodo/actualizar/<int:pk>/', login_required(NodoUpdateView.as_view(), login_url='/login/'), name='nodo_editar'),
     path('calculos/gradiente/<int:pk>/', login_required(GradienteView.as_view(), login_url='/login/'), name='calculo_gradiente'),
     path('reporte/pdf/gradiente/<int:pk>/', login_required(GradienteToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
     path('materiales/', login_required(MaterialesListView.as_view(), login_url='/login/'), name='materiales'),

@@ -16,6 +16,7 @@ class Nodo(models.Model):
     numero = models.CharField(max_length=4, default='')
     demanda = models.FloatField()
     cota = models.FloatField()
+    orden = models.IntegerField(default=1)
     x_position = models.IntegerField(default=0)
     y_position = models.IntegerField(default=0)
 
