@@ -516,19 +516,11 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         A12.append(a)
     
     A12 = np.matrix(A12)
-    #print("\n\n------------------Iteracion {}--------------------".format(iteracion))
-    #print("Matriz A12")
-    #print(A12)
-
 
     # Matriz traspuesta de A12
     A21 = A12.transpose()
-    #print("\nMatriz A21 Matriz traspuesta de A12")
-    #print(A21)
-
 
     # MATRIZ TOPOLOGICA A10
-    # A10 = np.zeros((ntuberias, nreservorios)).astype(int)
     A10 = []
     for tuberia in data['tuberias']:
         a = np.zeros(nreservorios).astype(int)
@@ -537,17 +529,11 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
                 a[i] = -1
         A10.append(a)
     A10 = np.matrix(A10)
-    #print("\nMatriz topologica A10")
-    #print(A10)
-
 
     # MATRIZ DIAGONAL A11 
     A11 = np.zeros((ntuberias, ntuberias))
     for i in range(0, len(af)):
         A11[i][i] = af[i]
-    #print("\nMatriz diagonal A11")
-    #print(np.round(A11,4))
-    
     
     # Arreglo alturas de reservorios
     H0 = []
@@ -556,7 +542,6 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     
     H0 = np.array(H0)
 
-    
     # Arreglo caudal de salida
     q = []
     for nodo in data['nodos']:
@@ -564,9 +549,6 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     
     q = np.array(q)
     q = np.reshape(q, (nnodos,1))
-    #print("\nArreglo caudal de salida q")
-    #print(q)
-   
    
     # Matriz diagonal del 2 y matriz identidad
     N = np.zeros((ntuberias, ntuberias)).astype(int)
@@ -575,55 +557,47 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         N[i][i] = 2
         I[i][i] = 1
     
-    #print("\nMatriz diagonal del 2 y matriz identidad")
-    #print(N)
-    #print(I)
-    
-    
-    
-    # CALCULAMOS LAS H
+   
+    ##### CALCULAMOS LAS H #####
 
     # ([N][A11])^-1
     step1 = inv(N*A11)
-    #print("\n([N][A11])^-1")
-    #print(np.round(step1,4))
+
     # [A21]([N][A11])^-1
     step2 = A21*step1
-    #print("\n[A21]([N][A11])^-1")
-    #print(np.round(step2,4))
-    # ([A21]([N][A11])^-1)*([A12]
+
+    # ([A21]([N][A11])^-1)*([A12])
     step3 = step2*A12
-    #print("\n([A21]([N][A11])^-1)*([A12]")
-    #print(np.round(step3,4))
+
     # -(([A21]([N][A11])^-1)*([A12])^-1
     step4 = inv(step3) * -1
-    #print("\n-(([A21]([N][A11])^-1)*([A12])^-1")
-    #print(np.round(step4,4))
 
     Qx = np.reshape(Qx, ntuberias)
 
     # [A11][Q]+[A10][H0]
     step5 = Qx.dot(A11) + A10.dot(H0)
     step5 = np.reshape(step5, (ntuberias,1))
-    #print("\n[A11][Q]+[A10][H0]")
-    #print(np.round(step5,4))
 
     # [A21]([N][A11])^-1*([A11][Q]+[A10][H0])
     step6 = step2.dot(step5)
-    #print("\n[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
-    #print(np.round(step6,4))
 
     Qx = np.reshape(Qx, (ntuberias,1))
+
+    # A21*Qx
     step7 = A21.dot(Qx)
+
+    # A21*Qx-q
     step8 = step7 - q 
     step9 = step6 - step8
+
+    # step10 son las H ya calculadas
     step10 = step4.dot(step9)
     
+    # Las guardamos para enviarlas luego a los reportes
     iteracionRow['H'] = np.squeeze(np.asarray(np.round(step10,4))).tolist()
-    #print("\ntodas las H")
-    #print(np.round(step10,4))
 
-    # Calculamos las Q
+    #### CALCULAMOS LAS Q ####
+
     Qstep1 = inv(N*A11)
     Qstep2 = Qstep1*A11
     Qstep3 = I - Qstep2
@@ -633,23 +607,35 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     Qstep6 = A12 * step10
     Qstep7 = Qstep6 + Qstep5
     Qstep8 = Qstep1.dot(Qstep7)
+
+    # En Qstep9 se encuentra el rsultado de todas las Qx
     Qstep9 = Qstep4 - Qstep8
     
+    # Guardamos Qx para enviarlo luego a los reportes y vistas
     iteracionRow['Qx'] = np.squeeze(np.asarray(np.round(Qstep9, 4))).tolist()
-    #print("todas las Q")
-    #print(Qstep9)
-    
+   
+    # Culminamos la iteracion y subimos este valor en 1
     iteracion = iteracion + 1
+
+    # Si H esta vacia entonces es la primera iteracion y no calculamos el error
     if(len(H) > 0):
+        # Calculamos el error
         error = np.absolute(H-step10)
+
+        # Lo almacenamos y lo aadimos a la respuesta
         iteracionRow['error'] = np.squeeze(np.asarray(np.round(error,4))).tolist()
         response.append(iteracionRow)
+
+        # Validamos el error, si deuvelve True entonces llamamos recursivamente esta funcion
+        # Con los nuevos parametros
         if (validateError(error)):
             Qstep9 = np.squeeze(np.asarray(Qstep9))
             return calculosGradiente(iteracion, pk, Qstep9, step10, response)
         else:
+            # Sino retornamos y finaliza el calculo
             return response
     else:
+        # Esto solo ocurrira en la primera iteracion, donde no hay que calcular el error
         response.append(iteracionRow)
         Qstep9 = np.squeeze(np.asarray(Qstep9))
         return calculosGradiente(iteracion, pk, Qstep9, step10, response)
