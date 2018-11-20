@@ -422,51 +422,84 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
     iteracionRow = { "iteracion": iteracion }
-    print(data['tuberias'])
+
     ntuberias = len(data['tuberias'])
     nnodos = len(data['nodos'])
     nreservorios = len(data['reservorios'])
     
+    # Creacion del arreglo de longitud
     array_longitud = []
     for t in data['tuberias']:
         array_longitud.append(t['longitud'])
+    Lx = np.array(array_longitud)
     
+
+    # Creacion del arreglo de diametro
     array_diametro = []
     for t in data['tuberias']:
         array_diametro.append(t['diametro'])
+    Dx = np.array(array_diametro)
     
+
+    # Creacion del arreglo de km
     array_km = []
     for t in data['tuberias']:
         array_km.append(t['km'])
+    Km = np.array(array_km)
 
+
+    # Guardamos Qx en una variable auxiliar para luego saber que fila de A12
+    # debe ser multiplicada por -1 en caso de que una fila de Qx sea negativa
     aux_qx = Qx
+
+
+    # Convertimos a Qx en positivo
     for i in range(0,ntuberias):
         if (Qx[i] < 0):
             Qx[i] = Qx[i] * -1
 
-    Lx = np.array(array_longitud)
-    Dx = np.array(array_diametro)
+    
+    # Calculamos el Area
     A = (np.pi*np.power(Dx,2))/4
+
+    # Calculamos la Velocidad
     V = Qx/A
+
+    # Armamos el arrego de Ks 
     Ks   = np.zeros(ntuberias) + proyecto.material.ks
+
+    # Calculamos Re
     Re   = np.zeros(ntuberias) + V*Dx/proyecto.fluido.valor_viscocidad
     Re = np.round(Re, 0)
+
+    # Calculamos el coheficiente de friccion
     f = []
     for i in range(0,ntuberias):
         f.append(f_calculo(Re[i],Ks[i]/Dx[i]))
 
+    # Calculamos hf
     hf   = np.zeros(ntuberias) + f*(Lx/Dx)*(np.power(V,2)/(2*9.81))
-    Km = np.array(array_km)
 
+    # Calculamos hm
     hm   = np.zeros(ntuberias) + Km * (np.power(V,2)/(2*9.81))
+
+    # Calculamos la suma de hf y hm
     hfhm = np.zeros(ntuberias) + (hf + hm)
+
+    # Calculamos alfa
     a    = np.zeros(ntuberias) + (hfhm / np.power(Qx, 2))
+
+    # Calculamos la multiplicacion de alfa por Qx
     af   = np.zeros(ntuberias) + (a * Qx)
 
+    # Creamos un json on todos estos datos para enviarlos luego a las Vistas y reportes
     table = TableFormatter(ntuberias,data['tuberias'], Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af)
     iteracionRow['tabla'] = table
     
-    # 1.- Matriz de conectividad
+    """
+    Ahora comenzamos a crear y calcular las matrices
+    """
+    # Matriz de conectividad
     A12 = []
 
     i = 0
@@ -480,19 +513,21 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
                 a[i] = 1
         if (aux_qx[i] < 0):
             a = a * -1
-        print(tuberia['numero'])
-        print(a)
         A12.append(a)
     
     A12 = np.matrix(A12)
     #print("\n\n------------------Iteracion {}--------------------".format(iteracion))
     #print("Matriz A12")
     #print(A12)
-    # Matrix traspuesta de A12
+
+
+    # Matriz traspuesta de A12
     A21 = A12.transpose()
     #print("\nMatriz A21 Matriz traspuesta de A12")
     #print(A21)
-    # Matrix topologica
+
+
+    # MATRIZ TOPOLOGICA A10
     # A10 = np.zeros((ntuberias, nreservorios)).astype(int)
     A10 = []
     for tuberia in data['tuberias']:
@@ -504,13 +539,16 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     A10 = np.matrix(A10)
     #print("\nMatriz topologica A10")
     #print(A10)
-    # Matriz diagonal 
+
+
+    # MATRIZ DIAGONAL A11 
     A11 = np.zeros((ntuberias, ntuberias))
     for i in range(0, len(af)):
         A11[i][i] = af[i]
-    
     #print("\nMatriz diagonal A11")
     #print(np.round(A11,4))
+    
+    
     # Arreglo alturas de reservorios
     H0 = []
     for reservorio in data['reservorios']:
@@ -518,6 +556,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     
     H0 = np.array(H0)
 
+    
     # Arreglo caudal de salida
     q = []
     for nodo in data['nodos']:
@@ -527,6 +566,8 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     q = np.reshape(q, (nnodos,1))
     #print("\nArreglo caudal de salida q")
     #print(q)
+   
+   
     # Matriz diagonal del 2 y matriz identidad
     N = np.zeros((ntuberias, ntuberias)).astype(int)
     I = np.zeros((ntuberias, ntuberias)).astype(int)
@@ -537,29 +578,37 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     #print("\nMatriz diagonal del 2 y matriz identidad")
     #print(N)
     #print(I)
-    # Calculamos las H
+    
+    
+    
+    # CALCULAMOS LAS H
+
+    # ([N][A11])^-1
     step1 = inv(N*A11)
     #print("\n([N][A11])^-1")
     #print(np.round(step1,4))
-
+    # [A21]([N][A11])^-1
     step2 = A21*step1
     #print("\n[A21]([N][A11])^-1")
     #print(np.round(step2,4))
-
+    # ([A21]([N][A11])^-1)*([A12]
     step3 = step2*A12
     #print("\n([A21]([N][A11])^-1)*([A12]")
     #print(np.round(step3,4))
-
+    # -(([A21]([N][A11])^-1)*([A12])^-1
     step4 = inv(step3) * -1
     #print("\n-(([A21]([N][A11])^-1)*([A12])^-1")
     #print(np.round(step4,4))
 
     Qx = np.reshape(Qx, ntuberias)
+
+    # [A11][Q]+[A10][H0]
     step5 = Qx.dot(A11) + A10.dot(H0)
     step5 = np.reshape(step5, (ntuberias,1))
     #print("\n[A11][Q]+[A10][H0]")
     #print(np.round(step5,4))
 
+    # [A21]([N][A11])^-1*([A11][Q]+[A10][H0])
     step6 = step2.dot(step5)
     #print("\n[A21]([N][A11])^-1*([A11][Q]+[A10][H0])")
     #print(np.round(step6,4))
