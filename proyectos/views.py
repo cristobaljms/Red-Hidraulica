@@ -485,9 +485,9 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         A12.append(a)
     
     A12 = np.matrix(A12)
-    print("\n\n------------------Iteracion {}--------------------".format(iteracion))
-    print("Matriz A12")
-    print(A12)
+    #print("\n\n------------------Iteracion {}--------------------".format(iteracion))
+    #print("Matriz A12")
+    #print(A12)
     # Matrix traspuesta de A12
     A21 = A12.transpose()
     #print("\nMatriz A21 Matriz traspuesta de A12")
@@ -655,9 +655,12 @@ def GradienteToPDFView(request, pk):
         Paragraph('<b>Velocidad</b>', ps_tabla),
         Paragraph('<b>Re</b>', ps_tabla),
         Paragraph('<b>f</b>', ps_tabla),
+        Paragraph('<b>hf</b>', ps_tabla),
+        Paragraph('<b>Km</b>', ps_tabla),
+        Paragraph('<b>hm</b>', ps_tabla),
         Paragraph('<b>hf+hm</b>', ps_tabla),
         Paragraph('<b>a</b>', ps_tabla),
-        Paragraph('<b>af</b>', ps_tabla)
+        Paragraph('<b>a*Qx</b>', ps_tabla)
     ]
     
     for iteracion in calculos:
@@ -676,24 +679,27 @@ def GradienteToPDFView(request, pk):
             V = i['V']
             Re = i['Re']
             f = i['f']
+            hf = i['hf']
+            Km = i['Km']
+            hm = i['hm']
             hfhm = i['hfhm']
             a = i['a']
             af = i['af']
-            row = [ tuberia, Qx, Lx, Dx, A, V,Re, f, hfhm, a, af ]
+            row = [ tuberia, Qx, Lx, Dx, A, V,Re, f, hf, Km, hm, hfhm, a, af ]
             table_formatted.append(row)
 
 
-        t=Table(table_formatted, (60,40,60,60,60,60,50,40,100,100,100))
-        for each in range(len(iteracion['tabla'])):
-            if each % 2 == 0:
-                bg_color = colors.white
-            else:
-                bg_color = '#c9c9c9'
-            t.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
+        t=Table(table_formatted, (60,40,60,60,60,60,50,40,40, 40, 40, 65,100,80))
+        # for each in range(len(iteracion['tabla'])):
+        #     if each % 2 == 0:
+        #         bg_color = colors.white
+        #     else:
+        #         bg_color = '#c9c9c9'
+        #     t.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
         t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(9,0),'#878787'),
-            ('INNERGRID',(0,0),(9,0), 0.25, colors.gray),
-            ('BOX',(0,0),(9,0), 0.25, colors.gray)
+            ('BACKGROUND',(0,0),(13,0),'#878787'),
+            ('INNERGRID',(0,0),(13,0), 0.25, colors.gray),
+            ('BOX',(0,0),(13,0), 0.25, colors.gray)
         ]))
 
         Story.append(t)
