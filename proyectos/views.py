@@ -13,7 +13,7 @@ from io import BytesIO
 from numpy import inf
 from numpy.linalg import inv
 from django.core.files.storage import FileSystemStorage
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, BaseDocTemplate, Frame
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus.tables import Table, TableStyle
 from reportlab.lib import colors
@@ -418,7 +418,8 @@ def validateError(Error):
                 flag = True
     return flag
 
-def calculosGradiente(iteracion, pk, Qx, H, response):
+def calculosGradiente(iteracion, pk, Qx, H, A12, response):
+    print("iteracion", iteracion)
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
     iteracionRow = { "iteracion": iteracion }
@@ -450,7 +451,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
 
     # Guardamos Qx en una variable auxiliar para luego saber que fila de A12
     # debe ser multiplicada por -1 en caso de que una fila de Qx sea negativa
-    aux_qx = Qx
+    aux_qx = np.zeros(ntuberias) + Qx
 
 
     # Convertimos a Qx en positivo
@@ -500,23 +501,26 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
     Ahora comenzamos a crear y calcular las matrices
     """
     # Matriz de conectividad
-    A12 = []
 
-    i = 0
-    for tuberia in data['tuberias']:
-        a = np.zeros(nnodos).astype(int)
-        for i in range(0, nnodos):
-            if(tuberia['start'] == data['nodos'][i]['numero']):
-                a[i] = -1
-        for i in range(0, nnodos):
-            if(tuberia['end'] == data['nodos'][i]['numero']):
-                a[i] = 1
-        if (aux_qx[i] < 0):
-            a = a * -1
-        A12.append(a)
-    
-    A12 = np.matrix(A12)
-
+    if (len(A12) == 0):
+        j = 0
+        for tuberia in data['tuberias']:
+            a = np.zeros(nnodos).astype(int)
+            for i in range(0, nnodos):
+                if(tuberia['start'] == data['nodos'][i]['numero']):
+                    a[i] = -1
+            for i in range(0, nnodos):
+                if(tuberia['end'] == data['nodos'][i]['numero']):
+                    a[i] = 1
+            if (aux_qx[j] < 0):
+                a = a * -1
+            j = j + 1
+            A12.append(a)
+        A12 = np.matrix(A12)
+    else:
+        for j in range(0, ntuberias):
+            if (aux_qx[j] < 0):
+                A12[j] = A12[j] * -1
     # Matriz traspuesta de A12
     A21 = A12.transpose()
 
@@ -630,7 +634,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         # Con los nuevos parametros
         if (validateError(error)):
             Qstep9 = np.squeeze(np.asarray(Qstep9))
-            return calculosGradiente(iteracion, pk, Qstep9, step10, response)
+            return calculosGradiente(iteracion, pk, Qstep9, step10, A12, response)
         else:
             # Sino retornamos y finaliza el calculo
             return response
@@ -638,7 +642,7 @@ def calculosGradiente(iteracion, pk, Qx, H, response):
         # Esto solo ocurrira en la primera iteracion, donde no hay que calcular el error
         response.append(iteracionRow)
         Qstep9 = np.squeeze(np.asarray(Qstep9))
-        return calculosGradiente(iteracion, pk, Qstep9, step10, response)
+        return calculosGradiente(iteracion, pk, Qstep9, step10, A12, response)
 
 class GradienteView(generic.View):
     template_name = "sections/calculos/gradiente.html"
@@ -650,8 +654,9 @@ class GradienteView(generic.View):
         for nodo in data['nodos']:
             qx = qx + nodo['demanda']
         Qx = np.zeros(ntuberias) + (qx/ntuberias)
+        
         context = {
-            'data': calculosGradiente(1, kwargs['pk'], Qx, [], []),
+            'data': calculosGradiente(1, kwargs['pk'], Qx, [], [], []),
             'project_pk': kwargs['pk']
         }
         #return JsonResponse(context, safe=False)
@@ -664,9 +669,10 @@ def GradienteToPDFView(request, pk):
     qx = 0
     for nodo in data['nodos']:
         qx = qx + nodo['demanda']
-    Qx = np.zeros(ntuberias) + (qx/ntuberias)
 
-    calculos = calculosGradiente(1, pk, Qx, [], [])
+    Qx = np.zeros(ntuberias) + (qx/ntuberias)
+    #Qx = np.zeros(ntuberias) + 0.00135714285714286
+    calculos = calculosGradiente(1, pk, Qx, [], [], [])
 
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
@@ -793,7 +799,15 @@ def GradienteToPDFView(request, pk):
             Story.append(t)
             Story.append(Spacer(1,0.2*inch))
 
-        table_formatted = [titles]
+        #table_formatted = [titles]
+        frameCount = 2
+        frames = []
+        #construct a frame for each column
+        for frame in range(frameCount):
+            column = Frame(100, 50, 50, 50)
+            frames.append(column)
+
+        #Story.append(frames)
         Story.append(Spacer(1,0.2*inch))
 
     proyecto = Proyecto.objects.get(pk=pk)
@@ -804,4 +818,147 @@ def GradienteToPDFView(request, pk):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="gradientmethod.pdf"'
     response.write(pdf_value)
+    return response
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Fill
+
+def GradienteToExcelView(request, pk):
+    data = getProjectData(pk)
+    ntuberias = len(data['tuberias'])
+    project = Proyecto.objects.get(pk=pk)
+
+    qx = 0
+    for nodo in data['nodos']:
+        qx = qx + nodo['demanda']
+
+    Qx = np.zeros(ntuberias) + (qx/ntuberias)
+    calculos = calculosGradiente(1, pk, Qx, [], [], [])
+
+    wb = Workbook()
+    ws = wb.active
+    cont = 1
+    ws.merge_cells('A1:D1')
+    ws['A'+str(cont)] = 'PROPIEDADES DEL RESERVORIO'
+    ws['A'+str(cont)].font = Font(size=12, bold=True)
+
+    cont = 2
+    ws['A'+str(cont)] = 'ID'
+    ws['A'+str(cont)].font = Font(size=10, bold=True)
+    ws['B'+str(cont)] = 'LGH (Zf)'
+    ws['B'+str(cont)].font = Font(size=10, bold=True)
+    ws['C'+str(cont)] = 'X'
+    ws['C'+str(cont)].font = Font(size=10, bold=True)
+    ws['D'+str(cont)] = 'Y'
+    ws['D'+str(cont)].font = Font(size=10, bold=True)
+
+    cont = 3
+    for r in data['reservorios']:
+        ws.cell(row=cont,column=1).value = r['numero']
+        ws.cell(row=cont,column=2).value = r['z']
+        ws.cell(row=cont,column=3).value = r['x_position']
+        ws.cell(row=cont,column=4).value = r['y_position']
+        cont = cont + 1
+
+    cont = cont + 1
+    ws.merge_cells('A'+str(cont)+':D'+str(cont))
+    ws['A'+str(cont)] = 'PROPIEDADES DE LOS NODOS'
+    ws['A'+str(cont)].font = Font(size=12, bold=True)
+
+    cont = cont + 1
+    ws['A'+str(cont)] = 'ID'
+    ws['A'+str(cont)].font = Font(size=10, bold=True)
+    ws['B'+str(cont)] = 'X'
+    ws['B'+str(cont)].font = Font(size=10, bold=True)
+    ws['C'+str(cont)] = 'Y'
+    ws['C'+str(cont)].font = Font(size=10, bold=True)
+    ws['D'+str(cont)] = 'Zn (msnm)'
+    ws['D'+str(cont)].font = Font(size=10, bold=True)
+    ws['E'+str(cont)] = 'DEMANDA m3/seg (Qs)'
+    ws['E'+str(cont)].font = Font(size=10, bold=True)
+    
+    cont = cont + 1
+    for n in data['nodos']:
+        ws.cell(row=cont,column=1).value = n['numero']
+        ws.cell(row=cont,column=2).value = n['x_position']
+        ws.cell(row=cont,column=3).value = n['y_position']
+        ws.cell(row=cont,column=4).value = n['cota']
+        ws.cell(row=cont,column=5).value = n['demanda']
+        cont = cont + 1
+
+    cont = cont + 1
+    ws.merge_cells('A'+str(cont)+':D'+str(cont))
+    ws['A'+str(cont)] = 'PROPIEDADES DE LAS TUBERIAS'
+    ws['A'+str(cont)].font = Font(size=12, bold=True)
+
+    cont = cont + 1
+    ws['A'+str(cont)] = 'TUBERIA'
+    ws['A'+str(cont)].font = Font(size=10, bold=True)
+    ws['B'+str(cont)] = 'NODO INICIAL'
+    ws['B'+str(cont)].font = Font(size=10, bold=True)
+    ws['C'+str(cont)] = 'NODO FINAL'
+    ws['C'+str(cont)].font = Font(size=10, bold=True)
+    ws['D'+str(cont)] = 'DIAMETRO (m)'
+    ws['D'+str(cont)].font = Font(size=10, bold=True)
+    ws['E'+str(cont)] = 'LONGITUD (m)'
+    ws['E'+str(cont)].font = Font(size=10, bold=True)
+    ws['F'+str(cont)] = 'COE_MENORES'
+    ws['F'+str(cont)].font = Font(size=10, bold=True)
+    #ws['G'+str(cont)] = 'COE_MENORES'
+
+    cont = cont + 1
+    for n in data['tuberias']:
+        ws.cell(row=cont,column=1).value = n['numero']
+        ws.cell(row=cont,column=2).value = n['start']
+        ws.cell(row=cont,column=3).value = n['end']
+        ws.cell(row=cont,column=4).value = n['diametro']
+        ws.cell(row=cont,column=5).value = n['longitud']
+        ws.cell(row=cont,column=6).value = n['km']
+        cont = cont + 1
+
+    cont = cont + 1
+    ws.merge_cells('A'+str(cont)+':D'+str(cont))
+    ws['A'+str(cont)] = 'PROPIEDADES FISICAS'
+    ws['A'+str(cont)].font = Font(size=12, bold=True)
+
+    cont = cont + 1
+    ws['A'+str(cont)] = 'GRAVEDAD (g)'
+    ws['A'+str(cont)].font = Font(size=10, bold=True)
+    ws['B'+str(cont)] = 9.8
+    ws['C'+str(cont)] = 'm/seg^2'
+
+    cont = cont + 1
+    ws['A'+str(cont)] = 'TEMPERATURA'
+    ws['A'+str(cont)].font = Font(size=10, bold=True)
+    ws['B'+str(cont)] =  project.material.ks
+    ws['C'+str(cont)] = 'º C'
+
+    cont = cont + 1
+    ws['A'+str(cont)] = 'VISCOSIDAD CINEMÁTICA'
+    ws['A'+str(cont)].font = Font(size=10, bold=True)
+    ws['B'+str(cont)] = project.fluido.valor_viscocidad
+    ws['C'+str(cont)] = 'm^2/seg'
+
+    dims = {}
+    for row in ws.rows:
+        for cell in row:
+            if cell.value:
+                dims[cell.column] = max((dims.get(cell.column, 0), len(str(cell.value))))    
+    for col, value in dims.items():
+        ws.column_dimensions[col].width = value
+
+    #Recorremos el conjunto de personas y vamos escribiendo cada uno de los datos en las celdas
+    # for persona in personas:
+    #     ws.cell(row=cont,column=2).value = persona.dni
+    #     ws.cell(row=cont,column=3).value = persona.nombre
+    #     ws.cell(row=cont,column=4).value = persona.apellido_paterno
+    #     ws.cell(row=cont,column=5).value = persona.apellido_materno
+    #     cont = cont + 1
+    #Establecemos el nombre del archivo
+    nombre_archivo ="ReportePersonasExcel.xlsx"
+    #Definimos que el tipo de respuesta a devolver es un archivo de microsoft excel
+    response = HttpResponse(content_type="application/ms-excel") 
+    contenido = "attachment; filename={0}".format(nombre_archivo)
+    response["Content-Disposition"] = contenido
+    wb.save(response)
     return response
