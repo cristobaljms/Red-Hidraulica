@@ -5,14 +5,17 @@ from fluidos.models import Fluido
 from django.views import generic
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.core.files.storage import FileSystemStorage
 from django.core.serializers import serialize
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.http import HttpResponse
 from io import BytesIO
+
+import numpy as np
 from numpy import inf
 from numpy.linalg import inv
-from django.core.files.storage import FileSystemStorage
+
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, BaseDocTemplate, Frame
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus.tables import Table, TableStyle
@@ -20,7 +23,10 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4, landscape, portrait
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT, TA_RIGHT
-import numpy as np
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
 import math
 import re
 import json
@@ -419,7 +425,6 @@ def validateError(Error):
     return flag
 
 def calculosGradiente(iteracion, pk, Qx, H, A12, response):
-    print("iteracion", iteracion)
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
     iteracionRow = { "iteracion": iteracion }
@@ -671,7 +676,7 @@ def GradienteToPDFView(request, pk):
         qx = qx + nodo['demanda']
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
-    #Qx = np.zeros(ntuberias) + 0.00135714285714286
+
     calculos = calculosGradiente(1, pk, Qx, [], [], [])
 
     pdf_buffer = BytesIO()
@@ -729,14 +734,8 @@ def GradienteToPDFView(request, pk):
             row = [ tuberia, Qx, Lx, Dx, A, V,Re, f, hf, Km, hm, hfhm, a, af ]
             table_formatted.append(row)
 
-
         t=Table(table_formatted, (60,40,60,60,60,60,50,40,40, 40, 40, 65,100,80))
-        # for each in range(len(iteracion['tabla'])):
-        #     if each % 2 == 0:
-        #         bg_color = colors.white
-        #     else:
-        #         bg_color = '#c9c9c9'
-        #     t.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
+
         t.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(13,0),'#878787'),
             ('INNERGRID',(0,0),(13,0), 0.25, colors.gray),
@@ -820,9 +819,6 @@ def GradienteToPDFView(request, pk):
     response.write(pdf_value)
     return response
 
-from openpyxl import Workbook
-from openpyxl.styles import Font, Fill
-
 def GradienteToExcelView(request, pk):
     data = getProjectData(pk)
     ntuberias = len(data['tuberias'])
@@ -837,6 +833,7 @@ def GradienteToExcelView(request, pk):
 
     wb = Workbook()
     ws = wb.active
+    ws.title = "data"
     cont = 1
     ws.merge_cells('A1:D1')
     ws['A'+str(cont)] = 'PROPIEDADES DEL RESERVORIO'
@@ -896,15 +893,18 @@ def GradienteToExcelView(request, pk):
     ws['A'+str(cont)].font = Font(size=10, bold=True)
     ws['B'+str(cont)] = 'NODO INICIAL'
     ws['B'+str(cont)].font = Font(size=10, bold=True)
+    ws.column_dimensions['B'].width = 12
     ws['C'+str(cont)] = 'NODO FINAL'
     ws['C'+str(cont)].font = Font(size=10, bold=True)
+    ws.column_dimensions['C'].width = 12
     ws['D'+str(cont)] = 'DIAMETRO (m)'
     ws['D'+str(cont)].font = Font(size=10, bold=True)
+    ws.column_dimensions['D'].width = 13
     ws['E'+str(cont)] = 'LONGITUD (m)'
     ws['E'+str(cont)].font = Font(size=10, bold=True)
+    ws.column_dimensions['E'].width = 13
     ws['F'+str(cont)] = 'COE_MENORES'
     ws['F'+str(cont)].font = Font(size=10, bold=True)
-    #ws['G'+str(cont)] = 'COE_MENORES'
 
     cont = cont + 1
     for n in data['tuberias']:
@@ -939,24 +939,104 @@ def GradienteToExcelView(request, pk):
     ws['B'+str(cont)] = project.fluido.valor_viscocidad
     ws['C'+str(cont)] = 'm^2/seg'
 
-    dims = {}
-    for row in ws.rows:
-        for cell in row:
-            if cell.value:
-                dims[cell.column] = max((dims.get(cell.column, 0), len(str(cell.value))))    
-    for col, value in dims.items():
-        ws.column_dimensions[col].width = value
+    ws1 = wb.create_sheet(title="resultados")
 
-    #Recorremos el conjunto de personas y vamos escribiendo cada uno de los datos en las celdas
-    # for persona in personas:
-    #     ws.cell(row=cont,column=2).value = persona.dni
-    #     ws.cell(row=cont,column=3).value = persona.nombre
-    #     ws.cell(row=cont,column=4).value = persona.apellido_paterno
-    #     ws.cell(row=cont,column=5).value = persona.apellido_materno
-    #     cont = cont + 1
-    #Establecemos el nombre del archivo
-    nombre_archivo ="ReportePersonasExcel.xlsx"
-    #Definimos que el tipo de respuesta a devolver es un archivo de microsoft excel
+    cont = 1
+    ws1.merge_cells('A'+str(cont)+':D'+str(cont))
+    ws1['A'+str(cont)] = 'RESULTADOS DE LOS NODOS'
+    ws1['A'+str(cont)].font = Font(size=12, bold=True)
+
+    cont = 2
+    ws1['A'+str(cont)] = 'ID'
+    ws1['A'+str(cont)].font = Font(size=10, bold=True)
+    ws1['B'+str(cont)] = 'Zn (msnm)'
+    ws1['B'+str(cont)].font = Font(size=10, bold=True)
+    ws1['C'+str(cont)] = 'DEMANDA'
+    ws1['C'+str(cont)].font = Font(size=10, bold=True)
+    ws1['D'+str(cont)] = 'LGH'
+    ws1['D'+str(cont)].font = Font(size=10, bold=True)
+    ws1['E'+str(cont)] = 'Presion'
+    ws1['E'+str(cont)].font = Font(size=10, bold=True)
+
+    data_maxima = None
+    iteracion_maxima = 1
+    for c in calculos:
+        if (iteracion_maxima <= c['iteracion']):
+            data_maxima = c
+
+    cont = cont + 1
+    i = 0
+    for n in data['nodos']:
+        ws1.cell(row=cont,column=1).value = n['numero']
+        ws1.cell(row=cont,column=2).value = n['cota']
+        ws1.cell(row=cont,column=3).value = n['demanda']
+        ws1.cell(row=cont,column=4).value = data_maxima['H'][i]
+        i = i + 1
+        cont = cont + 1
+
+    cont = cont + 1
+    ws1.merge_cells('A'+str(cont)+':D'+str(cont))
+    ws1['A'+str(cont)] = 'RESULTADOS DE LAS TUBERIAS'
+    ws1['A'+str(cont)].font = Font(size=12, bold=True)
+
+    cont = cont + 1
+    ws1['A'+str(cont)] = 'TUBERIA'
+    ws1['A'+str(cont)].font = Font(size=10, bold=True)
+    ws1['B'+str(cont)] = 'NODO INICIAL'
+    ws1['B'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['B'].width = 12
+    ws1['C'+str(cont)] = 'NODO FINAL'
+    ws1['C'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['c'].width = 12
+    ws1['D'+str(cont)] = 'DIAMETRO (m)'
+    ws1['D'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['D'].width = 13
+    ws1['E'+str(cont)] = 'LONGITUD (m)'
+    ws1['E'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['E'].width = 13
+    ws1['F'+str(cont)] = 'COE_MENORES'
+    ws1['F'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['F'].width = 13
+    ws1['G'+str(cont)] = 'CAUDAL'
+    ws1['G'+str(cont)].font = Font(size=10, bold=True)
+    ws1['H'+str(cont)] = 'VELOCIDAD'
+    ws1['H'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['H'].width = 12
+    ws1['I'+str(cont)] = 'REYNOLDS'
+    ws1['I'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['I'].width = 12
+    ws1['J'+str(cont)] = 'f'
+    ws1['J'+str(cont)].font = Font(size=10, bold=True)
+    ws1['K'+str(cont)] = 'hm'
+    ws1['K'+str(cont)].font = Font(size=10, bold=True)
+    ws1['L'+str(cont)] = 'PERDIDAS\nMENORES'
+    ws1['L'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['L'].width = 12
+    ws1['M'+str(cont)] = 'PERDIDAS\nTOTALES'
+    ws1['M'+str(cont)].font = Font(size=10, bold=True)
+    ws1.column_dimensions['M'].width = 12
+    ws1.row_dimensions[cont].height = 30
+
+    cont = cont + 1
+    i = 0
+    for n in data['tuberias']:
+        ws1.cell(row=cont,column=1).value = n['numero']
+        ws1.cell(row=cont,column=2).value = n['start']
+        ws1.cell(row=cont,column=3).value = n['end']
+        ws1.cell(row=cont,column=4).value = n['diametro']
+        ws1.cell(row=cont,column=5).value = n['longitud']
+        ws1.cell(row=cont,column=6).value = n['km']
+        ws1.cell(row=cont,column=7).value = data_maxima['Qx'][i]
+        ws1.cell(row=cont,column=8).value = data_maxima['tabla'][i]['V']
+        ws1.cell(row=cont,column=9).value = data_maxima['tabla'][i]['Re']
+        ws1.cell(row=cont,column=10).value = data_maxima['tabla'][i]['f']
+        ws1.cell(row=cont,column=11).value = data_maxima['tabla'][i]['hm']
+        ws1.cell(row=cont,column=12).value = data_maxima['tabla'][i]['hf']
+        ws1.cell(row=cont,column=13).value = data_maxima['tabla'][i]['hfhm']
+        i = i + 1
+        cont = cont + 1
+
+    nombre_archivo ="ReportGradient.xlsx"
     response = HttpResponse(content_type="application/ms-excel") 
     contenido = "attachment; filename={0}".format(nombre_archivo)
     response["Content-Disposition"] = contenido
