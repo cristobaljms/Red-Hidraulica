@@ -699,11 +699,8 @@ def GradienteToPDFView(request, pk):
         Paragraph('<b>Diametro</b>', ps_tabla),
         Paragraph('<b>Area</b>', ps_tabla),
         Paragraph('<b>Velocidad</b>', ps_tabla),
-        Paragraph('<b>Re</b>', ps_tabla),
         Paragraph('<b>f</b>', ps_tabla),
-        Paragraph('<b>hf</b>', ps_tabla),
         Paragraph('<b>Km</b>', ps_tabla),
-        Paragraph('<b>hm</b>', ps_tabla),
         Paragraph('<b>hf+hm</b>', ps_tabla),
         Paragraph('<b>a</b>', ps_tabla),
         Paragraph('<b>a*Qx</b>', ps_tabla)
@@ -731,10 +728,10 @@ def GradienteToPDFView(request, pk):
             hfhm = i['hfhm']
             a = i['a']
             af = i['af']
-            row = [ tuberia, Qx, Lx, Dx, A, V,Re, f, hf, Km, hm, hfhm, a, af ]
+            row = [ tuberia, Qx, Lx, Dx, A, V, f, Km, hfhm, a, af ]
             table_formatted.append(row)
 
-        t=Table(table_formatted, (60,40,60,60,60,60,50,40,40, 40, 40, 65,100,80))
+        t=Table(table_formatted, (60,40,60,60,60,60,50,40,100,100,80))
 
         t.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(13,0),'#878787'),
