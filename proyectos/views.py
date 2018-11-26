@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Proyecto, Nodo, Tuberia, Reservorio
+from .models import Proyecto, Nodo, Tuberia, Reservorio, DiametrosGeneticos
 from materiales.models import Material
 from fluidos.models import Fluido
 from django.views import generic
@@ -31,6 +31,47 @@ import math
 import re
 import json
 
+BIN_LIST_2 = ['00', '01', '10', '11']
+BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
+
+def getGeneticData(project_pk):
+    diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by("diametro")
+    data_genetico = []
+    for dg in diametros:
+        data_genetico.append({
+            "diametro":dg.diametro,
+            "costo": dg.costo
+        })
+        
+    l = DiametrosGeneticos.objects.filter(proyecto=project_pk).count()
+    if l <= 4:
+        for i in range(l):
+            data_genetico[i]['codigo'] = BIN_LIST_2[i]
+    else:
+        for i in range(l):
+            data_genetico[i]['codigo'] = BIN_LIST_3[i]
+
+    if l == 1:
+        data_genetico.append({ 'codigo':BIN_LIST_2[1], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+        data_genetico.append({ 'codigo':BIN_LIST_2[2], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+        data_genetico.append({ 'codigo':BIN_LIST_2[3], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+    elif l == 2:
+        data_genetico.append({ 'codigo':BIN_LIST_2[2], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+        data_genetico.append({ 'codigo':BIN_LIST_2[3], 'diametro': data_genetico[1]['diametro'], 'costo': data_genetico[1]['costo']})
+    elif l == 3:
+        data_genetico.append({ 'codigo':BIN_LIST_2[3], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+    elif l == 5:
+        data_genetico.append({ 'codigo':BIN_LIST_3[5], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+        data_genetico.append({ 'codigo':BIN_LIST_3[6], 'diametro': data_genetico[1]['diametro'], 'costo': data_genetico[1]['costo']})
+        data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[2]['diametro'], 'costo': data_genetico[2]['costo']})
+    elif l == 6:
+        data_genetico.append({ 'codigo':BIN_LIST_3[6], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+        data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[1]['diametro'], 'costo': data_genetico[1]['costo']})
+    elif l == 7:
+        data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+
+    return data_genetico
+
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
 
@@ -39,6 +80,8 @@ class ProyectoAdminView(generic.CreateView):
         nodos = Nodo.objects.filter(proyecto=proyecto).order_by('orden')
         tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('orden')
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
+        diametros = DiametrosGeneticos.objects.filter(proyecto=proyecto).order_by("diametro")
+        data_genetico = getGeneticData(kwargs['pk'])
 
         sreservorios = json.loads(serialize("json", reservorios))
         snodos = json.loads(serialize("json", nodos))
@@ -58,10 +101,13 @@ class ProyectoAdminView(generic.CreateView):
         torden = len(tuberias)
         norden = len(nodos)
         
+
         context = {
             'proyecto': proyecto,
             'nodos':nodos,
             'tuberias':tuberias,
+            'diametros':diametros,
+            'genetic_data':data_genetico,
             'norden': norden + 1,
             'torden': torden + 1,
             'reservorios': reservorios,
@@ -125,6 +171,15 @@ class ProyectoAdminView(generic.CreateView):
             tuberia = Tuberia(proyecto=proyecto, numero=numero, orden=orden, longitud=longitud, diametro=diametro, km=km, start=nstart.numero, end = nend.numero)
             tuberia.save()
             messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
+            return redirect('proyecto_administrar', id_proyecto, active_tab)
+        elif (tipo == 'genetico'):
+            active_tab = 'g'
+            proyecto = Proyecto.objects.get(pk=id_proyecto)
+            diametro = request.POST.get('diametro')
+            costo = request.POST.get('costo')
+            dg = DiametrosGeneticos(proyecto=proyecto, diametro=diametro, costo=costo)
+            dg.save()
+            messages.add_message(request, messages.SUCCESS, 'Diametro creado con exito')
             return redirect('proyecto_administrar', id_proyecto, active_tab)
         else:
             active_tab = 'r'
@@ -316,6 +371,21 @@ class NodoUpdateView(generic.View):
         messages.add_message(request, messages.SUCCESS, 'Nodo actualizado con exito')
         return redirect('proyecto_administrar', id_proyecto, active_tab)
 
+class DiametroGeneticoUpdateView(generic.View):
+
+    def post(self, request, *args, **kwargs):
+        active_tab = 'g'
+        diametro = request.POST.get('diametro')
+        costo = request.POST.get('costo')
+        id_proyecto = request.POST.get('id_proyecto')
+        dg = DiametrosGeneticos.objects.get(pk=kwargs['pk'])
+        dg.diametro=diametro
+        dg.costo=costo
+        dg.save()
+
+        messages.add_message(request, messages.SUCCESS, 'Diametro actualizado con exito')
+        return redirect('proyecto_administrar', id_proyecto, active_tab)
+
 def borrarTuberia(request, pk):
     Tuberia.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -326,6 +396,10 @@ def borrarNodo(request, pk):
     
 def borrarReservorio(request, pk):
     Reservorio.objects.filter(pk=pk).delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def borrarDiametroGenetico(request, pk):
+    DiametrosGeneticos.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def getProjectData(pk):

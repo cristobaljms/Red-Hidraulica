@@ -64,6 +64,16 @@
               </li>
               <li role="presentation" class="nav-item">
                 <a
+                  class="nav-link {% if active_tab == 'g' %} active{% endif %}"
+                  href="#genetico"
+                  aria-controls="genetico"
+                  role="tab"
+                  data-toggle="tab"
+                  >Genetico</a
+                >
+              </li>
+              <li role="presentation" class="nav-item">
+                <a
                   class="nav-link"
                   href="#calculos"
                   aria-controls="calculos"
@@ -103,6 +113,13 @@
                 id="tuberias"
               >
                 {% include 'sections/proyectos/partials/tuberias.html' %}
+              </div>
+              <div 
+                role="tabpanel" 
+                class="tab-pane {% if active_tab == 'g' %} active{% endif %}" 
+                id="genetico"
+              >
+                {% include 'sections/proyectos/partials/genetico.html' %}
               </div>
               <div role="tabpanel" class="tab-pane" id="calculos">
                 {% include 'sections/proyectos/partials/calculos.html' %}

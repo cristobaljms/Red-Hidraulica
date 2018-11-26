@@ -10,6 +10,35 @@
     >
       Metodo de la gradiente
     </a>
+    <a
+      href="#"
+      class="btn btn-sm btn-primary"
+      data-toggle="tooltip"
+      data-placement="top"
+    >
+      Metodo genetico
+    </a>
   </div>
+</div>
+<h3>Data del metodo genetico</h3>
+<div class="table-responsive ">
+  <table id="NodeTable" class="table table-bordered">
+    <thead>
+      <tr>
+        <th style="width: 25%; text-Align:center; padding: 10px 10px;">Codigo</th>
+        <th style="width: 25%; text-Align:center; padding: 10px 10px;">Diametro</th>
+        <th style="padding: 10px 10px; text-Align:center;">Costo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if genetic_data %} {% for diametro in genetic_data %}
+      <tr>
+        <td style="text-Align:center;">{{ diametro.codigo }}</td>
+        <td style="text-Align:center;">{{ diametro.diametro }}</td>
+        <td style="text-Align:center;" class="text-dark">{{ diametro.costo }}</td>
+      </tr>
+      {% endfor %} {% endif %}
+    </tbody>
+  </table>
 </div>
 {% endif %}

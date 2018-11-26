@@ -36,3 +36,9 @@ class Reservorio(models.Model):
     z = models.FloatField()
     x_position = models.IntegerField(default=0)
     y_position = models.IntegerField(default=0)
+
+
+class DiametrosGeneticos(models.Model):
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
+    diametro = models.FloatField(default=0)
+    costo = models.FloatField(default=0)

@@ -1,0 +1,166 @@
+{% load staticfiles %}
+<form method="post">
+  {%csrf_token%} <input type="hidden" value="genetico" id="tipo" name="tipo" />
+  <input
+    type="hidden"
+    value="{{proyecto.id}}"
+    id="id_proyecto"
+    name="id_proyecto"
+  />
+  <div class="row">
+    <div class="form-group col-md-4">
+      <input
+        type="number"
+        step="any"
+        placeholder="Diametro"
+        class="form-control"
+        id="diametro"
+        name="diametro"
+        required
+      />
+    </div>
+    <div class="form-group col-md-4">
+      <input
+        type="number"
+        step="any"
+        placeholder="Costo"
+        class="form-control"
+        id="costo"
+        name="costo"
+        required
+      />
+    </div>
+    <div class="form-group col-md-4">
+      <button type="submit" class="btn btn-primary ">Agregar</button>
+    </div>
+  </div>
+</form>
+
+<div class="table-responsive ">
+  <table id="NodeTable" class="table table-bordered">
+    <thead>
+      <tr>
+        <th style="width: 25%; text-Align:center; padding: 10px 10px;">Diametro</th>
+        <th style="padding: 10px 10px; text-Align:center;">Costo</th>
+        <th style="width: 100px; text-Align:center">Accion</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if diametros %} {% for diametro in diametros %}
+      <tr>
+        <td style="text-Align:center;">{{ diametro.diametro }}</td>
+        <td style="text-Align:center;" class="text-dark">{{ diametro.costo }}</td>
+        <td style="width: 150px; text-Align:center">
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            data-toggle="modal"
+            data-target="#myModal{{ diametro.id }}"
+          >
+            <i class="fa fa-edit"></i>
+          </button>
+          <a
+            href="#"
+            onclick="borrarDiametro({{diametro.id}})"
+            class="btn btn-sm btn-danger"
+            data-toggle="tooltip"
+            data-placement="top"
+          >
+            <i class="fa fa-trash-alt"></i>
+          </a>
+        </td>
+      </tr>
+      {% endfor %} {% endif %}
+    </tbody>
+  </table>
+</div>
+
+{% if diametros %} {% for diametro in diametros %}
+<div class="modal" id="myModal{{ diametro.id }}">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Editar</h4>
+        </div>
+  
+        <!-- Modal body -->
+        <div class="modal-body">
+          <form action="{%url 'genetico_editar' diametro.id %}" method="post">
+            {%csrf_token%}
+            <input
+              type="hidden"
+              value="{{proyecto.id}}"
+              id="id_proyecto"
+              name="id_proyecto"
+            />
+            <div class="row">
+              <div class="form-group col-md-4">
+                <input
+                value="{{ diametro.diametro }}"
+                  type="number"
+                  step="any"
+                  placeholder="Diametro"
+                  class="form-control"
+                  id="diametro"
+                  name="diametro"
+                  required
+                />
+              </div>
+              <div class="form-group col-md-4">
+                <input
+                  value="{{ diametro.costo }}"
+                  type="number"
+                  step="any"
+                  placeholder="Costo"
+                  class="form-control"
+                  id="costo"
+                  name="costo"
+                  required
+                />
+              </div>
+              <div class="form-group col-md-4">
+                <button type="submit" class="btn btn-primary ">Guardar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+  
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %} {% endif %}
+
+<script type="text/javascript" language="javascript" class="init">
+  function borrarDiametro(pk) {
+    swal({
+      title: "Borrar registro",
+      text: "¿Estas seguro de querer borrar este registro?",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true
+    }).then(willDelete => {
+      if (willDelete) {
+        request_url = "/genetico/eliminar/" + pk;
+        $.ajax({
+          url: request_url,
+          success: function(data) {
+            swal("Registro borrado", {
+              icon: "success"
+            }).then(() => {
+              location.reload();
+            });
+          }
+        });
+      } else {
+        swal("Operacion cancelada");
+      }
+    });
+  }
+</script>
