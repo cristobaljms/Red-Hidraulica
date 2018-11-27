@@ -1,48 +1,96 @@
 {% load staticfiles %}
 <form method="post">
-  {%csrf_token%} <input type="hidden" value="genetico" id="tipo" name="tipo" />
-  <input
-    type="hidden"
-    value="{{proyecto.id}}"
-    id="id_proyecto"
-    name="id_proyecto"
-  />
-  <div class="row">
-    <div class="form-group col-md-4">
-      <input
-        type="number"
-        step="any"
-        placeholder="Diametro"
-        class="form-control"
-        id="diametro"
-        name="diametro"
-        required
-      />
+    {%csrf_token%} <input type="hidden" value="datagenetico" id="tipo" name="tipo" />
+    <input
+      type="hidden"
+      value="{{proyecto.id}}"
+      id="id_proyecto"
+      name="id_proyecto"
+    />
+    <div class="row">
+      <div class="form-group col-md-6">
+          <label for="nindividuos">Numero de individuos</label>
+        <input
+          value="{{datagenetica.nindividuos}}"
+          type="number"
+          placeholder="Numero individuos"
+          class="form-control"
+          id="nindividuos"
+          name="nindividuos"
+          required
+        />
+      </div>
+      <div class="form-group col-md-6">
+        <label for="npoblacion">Numero de poblacion</label>
+        <input
+          value="{{datagenetica.npoblacion}}"
+          type="number"
+          placeholder="Numero poblacion"
+          class="form-control"
+          id="npoblacion"
+          name="npoblacion"
+          required
+        />
+      </div>
     </div>
-    <div class="form-group col-md-4">
-      <input
-        type="number"
-        step="any"
-        placeholder="Costo"
-        class="form-control"
-        id="costo"
-        name="costo"
-        required
-      />
+    <div class="row">
+        <div class="form-group col-md-3">
+            <label for="preplicacion">Porcentaje de replicación</label>
+            <input
+              value="{{datagenetica.porcentaje_replicacion}}"
+              type="number"
+              step="any"
+              placeholder="% Replicacion"
+              class="form-control"
+              id="preplicacion"
+              name="preplicacion"
+              min="0" max="100"
+              required
+            />
+          </div>
+          <div class="form-group col-md-3">
+            <label for="pmutacion">Porcentaje de mutación</label>
+              <input
+                value="{{datagenetica.porcentaje_mutacion}}"
+                type="number"
+                step="any"
+                placeholder="% Mutacion"
+                class="form-control"
+                id="pmutacion"
+                name="pmutacion"
+                min="0" max="100"
+                required
+              />
+            </div>
+            <div class="form-group col-md-3">
+                <label for="pcruzami">Porcentaje de cruzami</label>
+                <input
+                  value="{{datagenetica.porcentaje_cruzami}}"
+                  type="number"
+                  step="any"
+                  placeholder="% Cruzami"
+                  class="form-control"
+                  id="pcruzami"
+                  name="pcruzami"
+                  min="0" max="100"
+                  required
+                />
+              </div>
+      <div class="form-group col-md-3">
+          <br>
+        <button type="submit" class="btn btn-primary ">
+          Guardar
+        </button>
+      </div>
     </div>
-    <div class="form-group col-md-4">
-      <button type="submit" class="btn btn-primary ">Agregar</button>
-    </div>
-  </div>
-</form>
-
+  </form>
 <div class="table-responsive ">
   <table id="NodeTable" class="table table-bordered">
     <thead>
       <tr>
-        <th style="width: 25%; text-Align:center; padding: 10px 10px;">Diametro</th>
-        <th style="padding: 10px 10px; text-Align:center;">Costo</th>
-        <th style="width: 100px; text-Align:center">Accion</th>
+        <th style="width: 33%; text-Align:center; padding: 10px 10px;">Diametro</th>
+        <th style="width: 33%; padding: 10px 10px; text-Align:center;">Costo</th>
+        <th style="width: 33%; text-Align:center">Accion</th>
       </tr>
     </thead>
     <tbody>
@@ -74,7 +122,43 @@
     </tbody>
   </table>
 </div>
-
+<br>
+<form method="post">
+    {%csrf_token%} <input type="hidden" value="genetico" id="tipo" name="tipo" />
+    <input
+      type="hidden"
+      value="{{proyecto.id}}"
+      id="id_proyecto"
+      name="id_proyecto"
+    />
+    <div class="row">
+      <div class="form-group col-md-4">
+        <input
+          type="number"
+          step="any"
+          placeholder="Diametro"
+          class="form-control"
+          id="diametro"
+          name="diametro"
+          required
+        />
+      </div>
+      <div class="form-group col-md-4">
+        <input
+          type="number"
+          step="any"
+          placeholder="Costo"
+          class="form-control"
+          id="costo"
+          name="costo"
+          required
+        />
+      </div>
+      <div class="form-group col-md-4">
+        <button type="submit" class="btn btn-primary ">Agregar</button>
+      </div>
+    </div>
+  </form>
 {% if diametros %} {% for diametro in diametros %}
 <div class="modal" id="myModal{{ diametro.id }}">
     <div class="modal-dialog modal-lg">

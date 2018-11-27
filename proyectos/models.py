@@ -37,8 +37,15 @@ class Reservorio(models.Model):
     x_position = models.IntegerField(default=0)
     y_position = models.IntegerField(default=0)
 
-
 class DiametrosGeneticos(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
     diametro = models.FloatField(default=0)
     costo = models.FloatField(default=0)
+
+class DatosGeneticos(models.Model):
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
+    nindividuos = models.IntegerField(default=0)
+    npoblacion = models.IntegerField(default=0)
+    porcentaje_replicacion = models.FloatField(default=0)
+    porcentaje_mutacion = models.FloatField(default=0)
+    porcentaje_cruzami = models.FloatField(default=0)

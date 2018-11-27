@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Proyecto, Nodo, Tuberia, Reservorio, DiametrosGeneticos
+from .models import Proyecto, Nodo, Tuberia, Reservorio, DiametrosGeneticos, DatosGeneticos
 from materiales.models import Material
 from fluidos.models import Fluido
 from django.views import generic
@@ -30,9 +30,33 @@ from openpyxl.styles import Font
 import math
 import re
 import json
+import random
 
 BIN_LIST_2 = ['00', '01', '10', '11']
 BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
+
+def getMatrizBinarios(nindividuos, ntuberias, l):
+    matriz = []
+    i = 0
+    while i < nindividuos:
+        if l < 5:
+            x = [random.choice(BIN_LIST_2) for i in range(ntuberias)]
+        else:
+            x = [random.choice(BIN_LIST_3) for i in range(ntuberias)]
+        if not(x in matriz):
+            matriz.append(x)
+            i = i + 1  
+    return np.matrix(matriz)
+
+def getMatrizDiametros(matrizBinarios, data_genetico):
+    dimension = matrizBinarios.shape
+    matriz = np.zeros(dimension)
+    for i in range(0, dimension[0]):
+        for j in range(0, dimension[1]):
+            for dg in data_genetico:
+                if str(matrizBinarios[i, j]) == dg['codigo']:
+                    matriz[i, j] = dg['diametro']   
+    return matriz
 
 def getGeneticData(project_pk):
     diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by("diametro")
@@ -69,8 +93,13 @@ def getGeneticData(project_pk):
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[1]['diametro'], 'costo': data_genetico[1]['costo']})
     elif l == 7:
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
+    matrizBinarios = getMatrizBinarios(20, 11, 8)
+    print(matrizBinarios)
 
+
+    print(getMatrizDiametros(matrizBinarios, data_genetico))
     return data_genetico
+
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -82,10 +111,20 @@ class ProyectoAdminView(generic.CreateView):
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
         diametros = DiametrosGeneticos.objects.filter(proyecto=proyecto).order_by("diametro")
         data_genetico = getGeneticData(kwargs['pk'])
-
         sreservorios = json.loads(serialize("json", reservorios))
         snodos = json.loads(serialize("json", nodos))
-
+        datagenetica = None
+        try:
+            datagenetica = DatosGeneticos.objects.get(proyecto=proyecto)
+        except DatosGeneticos.DoesNotExist:
+            datagenetica = { 
+                'nindividuos':' ',
+                'npoblacion' :' ',
+                'porcentaje_replicacion' :' ',
+                'porcentaje_mutacion' :' ',
+                'porcentaje_cruzami':' ' 
+            }
+            
         rarray = []
 
         for sr in sreservorios:
@@ -108,6 +147,7 @@ class ProyectoAdminView(generic.CreateView):
             'tuberias':tuberias,
             'diametros':diametros,
             'genetic_data':data_genetico,
+            'datagenetica':datagenetica,
             'norden': norden + 1,
             'torden': torden + 1,
             'reservorios': reservorios,
@@ -172,8 +212,15 @@ class ProyectoAdminView(generic.CreateView):
             tuberia.save()
             messages.add_message(request, messages.SUCCESS, 'Tuberia creada con exito')
             return redirect('proyecto_administrar', id_proyecto, active_tab)
+
         elif (tipo == 'genetico'):
             active_tab = 'g'
+            
+            l = DiametrosGeneticos.objects.filter(proyecto=id_proyecto).count()
+            if l == 8:
+                messages.add_message(request, messages.ERROR, 'Solo se pueden cargar 8 diametros como maximo')
+                return redirect('proyecto_administrar', id_proyecto, active_tab)
+
             proyecto = Proyecto.objects.get(pk=id_proyecto)
             diametro = request.POST.get('diametro')
             costo = request.POST.get('costo')
@@ -181,6 +228,33 @@ class ProyectoAdminView(generic.CreateView):
             dg.save()
             messages.add_message(request, messages.SUCCESS, 'Diametro creado con exito')
             return redirect('proyecto_administrar', id_proyecto, active_tab)
+        
+        elif (tipo == 'datagenetico'):
+            active_tab = 'g'
+            nindividuos = request.POST.get('nindividuos')
+            npoblacion = request.POST.get('npoblacion')
+            preplicacion = request.POST.get('preplicacion')
+            pmutacion = request.POST.get('pmutacion')
+            pcruzami = request.POST.get('pcruzami')
+
+            try:
+                datagentica = DatosGeneticos.objects.get(proyecto=id_proyecto)
+                datagentica.nindividuos = nindividuos
+                datagentica.npoblacion = npoblacion
+                datagentica.porcentaje_replicacion = preplicacion
+                datagentica.porcentaje_mutacion = pmutacion
+                datagentica.porcentaje_cruzami = pcruzami
+                datagentica.save()
+                messages.add_message(request, messages.SUCCESS, 'data guardada con exito')
+                return redirect('proyecto_administrar', id_proyecto, active_tab)
+
+            except DatosGeneticos.DoesNotExist:
+                proyecto = Proyecto.objects.get(pk=id_proyecto)
+                datagentica = DatosGeneticos(proyecto = proyecto, nindividuos = nindividuos, npoblacion = npoblacion,porcentaje_replicacion = preplicacion,porcentaje_mutacion = pmutacion, porcentaje_cruzami = pcruzami)
+                datagentica.save()
+                messages.add_message(request, messages.SUCCESS, 'data guardada con exito')
+                return redirect('proyecto_administrar', id_proyecto, active_tab)
+
         else:
             active_tab = 'r'
             numero = request.POST.get('numero')
