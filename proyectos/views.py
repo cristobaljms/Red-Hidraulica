@@ -572,7 +572,7 @@ def validateError(Error):
                 flag = True
     return flag
 
-def calculosGradiente(iteracion, pk, Qx, H, A12, response):
+def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
     iteracionRow = { "iteracion": iteracion }
@@ -589,10 +589,11 @@ def calculosGradiente(iteracion, pk, Qx, H, A12, response):
     
 
     # Creacion del arreglo de diametro
-    array_diametro = []
-    for t in data['tuberias']:
-        array_diametro.append(t['diametro'])
-    Dx = np.array(array_diametro)
+    if len(Dx) == 0:
+        array_diametro = []
+        for t in data['tuberias']:
+            array_diametro.append(t['diametro'])
+        Dx = np.array(array_diametro)
     
 
     # Creacion del arreglo de km
@@ -787,7 +788,7 @@ def calculosGradiente(iteracion, pk, Qx, H, A12, response):
         # Con los nuevos parametros
         if (validateError(error)):
             Qstep9 = np.squeeze(np.asarray(Qstep9))
-            return calculosGradiente(iteracion, pk, Qstep9, step10, A12, response)
+            return calculosGradiente(iteracion, pk, Dx, Qstep9, step10, A12, response)
         else:
             # Sino retornamos y finaliza el calculo
             return response
@@ -795,7 +796,7 @@ def calculosGradiente(iteracion, pk, Qx, H, A12, response):
         # Esto solo ocurrira en la primera iteracion, donde no hay que calcular el error
         response.append(iteracionRow)
         Qstep9 = np.squeeze(np.asarray(Qstep9))
-        return calculosGradiente(iteracion, pk, Qstep9, step10, A12, response)
+        return calculosGradiente(iteracion, pk, Dx, Qstep9, step10, A12, response)
 
 class GradienteView(generic.View):
     template_name = "sections/calculos/gradiente.html"
@@ -809,7 +810,7 @@ class GradienteView(generic.View):
         Qx = np.zeros(ntuberias) + (qx/ntuberias)
         
         context = {
-            'data': calculosGradiente(1, kwargs['pk'], Qx, [], [], []),
+            'data': calculosGradiente(1, kwargs['pk'], [],  Qx, [], [], []),
             'project_pk': kwargs['pk']
         }
         #return JsonResponse(context, safe=False)
@@ -825,7 +826,7 @@ def GradienteToPDFView(request, pk):
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
 
-    calculos = calculosGradiente(1, pk, Qx, [], [], [])
+    calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
 
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
