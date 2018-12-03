@@ -58,6 +58,26 @@ def getMatrizDiametros(matrizBinarios, data_genetico):
                     matriz[i, j] = dg['diametro']   
     return matriz
 
+def getMatrizCostos(matrizBinarios, data_genetico):
+    dimension = matrizBinarios.shape
+    matriz = np.zeros(dimension)
+    for i in range(0, dimension[0]):
+        for j in range(0, dimension[1]):
+            for dg in data_genetico:
+                if str(matrizBinarios[i, j]) == dg['codigo']:
+                    matriz[i, j] = dg['costo']   
+    return matriz
+
+def getK(Cc):
+    if Cc > 10:
+        result = 10
+        while Cc > 10:
+            Cc /= 10
+            result *= 10
+        return result/10
+    else:
+        return 1
+
 def getGeneticData(project_pk):
     diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by("diametro")
     data_genetico = []
@@ -93,13 +113,100 @@ def getGeneticData(project_pk):
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[1]['diametro'], 'costo': data_genetico[1]['costo']})
     elif l == 7:
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
-    matrizBinarios = getMatrizBinarios(20, 11, 8)
+    
+    nindividuos = 5
+    ntuberias = 11
+    l = 4
+
+    matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, l)
+
+    matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
+    matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
     print(matrizBinarios)
+    print(matrizDiametros)
+    #print(matrizCostos)
+
+    FO = []
+    
+    data = getProjectData(project_pk)
+    ntuberias = len(data['tuberias'])
+
+    qx = 0
+    for nodo in data['nodos']:
+        qx = qx + nodo['demanda']
+
+    Qx = np.zeros(ntuberias) + (qx/ntuberias)
+
+    array_longitud = []
+    for t in data['tuberias']:
+        array_longitud.append(t['longitud'])
+    Lx = np.array(array_longitud)
+    print("Lx")
+    print(Lx)
+    #print(matrizCostos)
+    for i in range(nindividuos):
+        print("\n\nindividuo {}".format(i+1))
+        
+        calculos = calculosGradiente(1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
+
+        data_maxima = None
+        iteracion_maxima = 1
+        for c in calculos:
+            if (iteracion_maxima <= c['iteracion']):
+                iteracion_maxima = c['iteracion']
+                data_maxima = c
 
 
-    print(getMatrizDiametros(matrizBinarios, data_genetico))
+        # Calculo de Cc
+        Cc = 0
+        for j in range(ntuberias):
+            Cc += matrizCostos[i,j]*Lx[j]
+        print("\nCc")
+        print(Cc)
+
+        # Calculo de Cph
+        cont = 0
+        Cph = 0
+        K = getK(Cc)
+
+        for n in data['nodos']:
+            Pmin = 10
+            Pnodo = data_maxima['H'][cont] - n['cota']
+            AP = Pmin - Pnodo
+            if AP <= 0:
+                AP = 0
+            else:
+                C = np.power(2.71828,AP)
+                AP = C
+            cont += 1
+            if Cph <= AP:
+                Cph = AP
+        Cph *= K
+        
+        print("\nCph")
+        print (Cph)
+
+        #Calculo de Cv
+        Cv = 0
+        for t in range(ntuberias):
+            Vmin = 1
+            Vtubo = data_maxima['tabla'][t]['V']
+            AV = Vmin - Vtubo
+            if AV <= 0:
+                AV = 0
+            else:
+                Cv += AV
+        Cv*=K
+        print("\nCV")
+        print(Cv)
+
+        FO.append({
+            "individuo": i,
+            "FO": Cc + Cph + Cv
+        })
+
+    print(FO)
     return data_genetico
-
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
