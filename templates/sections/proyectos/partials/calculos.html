@@ -1,45 +1,26 @@
 {% load staticfiles %} {% if proyecto%}
 
-<div class="row">
-  <div class="col-md-4">
-    <a
+<div class="row" >
+    <div style="margin: 0 auto; text-align:center;">
+
+      <a
       href="{% url 'calculo_gradiente' proyecto.id %}"
       class="btn btn-sm btn-danger"
       data-toggle="tooltip"
       data-placement="top"
-    >
+      style="font-size:16px"
+      >
       Metodo de la gradiente
     </a>
     <a
-      href="#"
-      class="btn btn-sm btn-primary"
-      data-toggle="tooltip"
-      data-placement="top"
+    href="{% url 'calculo_genetico' proyecto.id %}"
+    class="btn btn-sm btn-primary"
+    data-toggle="tooltip"
+    data-placement="top"
+    style="font-size:16px"
     >
-      Metodo genetico
-    </a>
-  </div>
+    Algoritmo genetico
+  </a>
 </div>
-<br>
-<div class="table-responsive ">
-  <h3>Data del metodo genetico</h3>
-  <table id="NodeTable" class="table table-bordered">
-    <thead>
-      <tr>
-        <th style="width: 25%; text-Align:center; padding: 10px 10px;">Codigo</th>
-        <th style="width: 25%; text-Align:center; padding: 10px 10px;">Diametro</th>
-        <th style="padding: 10px 10px; text-Align:center;">Costo</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% if genetic_data %} {% for diametro in genetic_data %}
-      <tr>
-        <td style="text-Align:center;">{{ diametro.codigo }}</td>
-        <td style="text-Align:center;">{{ diametro.diametro }}</td>
-        <td style="text-Align:center;" class="text-dark">{{ diametro.costo }}</td>
-      </tr>
-      {% endfor %} {% endif %}
-    </tbody>
-  </table>
 </div>
 {% endif %}

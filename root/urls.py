@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import  login
-from proyectos.views import borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
+from proyectos.views import GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
 from materiales.views import MaterialesListView, MaterialesCreateView, MaterialesUpdateView, MaterialesDeleteView
 from fluidos.views import FluidosListView, FluidosCreateView, FluidosUpdateView, FluidosDeleteView
 from django.contrib.auth.decorators import login_required
@@ -23,6 +23,7 @@ urlpatterns = [
     path('genetico/eliminar/<int:pk>/', login_required(borrarDiametroGenetico, login_url='/login/'), name='genetico_eliminar'),
     path('genetico/actualizar/<int:pk>/', login_required(DiametroGeneticoUpdateView.as_view(), login_url='/login/'), name='genetico_editar'),
     path('calculos/gradiente/<int:pk>/', login_required(GradienteView.as_view(), login_url='/login/'), name='calculo_gradiente'),
+    path('calculos/genetico/<int:pk>/', login_required(GeneticView.as_view(), login_url='/login/'), name='calculo_genetico'),
     path('reporte/pdf/gradiente/<int:pk>/', login_required(GradienteToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
     path('reporte/excel/gradiente/<int:pk>/', login_required(GradienteToExcelView, login_url='/login/'), name='reporte_excel_gradiente'),
     path('materiales/', login_required(MaterialesListView.as_view(), login_url='/login/'), name='materiales'),

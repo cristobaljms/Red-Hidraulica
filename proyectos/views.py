@@ -31,6 +31,7 @@ import math
 import re
 import json
 import random
+import copy
 
 BIN_LIST_2 = ['00', '01', '10', '11']
 BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
@@ -78,8 +79,23 @@ def getK(Cc):
     else:
         return 1
 
+def bubbleSort(arr, key):
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, n-i-1):
+            if arr[j][key] > arr[j+1][key] :
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+    return arr
+
+def concatArr(arr):
+    cad = ""
+    for i in arr:
+        cad += i
+    return cad
+
 def getGeneticData(project_pk):
     diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by("diametro")
+    dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
     data_genetico = []
     for dg in diametros:
         data_genetico.append({
@@ -114,19 +130,24 @@ def getGeneticData(project_pk):
     elif l == 7:
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
     
-    nindividuos = 5
+    nindividuos = dataGenetica.nindividuos
     ntuberias = 11
     l = 4
+    B =  dataGenetica.beta
 
     matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, l)
-
+    #     matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
+    #  ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
+    #  ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
+    #  ['10', '11', '01', '11' ,'00' ,'01', '00' ,'11', '10', '00', '01'],
+    #  ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
-    print(matrizBinarios)
-    print(matrizDiametros)
+    #print(matrizBinarios)
+    #print(matrizDiametros)
     #print(matrizCostos)
 
-    FO = []
+    result = []
     
     data = getProjectData(project_pk)
     ntuberias = len(data['tuberias'])
@@ -141,14 +162,12 @@ def getGeneticData(project_pk):
     for t in data['tuberias']:
         array_longitud.append(t['longitud'])
     Lx = np.array(array_longitud)
-    print("Lx")
-    print(Lx)
-    #print(matrizCostos)
+    #print("Lx")
+    #print(Lx)
+    #print(matrizCostos) round
     for i in range(nindividuos):
-        print("\n\nindividuo {}".format(i+1))
-        
+        print("{} %".format(np.round(((i+1)/nindividuos)*100),1))
         calculos = calculosGradiente(1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
-
         data_maxima = None
         iteracion_maxima = 1
         for c in calculos:
@@ -156,13 +175,12 @@ def getGeneticData(project_pk):
                 iteracion_maxima = c['iteracion']
                 data_maxima = c
 
-
         # Calculo de Cc
         Cc = 0
         for j in range(ntuberias):
             Cc += matrizCostos[i,j]*Lx[j]
-        print("\nCc")
-        print(Cc)
+        #print("\nCc")
+        #print(Cc)
 
         # Calculo de Cph
         cont = 0
@@ -183,30 +201,145 @@ def getGeneticData(project_pk):
                 Cph = AP
         Cph *= K
         
-        print("\nCph")
-        print (Cph)
+        #print("\nCph")
+        #print (Cph)
 
         #Calculo de Cv
         Cv = 0
         for t in range(ntuberias):
-            Vmin = 1
+            Vmin = 0.3
             Vtubo = data_maxima['tabla'][t]['V']
             AV = Vmin - Vtubo
+            #print(Vmin, Vtubo, AV)
             if AV <= 0:
                 AV = 0
             else:
                 Cv += AV
         Cv*=K
-        print("\nCV")
-        print(Cv)
-
-        FO.append({
-            "individuo": i,
-            "FO": Cc + Cph + Cv
+        #print("\nCV")
+        #print(Cv)
+        FO = Cc + Cph + Cv
+        result.append({
+            'FO':FO,
+            #'diametros': matrizDiametros[i],
+            'binarios': concatArr(matrizBinarios[i].tolist()[0]),
+            #'costos': matrizCostos[i],
+            #'individuo': i
         })
+    return [bubbleSort(result, 'FO'), nindividuos, B]
 
-    print(FO)
-    return data_genetico
+def seleccion(data):
+    d = data[0]
+    Nc = data[1]
+    B = data[2]
+
+    Pmax = B/Nc
+    Pmin = (2-B)/Nc
+
+    arrProbabilidad = []
+
+    for i in range(1, Nc+1):
+        Pi = Pmin + ( Pmax - Pmin ) * ((Nc - i)/(Nc - 1))
+        PiN = Pi * Nc
+        if PiN >= 1.5:
+            arrProbabilidad.append(d[i])
+            arrProbabilidad.append(d[i])
+        elif PiN >= 0.5:
+            arrProbabilidad.append(d[i])
+
+    arrPadresCruzamiento = []
+
+    for i in arrProbabilidad:
+        arrPadresCruzamiento.append(i['binarios'])
+
+    arrIndividuos=[i+1 for i in range(Nc)]
+
+    flagA = True
+    while(flagA):
+        auxArr = copy.deepcopy(arrIndividuos)
+        arrIndexPadres = []
+        while(len(auxArr) > 1):
+            a = random.choice(auxArr)
+            b = random.choice(auxArr)
+            if (a != b and (a + 1) != b and (a-1) != b):
+                auxArr.remove(a)
+                auxArr.remove(b)
+                arrIndexPadres.append({'a':a, 'b':b})    
+            if( len(auxArr) == 1 ):
+                flagA = False
+                arrIndexPadres.append({'a':auxArr[0], 'b':-1})
+            elif(len(auxArr) == 0):
+                flagA = False
+    return [arrIndexPadres,arrProbabilidad]
+
+def cruzamiento(data):
+    arrIndexPadres = data[0]
+    arrProbabilidad = data[1]
+
+    arrHijosCruzamiento = []
+
+    for aIP in arrIndexPadres:
+        if aIP['b'] == -1:
+            arrHijosCruzamiento.append(arrProbabilidad[aIP['a']])
+        else:
+            binA = arrProbabilidad[aIP['a']-1]['binarios']
+            binB = arrProbabilidad[aIP['b']-1]['binarios']
+
+            arrbinA = [binA[c] for c in range(len(binA))]
+            arrbinB = [binB[c] for c in range(len(binB))]
+
+            a = random.randint(1, len(binA) -1)
+            b = random.randint(1, len(binA) -1)
+            
+            if a > b:
+                a, b = b, a
+
+            for i in range(a ,b-1):
+                arrbinA[i], arrbinB[i] = arrbinB[i], arrbinA[i]
+
+            arrProbabilidad[aIP['a']-1]['binarios'] = concatArr(arrbinA)
+            arrProbabilidad[aIP['b']-1]['binarios'] = concatArr(arrbinB)
+
+            arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
+            arrHijosCruzamiento.append(arrProbabilidad[aIP['b']-1])
+    return arrHijosCruzamiento
+
+def mutacion(hijosCruzamiento):
+    Lc = len(hijosCruzamiento[0]['binarios'])
+    Pm = 1/Lc
+    
+    #print(Pm)
+    listado_mutacion = []
+    for d in hijosCruzamiento:
+        a = random.uniform(0.0001, 1)
+        if a >= Pm:
+            listado_mutacion.append(d)
+        else:
+            a = random.randint(0, Lc-1)
+
+    return hijosCruzamiento
+
+class GeneticView(generic.View):
+    template_name = "sections/calculos/genetico.html"
+
+    def get(self, request, *args, **kwargs):
+        active_tab = 'g'
+        data = getGeneticData(kwargs['pk'])
+        resultado_seleccion = seleccion(data)
+        resultado_cruzamiento = cruzamiento(resultado_seleccion)
+        if len(resultado_cruzamiento) == 0:
+            messages.add_message(request, messages.ERROR, 'El resultado del cruzamiento vino vacio')
+            return redirect('proyecto_administrar', kwargs['pk'], active_tab)
+
+        resultado_mutacion = mutacion(resultado_cruzamiento)
+
+        print(resultado_mutacion)
+
+        context = {
+            'project_pk': kwargs['pk']
+        }
+        #return JsonResponse(context, safe=False)
+        return render(request, self.template_name, context)
 
 class ProyectoAdminView(generic.CreateView):
     template_name = "sections/proyectos/show.html"
@@ -217,7 +350,7 @@ class ProyectoAdminView(generic.CreateView):
         tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('orden')
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
         diametros = DiametrosGeneticos.objects.filter(proyecto=proyecto).order_by("diametro")
-        data_genetico = getGeneticData(kwargs['pk'])
+        #data_genetico = FO(kwargs['pk'])
         sreservorios = json.loads(serialize("json", reservorios))
         snodos = json.loads(serialize("json", nodos))
         datagenetica = None
@@ -253,7 +386,6 @@ class ProyectoAdminView(generic.CreateView):
             'nodos':nodos,
             'tuberias':tuberias,
             'diametros':diametros,
-            'genetic_data':data_genetico,
             'datagenetica':datagenetica,
             'norden': norden + 1,
             'torden': torden + 1,
@@ -343,7 +475,7 @@ class ProyectoAdminView(generic.CreateView):
             preplicacion = request.POST.get('preplicacion')
             pmutacion = request.POST.get('pmutacion')
             pcruzami = request.POST.get('pcruzami')
-
+            beta = request.POST.get('beta')
             try:
                 datagentica = DatosGeneticos.objects.get(proyecto=id_proyecto)
                 datagentica.nindividuos = nindividuos
@@ -351,13 +483,14 @@ class ProyectoAdminView(generic.CreateView):
                 datagentica.porcentaje_replicacion = preplicacion
                 datagentica.porcentaje_mutacion = pmutacion
                 datagentica.porcentaje_cruzami = pcruzami
+                datagentica.beta = beta
                 datagentica.save()
                 messages.add_message(request, messages.SUCCESS, 'data guardada con exito')
                 return redirect('proyecto_administrar', id_proyecto, active_tab)
 
             except DatosGeneticos.DoesNotExist:
                 proyecto = Proyecto.objects.get(pk=id_proyecto)
-                datagentica = DatosGeneticos(proyecto = proyecto, nindividuos = nindividuos, npoblacion = npoblacion,porcentaje_replicacion = preplicacion,porcentaje_mutacion = pmutacion, porcentaje_cruzami = pcruzami)
+                datagentica = DatosGeneticos(proyecto = proyecto, nindividuos = nindividuos, npoblacion = npoblacion,porcentaje_replicacion = preplicacion,porcentaje_mutacion = pmutacion, porcentaje_cruzami = pcruzami, beta=beta)
                 datagentica.save()
                 messages.add_message(request, messages.SUCCESS, 'data guardada con exito')
                 return redirect('proyecto_administrar', id_proyecto, active_tab)

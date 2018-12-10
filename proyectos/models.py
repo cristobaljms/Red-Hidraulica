@@ -49,3 +49,4 @@ class DatosGeneticos(models.Model):
     porcentaje_replicacion = models.FloatField(default=0)
     porcentaje_mutacion = models.FloatField(default=0)
     porcentaje_cruzami = models.FloatField(default=0)
+    beta = models.FloatField(default=0)
