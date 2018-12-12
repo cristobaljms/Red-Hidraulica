@@ -312,10 +312,20 @@ def mutacion(hijosCruzamiento):
     listado_mutacion = []
     for d in hijosCruzamiento:
         a = random.uniform(0.0001, 1)
+
         if a >= Pm:
             listado_mutacion.append(d)
         else:
             a = random.randint(0, Lc-1)
+            arrBinarios = [hijosCruzamiento[0]['binarios'][c] for c in range(Lc)]
+
+            if arrBinarios[a] == '0':
+                arrBinarios[a] = '1'
+            else:
+                arrBinarios[a] = '0' 
+   
+            hijosCruzamiento[0]['binarios'] = concatArr(arrBinarios)  
+            
 
     return hijosCruzamiento
 
