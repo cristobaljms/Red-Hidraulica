@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from .models import Proyecto, Nodo, Tuberia, Reservorio, DiametrosGeneticos, DatosGeneticos
+from .models import *
+from .utils import *
 from materiales.models import Material
 from fluidos.models import Fluido
 from django.views import generic
@@ -13,7 +14,6 @@ from django.http import HttpResponse
 from io import BytesIO
 
 import numpy as np
-from numpy import inf
 from numpy.linalg import inv
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, BaseDocTemplate, Frame
@@ -27,7 +27,6 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT, TA_RIGHT
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
-import math
 import re
 import json
 import random
@@ -69,33 +68,9 @@ def getMatrizCostos(matrizBinarios, data_genetico):
                     matriz[i, j] = dg['costo']   
     return matriz
 
-def getK(Cc):
-    if Cc > 10:
-        result = 10
-        while Cc > 10:
-            Cc /= 10
-            result *= 10
-        return result/10
-    else:
-        return 1
-
-def bubbleSort(arr, key):
-    n = len(arr)
-    for i in range(n):
-        for j in range(0, n-i-1):
-            if arr[j][key] > arr[j+1][key] :
-                arr[j], arr[j+1] = arr[j+1], arr[j]
-    return arr
-
-def concatArr(arr):
-    cad = ""
-    for i in arr:
-        cad += i
-    return cad
-
-def getGeneticData(project_pk):
-    diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by("diametro")
-    dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
+def getGeneticData(project_pk, nindividuos):
+    diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by('diametro')
+    
     data_genetico = []
     for dg in diametros:
         data_genetico.append({
@@ -103,7 +78,8 @@ def getGeneticData(project_pk):
             "costo": dg.costo
         })
         
-    l = DiametrosGeneticos.objects.filter(proyecto=project_pk).count()
+    l = len(diametros)
+
     if l <= 4:
         for i in range(l):
             data_genetico[i]['codigo'] = BIN_LIST_2[i]
@@ -130,36 +106,35 @@ def getGeneticData(project_pk):
     elif l == 7:
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
     
-    nindividuos = dataGenetica.nindividuos
-    ntuberias = 11
-    l = 4
-    B =  dataGenetica.beta
+    tuberias = Tuberia.objects.filter(proyecto=project_pk)
+    K = 0
+    for t in tuberias:
+        K += t.longitud
 
-    matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, l)
-    #     matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
-    #  ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
-    #  ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
-    #  ['10', '11', '01', '11' ,'00' ,'01', '00' ,'11', '10', '00', '01'],
-    #  ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
+    K = getK(K*diametros[0].costo)
+
+    ntuberias = len(tuberias)
+    ndiametros = len(data_genetico)
+
+    matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
-    #print(matrizBinarios)
-    #print(matrizDiametros)
-    #print(matrizCostos)
 
+    return [matrizBinarios, matrizDiametros, matrizCostos, K, data_genetico]
+
+def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos):
     result = []
     
-    data = getProjectData(project_pk)
-    ntuberias = len(data['tuberias'])
+    ntuberias = len(projectData['tuberias'])
 
     qx = 0
-    for nodo in data['nodos']:
+    for nodo in projectData['nodos']:
         qx = qx + nodo['demanda']
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
 
     array_longitud = []
-    for t in data['tuberias']:
+    for t in projectData['tuberias']:
         array_longitud.append(t['longitud'])
     Lx = np.array(array_longitud)
     #print("Lx")
@@ -187,7 +162,7 @@ def getGeneticData(project_pk):
         Cph = 0
         K = getK(Cc)
 
-        for n in data['nodos']:
+        for n in projectData['nodos']:
             Pmin = 10
             Pnodo = data_maxima['H'][cont] - n['cota']
             AP = Pmin - Pnodo
@@ -200,7 +175,7 @@ def getGeneticData(project_pk):
             if Cph <= AP:
                 Cph = AP
         Cph *= K
-        
+
         #print("\nCph")
         #print (Cph)
 
@@ -216,6 +191,7 @@ def getGeneticData(project_pk):
             else:
                 Cv += AV
         Cv*=K
+
         #print("\nCV")
         #print(Cv)
         FO = Cc + Cph + Cv
@@ -226,12 +202,13 @@ def getGeneticData(project_pk):
             #'costos': matrizCostos[i],
             #'individuo': i
         })
-    return [bubbleSort(result, 'FO'), nindividuos, B]
+        print("FO individuo {}".format(i+1))
+    return [bubbleSort(result, 'FO')]
 
 def seleccion(data):
     d = data[0]
-    Nc = data[1]
-    B = data[2]
+    Nc = 10
+    B = 1.8
 
     Pmax = B/Nc
     Pmin = (2-B)/Nc
@@ -265,12 +242,15 @@ def seleccion(data):
                 auxArr.remove(a)
                 auxArr.remove(b)
                 arrIndexPadres.append({'a':a, 'b':b})    
-            if( len(auxArr) == 1 ):
+            if(len(auxArr) == 2 and ((auxArr[0] + 1) == auxArr[1] or (auxArr[1] + 1) == auxArr[0])):
+                break
+            elif( len(auxArr) == 1 ):
                 flagA = False
                 arrIndexPadres.append({'a':auxArr[0], 'b':-1})
             elif(len(auxArr) == 0):
                 flagA = False
-    return [arrIndexPadres,arrProbabilidad]
+              
+    return [arrIndexPadres, arrProbabilidad]
 
 def cruzamiento(data):
     arrIndexPadres = data[0]
@@ -334,19 +314,41 @@ class GeneticView(generic.View):
 
     def get(self, request, *args, **kwargs):
         active_tab = 'g'
-        data = getGeneticData(kwargs['pk'])
-        resultado_seleccion = seleccion(data)
-        resultado_cruzamiento = cruzamiento(resultado_seleccion)
-        if len(resultado_cruzamiento) == 0:
-            messages.add_message(request, messages.ERROR, 'El resultado del cruzamiento vino vacio')
-            return redirect('proyecto_administrar', kwargs['pk'], active_tab)
+        project_pk = kwargs['pk']
+        dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
+        nindividuos = dataGenetica.nindividuos
+        npoblacion = dataGenetica.npoblacion
+        B =  dataGenetica.beta
 
-        resultado_mutacion = mutacion(resultado_cruzamiento)
+        geneticData = getGeneticData(project_pk, nindividuos)
+        matrizBinarios = geneticData[0]
+        matrizDiametros = geneticData[1]
+        matrizCostos = geneticData[2]
+        K = geneticData[3]
+        data_genetico = geneticData[4]
 
-        print(resultado_mutacion)
+        projectData = getProjectData(project_pk)
+
+        matrizBinariosFromMutacion = []
+        for i in range(npoblacion):
+            if len(matrizBinariosFromMutacion) == 0:
+                resultado_FO = calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
+            else:
+                matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
+                matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
+                resultado_FO = calculoFO(project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
+
+            resultado_seleccion = seleccion(resultado_FO)
+            resultado_cruzamiento = cruzamiento(resultado_seleccion)
+            resultado_mutacion = mutacion(resultado_cruzamiento)
+
+            arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
+            matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
+            print(matrizBinariosFromMutacion)
+            print(resultado_mutacion)
 
         context = {
-            'project_pk': kwargs['pk']
+            'project_pk': project_pk
         }
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
@@ -752,75 +754,6 @@ def getProjectData(pk):
 
 def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
-
-def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
-    ban = False
-    if(Re<=2200):
-        f = 64/Re
-    else:
-        Xi = 1/math.sqrt(fhijo)
-        ban = True
-        while(ban):
-            fx = -2*np.log10((rf_D/3.7)+((2.51*Xi)/Re))
-            dividendo = 2.51/Re
-            divisor = ((rf_D/3.7)) + (( 2.51*Xi ) / Re )
-            Fx = ( -2/np.log(10) ) * (dividendo/divisor)
-            Xi_1 = Xi - (fx-Xi)/(Fx-1)
-            compare = abs(Xi_1-Xi)
-            if(compare<=error):
-                f = 1/pow(Xi,2)
-                ban = False
-            else:
-                Xi = Xi_1
-    return f
-
-def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af):
-        V = np.round(V, 4)
-        A = np.round(A, 4)
-        Qx = np.round(Qx, 4)
-        hf = np.round(hf, 4)
-        Km = np.round(Km, 4)
-        hm = np.round(hm, 4)
-        hfhm = np.round(hfhm, 4)
-        a = np.round(a, 4)
-        af = np.round(af, 4)
-        f = np.round(f,4)
-        tabla = []
-        for i in range(0,ntuberias):
-            tabla.append({
-                'tuberia': "{}-{}".format(tuberias[i]['start'],tuberias[i]['end']),
-                'Qx':Qx[i], 
-                'Lx': Lx[i], 
-                'Dx': Dx[i],
-                'A': A[i], 
-                'V': V[i],
-                'Re': Re[i],  
-                'f': f[i], 
-                'hf': hf[i], 
-                'Km': Km[i], 
-                'hm': hm[i], 
-                'hfhm': hfhm[i], 
-                'a': a[i],   
-                'af': af[i]
-            })
-        return tabla
-
-def infToZeros(arreglo):
-    dimension = arreglo.shape
-    for i in range(0, dimension[0]):
-        for j in range(0, dimension[1]):
-            if(arreglo[i,j] == inf):
-                arreglo[i,j] = 0
-    return arreglo
-
-def validateError(Error):
-    flag = False
-    dimension = Error.shape
-    for i in range(0, dimension[0]):
-        for j in range(0, dimension[1]):
-            if(Error[i,j] > 0.001):
-                flag = True
-    return flag
 
 def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
     data = getProjectData(pk)
