@@ -115,8 +115,12 @@ def getGeneticData(project_pk, nindividuos):
 
     ntuberias = len(tuberias)
     ndiametros = len(data_genetico)
-
-    matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
+    matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
+                                ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
+                                ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
+                                ['10', '11', '01', '11' ,'00' ,'01', '00' ,'11', '10', '00', '01'],
+                                ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
+    #matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
 
@@ -141,7 +145,7 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
     #print(Lx)
     #print(matrizCostos) round
     for i in range(nindividuos):
-        print("{} %".format(np.round(((i+1)/nindividuos)*100),1))
+        #print("{} %".format(np.round(((i+1)/nindividuos)*100),1))
         calculos = calculosGradiente(1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
         data_maxima = None
         iteracion_maxima = 1
@@ -202,12 +206,12 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
             #'costos': matrizCostos[i],
             #'individuo': i
         })
-        print("FO individuo {}".format(i+1))
+        #print("FO individuo {}".format(i+1))
     return [bubbleSort(result, 'FO')]
 
 def seleccion(data):
     d = data[0]
-    Nc = 10
+    Nc = 5
     B = 1.8
 
     Pmax = B/Nc
@@ -305,9 +309,17 @@ def mutacion(hijosCruzamiento):
                 arrBinarios[a] = '0' 
    
             hijosCruzamiento[0]['binarios'] = concatArr(arrBinarios)  
-            
 
     return hijosCruzamiento
+
+def validate_result_fo(fo, pos, k):
+    print("validacion: ", fo[pos]['FO'] - fo[0]['FO'], "  K:", k)
+    if((fo[pos]['FO'] - fo[0]['FO']) <= k):
+        return True
+    else:
+        return False
+
+
 
 class GeneticView(generic.View):
     template_name = "sections/calculos/genetico.html"
@@ -317,8 +329,11 @@ class GeneticView(generic.View):
         project_pk = kwargs['pk']
         dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
         nindividuos = dataGenetica.nindividuos
+
+        pos = int(np.round(nindividuos*0.8,0))-1
+
         npoblacion = dataGenetica.npoblacion
-        B =  dataGenetica.beta
+        B = dataGenetica.beta
 
         geneticData = getGeneticData(project_pk, nindividuos)
         matrizBinarios = geneticData[0]
@@ -330,7 +345,10 @@ class GeneticView(generic.View):
         projectData = getProjectData(project_pk)
 
         matrizBinariosFromMutacion = []
+
         for i in range(npoblacion):
+
+            print("Poblacion {}".format(i))
             if len(matrizBinariosFromMutacion) == 0:
                 resultado_FO = calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
             else:
@@ -344,8 +362,17 @@ class GeneticView(generic.View):
 
             arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
             matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
+
+            print("FO")
+            print(resultado_FO)
+            print("Seleccion")
+            print(resultado_seleccion)
+            print("cruzamiento")
+            print(resultado_cruzamiento)
+            print("mutacion")
             print(matrizBinariosFromMutacion)
-            print(resultado_mutacion)
+            if(validate_result_fo(resultado_FO[0], pos, K)):
+                print("menor")
 
         context = {
             'project_pk': project_pk
