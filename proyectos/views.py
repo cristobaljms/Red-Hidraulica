@@ -34,6 +34,7 @@ import copy
 
 BIN_LIST_2 = ['00', '01', '10', '11']
 BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
+ITERACION_MAX = 2
 
 def getMatrizBinarios(nindividuos, ntuberias, l):
     matriz = []
@@ -115,18 +116,18 @@ def getGeneticData(project_pk, nindividuos):
 
     ntuberias = len(tuberias)
     ndiametros = len(data_genetico)
-    matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
-                                ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
-                                ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
-                                ['10', '11', '01', '11' ,'00' ,'01', '00' ,'11', '10', '00', '01'],
-                                ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
-    #matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
+    # matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
+    #                             ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
+    #                             ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
+    #                             ['10', '11', '01', '11' ,'00' ,'01', '00' ,'11', '10', '00', '01'],
+    #                             ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
+    matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
 
     return [matrizBinarios, matrizDiametros, matrizCostos, K, data_genetico]
 
-def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos):
+def calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos):
     result = []
     
     ntuberias = len(projectData['tuberias'])
@@ -141,12 +142,9 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
     for t in projectData['tuberias']:
         array_longitud.append(t['longitud'])
     Lx = np.array(array_longitud)
-    #print("Lx")
-    #print(Lx)
-    #print(matrizCostos) round
+
     for i in range(nindividuos):
-        #print("{} %".format(np.round(((i+1)/nindividuos)*100),1))
-        calculos = calculosGradiente(1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
+        calculos = calculosGradiente(request, 1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
         data_maxima = None
         iteracion_maxima = 1
         for c in calculos:
@@ -158,8 +156,6 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
         Cc = 0
         for j in range(ntuberias):
             Cc += matrizCostos[i,j]*Lx[j]
-        #print("\nCc")
-        #print(Cc)
 
         # Calculo de Cph
         cont = 0
@@ -180,39 +176,26 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
                 Cph = AP
         Cph *= K
 
-        #print("\nCph")
-        #print (Cph)
-
         #Calculo de Cv
         Cv = 0
         for t in range(ntuberias):
             Vmin = 0.3
             Vtubo = data_maxima['tabla'][t]['V']
             AV = Vmin - Vtubo
-            #print(Vmin, Vtubo, AV)
             if AV <= 0:
                 AV = 0
             else:
                 Cv += AV
         Cv*=K
 
-        #print("\nCV")
-        #print(Cv)
         FO = Cc + Cph + Cv
         result.append({
             'FO':FO,
-            #'diametros': matrizDiametros[i],
             'binarios': concatArr(matrizBinarios[i].tolist()[0]),
-            #'costos': matrizCostos[i],
-            #'individuo': i
         })
-        #print("FO individuo {}".format(i+1))
-    return [bubbleSort(result, 'FO')]
+    return bubbleSort(result, 'FO')
 
-def seleccion(data):
-    d = data[0]
-    Nc = 5
-    B = 1.8
+def seleccion(FO, Nc, B):
 
     Pmax = B/Nc
     Pmin = (2-B)/Nc
@@ -223,10 +206,10 @@ def seleccion(data):
         Pi = Pmin + ( Pmax - Pmin ) * ((Nc - i)/(Nc - 1))
         PiN = Pi * Nc
         if PiN >= 1.5:
-            arrProbabilidad.append(d[i])
-            arrProbabilidad.append(d[i])
+            arrProbabilidad.append(FO[i])
+            arrProbabilidad.append(FO[i])
         elif PiN >= 0.5:
-            arrProbabilidad.append(d[i])
+            arrProbabilidad.append(FO[i])
 
     arrPadresCruzamiento = []
 
@@ -261,10 +244,9 @@ def cruzamiento(data):
     arrProbabilidad = data[1]
 
     arrHijosCruzamiento = []
-
     for aIP in arrIndexPadres:
         if aIP['b'] == -1:
-            arrHijosCruzamiento.append(arrProbabilidad[aIP['a']])
+            arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
         else:
             binA = arrProbabilidad[aIP['a']-1]['binarios']
             binB = arrProbabilidad[aIP['b']-1]['binarios']
@@ -291,8 +273,7 @@ def cruzamiento(data):
 def mutacion(hijosCruzamiento):
     Lc = len(hijosCruzamiento[0]['binarios'])
     Pm = 1/Lc
-    
-    #print(Pm)
+
     listado_mutacion = []
     for d in hijosCruzamiento:
         a = random.uniform(0.0001, 1)
@@ -312,15 +293,6 @@ def mutacion(hijosCruzamiento):
 
     return hijosCruzamiento
 
-def validate_result_fo(fo, pos, k):
-    print("validacion: ", fo[pos]['FO'] - fo[0]['FO'], "  K:", k)
-    if((fo[pos]['FO'] - fo[0]['FO']) <= k):
-        return True
-    else:
-        return False
-
-
-
 class GeneticView(generic.View):
     template_name = "sections/calculos/genetico.html"
 
@@ -339,6 +311,12 @@ class GeneticView(generic.View):
         matrizBinarios = geneticData[0]
         matrizDiametros = geneticData[1]
         matrizCostos = geneticData[2]
+        # print("Matriz binarios")
+        # print(matrizBinarios)
+        # print("Matriz diametros")
+        # print(matrizDiametros)
+        # print("Matriz costos")
+        # print(matrizCostos)
         K = geneticData[3]
         data_genetico = geneticData[4]
 
@@ -347,16 +325,14 @@ class GeneticView(generic.View):
         matrizBinariosFromMutacion = []
 
         for i in range(npoblacion):
-
-            print("Poblacion {}".format(i))
             if len(matrizBinariosFromMutacion) == 0:
-                resultado_FO = calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
+                resultado_FO = calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
             else:
                 matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
                 matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
-                resultado_FO = calculoFO(project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
+                resultado_FO = calculoFO(request, project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
 
-            resultado_seleccion = seleccion(resultado_FO)
+            resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
             resultado_cruzamiento = cruzamiento(resultado_seleccion)
             resultado_mutacion = mutacion(resultado_cruzamiento)
 
@@ -364,15 +340,16 @@ class GeneticView(generic.View):
             matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
 
             print("FO")
-            print(resultado_FO)
-            print("Seleccion")
+            for f in resultado_FO:
+                print("Binario: {} FO: {}".format(str(f['binarios']), str(f['FO'])))
+
             print(resultado_seleccion)
             print("cruzamiento")
             print(resultado_cruzamiento)
             print("mutacion")
             print(matrizBinariosFromMutacion)
-            if(validate_result_fo(resultado_FO[0], pos, K)):
-                print("menor")
+            # if(validate_result_fo(resultado_FO[0], pos, K)):
+            #     print("menor")
 
         context = {
             'project_pk': project_pk
@@ -389,7 +366,6 @@ class ProyectoAdminView(generic.CreateView):
         tuberias = Tuberia.objects.filter(proyecto=proyecto).order_by('orden')
         reservorios = Reservorio.objects.filter(proyecto=proyecto)
         diametros = DiametrosGeneticos.objects.filter(proyecto=proyecto).order_by("diametro")
-        #data_genetico = FO(kwargs['pk'])
         sreservorios = json.loads(serialize("json", reservorios))
         snodos = json.loads(serialize("json", nodos))
         datagenetica = None
@@ -419,7 +395,6 @@ class ProyectoAdminView(generic.CreateView):
         torden = len(tuberias)
         norden = len(nodos)
         
-
         context = {
             'proyecto': proyecto,
             'nodos':nodos,
@@ -782,7 +757,12 @@ def getProjectData(pk):
 def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
 
-def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
+def calculosGradiente(request, iteracion, pk, Dx, Qx, H, A12, response):
+    if (iteracion > ITERACION_MAX):
+        active_tab = 'i'
+        messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
+        return redirect('proyecto_administrar', pk, active_tab)
+
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
     iteracionRow = { "iteracion": iteracion }
@@ -998,7 +978,7 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
         # Con los nuevos parametros
         if (validateError(error)):
             Qstep9 = np.squeeze(np.asarray(Qstep9))
-            return calculosGradiente(iteracion, pk, Dx, Qstep9, step10, A12, response)
+            return calculosGradiente(request, iteracion, pk, Dx, Qstep9, step10, A12, response)
         else:
             # Sino retornamos y finaliza el calculo
             return response
@@ -1006,7 +986,7 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
         # Esto solo ocurrira en la primera iteracion, donde no hay que calcular el error
         response.append(iteracionRow)
         Qstep9 = np.squeeze(np.asarray(Qstep9))
-        return calculosGradiente(iteracion, pk, Dx, Qstep9, step10, A12, response)
+        return calculosGradiente(request, iteracion, pk, Dx, Qstep9, step10, A12, response)
 
 class GradienteView(generic.View):
     template_name = "sections/calculos/gradiente.html"
@@ -1018,9 +998,8 @@ class GradienteView(generic.View):
         for nodo in data['nodos']:
             qx = qx + nodo['demanda']
         Qx = np.zeros(ntuberias) + (qx/ntuberias)
-        
         context = {
-            'data': calculosGradiente(1, kwargs['pk'], [],  Qx, [], [], []),
+            'data': calculosGradiente(request, 1, kwargs['pk'], [],  Qx, [], [], []),
             'project_pk': kwargs['pk']
         }
         #return JsonResponse(context, safe=False)
@@ -1036,7 +1015,7 @@ def GradienteToPDFView(request, pk):
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
 
-    calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
+    calculos = calculosGradiente(request, 1, pk, [], Qx, [], [], [])
 
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
@@ -1185,7 +1164,7 @@ def GradienteToExcelView(request, pk):
         qx = qx + nodo['demanda']
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
-    calculos = calculosGradiente(1, pk, Qx, [], [], [])
+    calculos = calculosGradiente(request, 1, pk, Qx, [], [], [])
 
     wb = Workbook()
     ws = wb.active

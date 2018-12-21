@@ -2,6 +2,7 @@ import math
 import numpy as np
 from numpy import inf
 
+
 def concatArr(arr):
     cad = ""
     for i in arr:
@@ -101,6 +102,7 @@ def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af
             })
         return tabla
 
+
 def handleArrMutacionToMatrizBinarios(arr, ndiametros):
     matriz = []
 
@@ -120,3 +122,11 @@ def handleArrMutacionToMatrizBinarios(arr, ndiametros):
         matriz.append(row)
 
     return np.matrix(matriz)    
+
+
+def validate_result_fo(fo, pos, k):
+    print("validacion: ", fo[pos]['FO'] - fo[0]['FO'], "  K:", k)
+    if((fo[pos]['FO'] - fo[0]['FO']) <= k):
+        return True
+    else:
+        return False
