@@ -34,7 +34,7 @@ import copy
 
 BIN_LIST_2 = ['00', '01', '10', '11']
 BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
-ITERACION_MAX = 2
+ITERACION_MAX = 100
 
 def getMatrizBinarios(nindividuos, ntuberias, l):
     matriz = []
@@ -144,7 +144,11 @@ def calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos
     Lx = np.array(array_longitud)
 
     for i in range(nindividuos):
-        calculos = calculosGradiente(request, 1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
+        calculos = calculosGradiente(1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
+
+        if calculos == "ERROR_MAX_LIMIT_ITERATION":
+            return calculos
+
         data_maxima = None
         iteracion_maxima = 1
         for c in calculos:
@@ -325,12 +329,18 @@ class GeneticView(generic.View):
         matrizBinariosFromMutacion = []
 
         for i in range(npoblacion):
+            print("poblacion {}".format(i+1))
             if len(matrizBinariosFromMutacion) == 0:
                 resultado_FO = calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
             else:
                 matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
                 matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
                 resultado_FO = calculoFO(request, project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
+
+            if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
+                active_tab = 'i'
+                messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
+                return redirect('proyecto_administrar', project_pk, active_tab)
 
             resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
             resultado_cruzamiento = cruzamiento(resultado_seleccion)
@@ -339,18 +349,10 @@ class GeneticView(generic.View):
             arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
             matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
 
-            print("FO")
-            for f in resultado_FO:
-                print("Binario: {} FO: {}".format(str(f['binarios']), str(f['FO'])))
+            if(validate_result_fo(resultado_FO, pos, K)):
+                break
 
-            print(resultado_seleccion)
-            print("cruzamiento")
-            print(resultado_cruzamiento)
-            print("mutacion")
-            print(matrizBinariosFromMutacion)
-            # if(validate_result_fo(resultado_FO[0], pos, K)):
-            #     print("menor")
-
+        print("culminado")
         context = {
             'project_pk': project_pk
         }
@@ -757,11 +759,9 @@ def getProjectData(pk):
 def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
 
-def calculosGradiente(request, iteracion, pk, Dx, Qx, H, A12, response):
+def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
     if (iteracion > ITERACION_MAX):
-        active_tab = 'i'
-        messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
-        return redirect('proyecto_administrar', pk, active_tab)
+        return "ERROR_MAX_LIMIT_ITERATION"
 
     data = getProjectData(pk)
     proyecto = Proyecto.objects.get(pk=pk)
@@ -803,7 +803,6 @@ def calculosGradiente(request, iteracion, pk, Dx, Qx, H, A12, response):
         if (Qx[i] < 0):
             Qx[i] = Qx[i] * -1
 
-    
     # Calculamos el Area
     A = (np.pi*np.power(Dx,2))/4
 
@@ -978,7 +977,7 @@ def calculosGradiente(request, iteracion, pk, Dx, Qx, H, A12, response):
         # Con los nuevos parametros
         if (validateError(error)):
             Qstep9 = np.squeeze(np.asarray(Qstep9))
-            return calculosGradiente(request, iteracion, pk, Dx, Qstep9, step10, A12, response)
+            return calculosGradiente(iteracion, pk, Dx, Qstep9, step10, A12, response)
         else:
             # Sino retornamos y finaliza el calculo
             return response
@@ -986,7 +985,7 @@ def calculosGradiente(request, iteracion, pk, Dx, Qx, H, A12, response):
         # Esto solo ocurrira en la primera iteracion, donde no hay que calcular el error
         response.append(iteracionRow)
         Qstep9 = np.squeeze(np.asarray(Qstep9))
-        return calculosGradiente(request, iteracion, pk, Dx, Qstep9, step10, A12, response)
+        return calculosGradiente(iteracion, pk, Dx, Qstep9, step10, A12, response)
 
 class GradienteView(generic.View):
     template_name = "sections/calculos/gradiente.html"
@@ -998,8 +997,11 @@ class GradienteView(generic.View):
         for nodo in data['nodos']:
             qx = qx + nodo['demanda']
         Qx = np.zeros(ntuberias) + (qx/ntuberias)
+
+        calculos = calculosGradiente(1, kwargs['pk'], [],  Qx, [], [], [])
+
         context = {
-            'data': calculosGradiente(request, 1, kwargs['pk'], [],  Qx, [], [], []),
+            'data': calculos,
             'project_pk': kwargs['pk']
         }
         #return JsonResponse(context, safe=False)
@@ -1015,7 +1017,12 @@ def GradienteToPDFView(request, pk):
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
 
-    calculos = calculosGradiente(request, 1, pk, [], Qx, [], [], [])
+    calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
+
+    if calculos == "ERROR_MAX_LIMIT_ITERATION":
+        active_tab = 'i'
+        messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
+        return redirect('proyecto_administrar', pk, active_tab)
 
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
@@ -1164,7 +1171,13 @@ def GradienteToExcelView(request, pk):
         qx = qx + nodo['demanda']
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
-    calculos = calculosGradiente(request, 1, pk, Qx, [], [], [])
+    
+    calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
+    
+    if calculos == "ERROR_MAX_LIMIT_ITERATION":
+        active_tab = 'i'
+        messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
+        return redirect('proyecto_administrar', pk, active_tab)
 
     wb = Workbook()
     ws = wb.active
