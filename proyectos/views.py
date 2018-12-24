@@ -297,64 +297,57 @@ def mutacion(hijosCruzamiento):
 
     return hijosCruzamiento
 
+def calculosGenetico(request, project_pk):
+    active_tab = 'g'
+    dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
+    nindividuos = dataGenetica.nindividuos
+
+    pos = int(np.round(nindividuos*0.8,0))-1
+
+    npoblacion = dataGenetica.npoblacion
+    B = dataGenetica.beta
+
+    geneticData = getGeneticData(project_pk, nindividuos)
+    matrizBinarios = geneticData[0]
+    matrizDiametros = geneticData[1]
+    matrizCostos = geneticData[2]
+
+    K = geneticData[3]
+    data_genetico = geneticData[4]
+    projectData = getProjectData(project_pk)
+    matrizBinariosFromMutacion = []
+    result = []
+    for i in range(npoblacion):
+        print("poblacion {}".format(i+1))
+        if len(matrizBinariosFromMutacion) == 0:
+            resultado_FO = calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
+        else:
+            matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
+            matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
+            resultado_FO = calculoFO(request, project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
+        if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
+            active_tab = 'i'
+            messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
+            return redirect('proyecto_administrar', project_pk, active_tab)
+        result.append({i:resultado_FO})
+        resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
+        resultado_cruzamiento = cruzamiento(resultado_seleccion)
+        resultado_mutacion = mutacion(resultado_cruzamiento)
+        arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
+        matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
+        if(validate_result_fo(resultado_FO, pos, K)):
+            break
+    return result
+
 class GeneticView(generic.View):
     template_name = "sections/calculos/genetico.html"
 
+    
     def get(self, request, *args, **kwargs):
-        active_tab = 'g'
-        project_pk = kwargs['pk']
-        dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
-        nindividuos = dataGenetica.nindividuos
-
-        pos = int(np.round(nindividuos*0.8,0))-1
-
-        npoblacion = dataGenetica.npoblacion
-        B = dataGenetica.beta
-
-        geneticData = getGeneticData(project_pk, nindividuos)
-        matrizBinarios = geneticData[0]
-        matrizDiametros = geneticData[1]
-        matrizCostos = geneticData[2]
-        # print("Matriz binarios")
-        # print(matrizBinarios)
-        # print("Matriz diametros")
-        # print(matrizDiametros)
-        # print("Matriz costos")
-        # print(matrizCostos)
-        K = geneticData[3]
-        data_genetico = geneticData[4]
-
-        projectData = getProjectData(project_pk)
-
-        matrizBinariosFromMutacion = []
-
-        for i in range(npoblacion):
-            print("poblacion {}".format(i+1))
-            if len(matrizBinariosFromMutacion) == 0:
-                resultado_FO = calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
-            else:
-                matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
-                matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
-                resultado_FO = calculoFO(request, project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
-
-            if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
-                active_tab = 'i'
-                messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
-                return redirect('proyecto_administrar', project_pk, active_tab)
-
-            resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
-            resultado_cruzamiento = cruzamiento(resultado_seleccion)
-            resultado_mutacion = mutacion(resultado_cruzamiento)
-
-            arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
-            matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
-
-            if(validate_result_fo(resultado_FO, pos, K)):
-                break
-
-        print("culminado")
+        result = calculosGenetico(request, kwargs['pk'])
+        print(result)
         context = {
-            'project_pk': project_pk
+            'project_pk': kwargs['pk']
         }
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
