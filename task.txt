@@ -1,2 +1,0 @@
-1) colocar un limite de iteraciones a la funcion de recursividad del calculo de la gradiente a un maximo de 100 iteraciones.
-2) Ingresar el numero de tuberias al calculo del algoritmo genetico
