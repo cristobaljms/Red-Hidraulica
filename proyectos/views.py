@@ -72,6 +72,9 @@ def getMatrizCostos(matrizBinarios, data_genetico):
 def getGeneticData(project_pk, nindividuos):
     diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by('diametro')
     
+    if len(diametros) == 0:
+        return "NOT_LOAD_GENETIC_DIAMETER"
+
     data_genetico = []
     for dg in diametros:
         data_genetico.append({
@@ -127,7 +130,7 @@ def getGeneticData(project_pk, nindividuos):
 
     return [matrizBinarios, matrizDiametros, matrizCostos, K, data_genetico]
 
-def calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos):
+def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos):
     result = []
     
     ntuberias = len(projectData['tuberias'])
@@ -147,7 +150,7 @@ def calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos
         calculos = calculosGradiente(1, project_pk, matrizDiametros[i] ,Qx, [], [], [])
 
         if calculos == "ERROR_MAX_LIMIT_ITERATION":
-            return calculos
+            return "ERROR_MAX_LIMIT_ITERATION"
 
         data_maxima = None
         iteracion_maxima = 1
@@ -296,10 +299,16 @@ def mutacion(hijosCruzamiento):
             hijosCruzamiento[0]['binarios'] = concatArr(arrBinarios)  
 
     return hijosCruzamiento
+from celery import task, shared_task, current_task
 
-def calculosGenetico(request, project_pk):
-    active_tab = 'g'
-    dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
+@shared_task
+def calculosGenetico(project_pk):
+
+    try:
+        dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
+    except DatosGeneticos.DoesNotExist:
+        return "NO_GENETIC_DATA_LOAD"
+
     nindividuos = dataGenetica.nindividuos
 
     pos = int(np.round(nindividuos*0.8,0))-1
@@ -308,6 +317,9 @@ def calculosGenetico(request, project_pk):
     B = dataGenetica.beta
 
     geneticData = getGeneticData(project_pk, nindividuos)
+    if geneticData == "NOT_LOAD_GENETIC_DIAMETER":
+        return "NOT_LOAD_GENETIC_DIAMETER"
+
     matrizBinarios = geneticData[0]
     matrizDiametros = geneticData[1]
     matrizCostos = geneticData[2]
@@ -318,18 +330,19 @@ def calculosGenetico(request, project_pk):
     matrizBinariosFromMutacion = []
     result = []
     for i in range(npoblacion):
-        print("poblacion {}".format(i+1))
+        process_percent = int(100 * float(i) / float(npoblacion))
+        current_task.update_state(state='PROGRESS', meta={'current': i,'total':npoblacion, 'percent':process_percent})
         if len(matrizBinariosFromMutacion) == 0:
-            resultado_FO = calculoFO(request, project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
+            resultado_FO = calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos)
         else:
             matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
             matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
-            resultado_FO = calculoFO(request, project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
+            resultado_FO = calculoFO(project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos)
+        
         if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
-            active_tab = 'i'
-            messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
-            return redirect('proyecto_administrar', project_pk, active_tab)
-        result.append({i:resultado_FO})
+            return "ERROR_MAX_LIMIT_ITERATION"
+
+        result.append(resultado_FO)
         resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
         resultado_cruzamiento = cruzamiento(resultado_seleccion)
         resultado_mutacion = mutacion(resultado_cruzamiento)
@@ -339,17 +352,169 @@ def calculosGenetico(request, project_pk):
             break
     return result
 
+def GeneticoToPDFView(request):
+    # data = getProjectData(pk)
+    # ntuberias = len(data['tuberias'])
+    
+    # qx = 0
+    # for nodo in data['nodos']:
+    #     qx = qx + nodo['demanda']
+
+    # Qx = np.zeros(ntuberias) + (qx/ntuberias)
+
+    # calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
+
+    # if calculos == "ERROR_MAX_LIMIT_ITERATION":
+    #     active_tab = 'i'
+    #     messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
+    #     return redirect('proyecto_administrar', pk, active_tab)
+
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
+    Story = []
+
+    ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 14, fontName="Times-Roman")
+    ps_iteracion = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 12, fontName="Times-Roman")
+    ps_tabla = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
+
+    text = "<b>ALGORITMO GENETICO</b>"
+    p = Paragraph(text, ps_head)
+    Story.append(p)
+    Story.append(Spacer(1,0.5*inch))
+
+    # titles = [
+    #     Paragraph('<b>Tuberia</b>', ps_tabla),
+    #     Paragraph('<b>Caudal</b>', ps_tabla),
+    #     Paragraph('<b>Longitud</b>', ps_tabla),
+    #     Paragraph('<b>Diametro</b>', ps_tabla),
+    #     Paragraph('<b>Area</b>', ps_tabla),
+    #     Paragraph('<b>Velocidad</b>', ps_tabla),
+    #     Paragraph('<b>f</b>', ps_tabla),
+    #     Paragraph('<b>Km</b>', ps_tabla),
+    #     Paragraph('<b>hf+hm</b>', ps_tabla),
+    #     Paragraph('<b>a</b>', ps_tabla),
+    #     Paragraph('<b>a*Qx</b>', ps_tabla)
+    # ]
+    
+    # for iteracion in calculos:
+    #     text = "<b>Iteracion {}</b>".format(iteracion['iteracion'])
+    #     p = Paragraph(text, ps_iteracion)
+    #     Story.append(p)
+    #     Story.append(Spacer(1,0.2*inch))
+
+    #     table_formatted = [titles]
+    #     for i in iteracion['tabla']:
+    #         tuberia = i['tuberia']
+    #         Qx = i['Qx']
+    #         Lx = i['Lx']
+    #         Dx = i['Dx']
+    #         A = i['A']
+    #         V = i['V']
+    #         Re = i['Re']
+    #         f = i['f']
+    #         hf = i['hf']
+    #         Km = i['Km']
+    #         hm = i['hm']
+    #         hfhm = i['hfhm']
+    #         a = i['a']
+    #         af = i['af']
+    #         row = [ tuberia, Qx, Lx, Dx, A, V, f, Km, hfhm, a, af ]
+    #         table_formatted.append(row)
+
+    #     t=Table(table_formatted, (60,40,60,60,60,60,50,40,100,100,80))
+
+    #     t.setStyle(TableStyle([
+    #         ('BACKGROUND',(0,0),(13,0),'#878787'),
+    #         ('INNERGRID',(0,0),(13,0), 0.25, colors.gray),
+    #         ('BOX',(0,0),(13,0), 0.25, colors.gray)
+    #     ]))
+
+    #     Story.append(t)
+    #     Story.append(Spacer(1,0.2*inch))
+
+    #     THtitles = [ 
+    #         Paragraph('H', ps_tabla)
+    #     ]
+    #     table_formatted = [THtitles]
+    #     for value in iteracion['H']:
+    #         table_formatted.append([value])
+
+    #     t=Table(table_formatted, (40))
+    #     t.setStyle(TableStyle([
+    #         ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
+    #         ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
+    #         ('BOX',(0,0),(1,0), 0.25, colors.gray)
+    #     ]))
+    #     Story.append(t)
+    #     Story.append(Spacer(1,0.2*inch))
+
+    #     TQxtitles = [ 
+    #         Paragraph('Qx', ps_tabla)
+    #     ]
+
+    #     table_formatted = [TQxtitles]
+    #     for value in iteracion['Qx']:
+    #         table_formatted.append([value])
+
+    #     t=Table(table_formatted, (40))
+    #     t.setStyle(TableStyle([
+    #         ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
+    #         ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
+    #         ('BOX',(0,0),(1,0), 0.25, colors.gray)
+    #     ]))
+    #     Story.append(t)
+    #     Story.append(Spacer(1,0.2*inch))
+
+
+    #     TErrortitles = [ 
+    #         Paragraph('Error', ps_tabla)
+    #     ]
+
+    #     table_formatted = [TErrortitles]
+
+    #     if 'error' in iteracion:
+    #         for value in iteracion['error']:
+    #             table_formatted.append([value])
+
+    #         t=Table(table_formatted, (40))
+    #         t.setStyle(TableStyle([
+    #             ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
+    #             ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
+    #             ('BOX',(0,0),(1,0), 0.25, colors.gray)
+    #         ]))
+    #         Story.append(t)
+    #         Story.append(Spacer(1,0.2*inch))
+
+    #     #table_formatted = [titles]
+    #     frameCount = 2
+    #     frames = []
+    #     #construct a frame for each column
+    #     for frame in range(frameCount):
+    #         column = Frame(100, 50, 50, 50)
+    #         frames.append(column)
+
+    #     #Story.append(frames)
+    #     Story.append(Spacer(1,0.2*inch))
+
+    # proyecto = Proyecto.objects.get(pk=pk)
+
+    doc.build(Story)
+    pdf_value = pdf_buffer.getvalue()
+    pdf_buffer.close()
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="gradientmethod.pdf"'
+    response.write(pdf_value)
+    return response
+
 class GeneticView(generic.View):
     template_name = "sections/calculos/genetico.html"
 
-    
     def get(self, request, *args, **kwargs):
-        result = calculosGenetico(request, kwargs['pk'])
-        print(result)
+        task_id = calculosGenetico.delay(kwargs['pk'])
         context = {
-            'project_pk': kwargs['pk']
+            'project_pk': kwargs['pk'],
+            'task_id':task_id.id
         }
-        #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
 
 class ProyectoAdminView(generic.CreateView):

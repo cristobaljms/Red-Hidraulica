@@ -1,0 +1,17 @@
+.progress{
+    border:.05rem solid rgb(240, 5, 5);
+    box-sizing:content-box;
+    width:100%;
+    position:relative
+}
+.progress,.progress__bar{
+    display:block;height:.8rem
+}
+.progress__bar{
+    background-color:rgb(240, 5, 5);
+    width:0;
+    transition:width .1s ease
+}
+.progress_streampercent:after{content:attr(data-progress) "%"}
+.progress_streampercent:after,.progress_streamtext:after{font-size:.8rem;color:#000;left:50%;position:absolute;top:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%)}
+.progress_streamtext:after{content:attr(data-progresstext)}

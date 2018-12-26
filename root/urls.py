@@ -2,10 +2,11 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import  login
-from proyectos.views import GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
+from proyectos.views import GeneticoToPDFView, GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
 from materiales.views import MaterialesListView, MaterialesCreateView, MaterialesUpdateView, MaterialesDeleteView
 from fluidos.views import FluidosListView, FluidosCreateView, FluidosUpdateView, FluidosDeleteView
 from django.contrib.auth.decorators import login_required
+from proyectos.utils import poll_state
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,6 +26,7 @@ urlpatterns = [
     path('calculos/gradiente/<int:pk>/', login_required(GradienteView.as_view(), login_url='/login/'), name='calculo_gradiente'),
     path('calculos/genetico/<int:pk>/', login_required(GeneticView.as_view(), login_url='/login/'), name='calculo_genetico'),
     path('reporte/pdf/gradiente/<int:pk>/', login_required(GradienteToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
+    path('reporte/pdf/genetico/', login_required(GeneticoToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
     path('reporte/excel/gradiente/<int:pk>/', login_required(GradienteToExcelView, login_url='/login/'), name='reporte_excel_gradiente'),
     path('materiales/', login_required(MaterialesListView.as_view(), login_url='/login/'), name='materiales'),
     path('materiales/crear/', login_required(MaterialesCreateView.as_view(), login_url='/login/'), name='materiales_crear'),
@@ -35,5 +37,6 @@ urlpatterns = [
     path('fluidos/editar/<int:pk>/', login_required(FluidosUpdateView.as_view(), login_url='/login/'), name='fluidos_editar'),
     path('fluidos/eliminar/<int:pk>/', login_required(FluidosDeleteView.as_view(), login_url='/login/'), name='fluidos_eliminar'),
     path('login/', LoginView.as_view(template_name='users/login.html'), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout')
+    path('logout/', LogoutView.as_view(), name='logout'),
+    path('poll_state/', poll_state, name='poll_state')
 ]

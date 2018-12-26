@@ -3,66 +3,21 @@
   <head>
     <title>Metodo Gradiente</title>
     {% include 'layouts/header.html' %}
-    <style>
-      .progress {
-       width:50%;
-       background:yellow;
-      }
-      .bar {
-       height:15px;
-       width:0%;
-       background:tomato;
-       text-align:right;
-      }
-     </style>
   </head>
   <body>
-
-    <div class="status"></div>
-      {% if task_id %}
-      <div class="progress">
-        <div class="bar"></div>
-      </div>
-      {% endif %}
-    </div>
-    <input id="returnBtn" type=button value="Previous Page" style="visibility:hidden; margin-top:10px;"onClick="javascript:history.go(-1);">
-    
-    <div style="visibility:hidden" id="container" class="container">
+    <div id="container" class="container">
       <b><h1 style="text-align: center;">ALGORITMO GENETICO</h1></b>
+      <br>
+      <h3>Se estan realizando los calculos, esta operación puede tardar varios minutos. Por favor espere...</h3>
+      <div id="pgb"></div>
+      <br>
+      <h1 id="status"></h1>
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
             <div class="btn-group-sm hidden" id="mini-fab">
               <a
-                href="#"
-                class="btn btn-info btn-fab"
-                data-toggle="tooltip"
-                data-placement="left"
-                data-original-title="PDF"
-                title=""
-                id="autre"
-              >
-                <img
-                  style="width:24px;height:24px"
-                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAH0SURBVFhH7ZdNS0JBFIb9bwoF0qKMyCgIwkWRqwJBBEkIgqBNtK8/YBREizaChllplklZloso+1QQLDP1jTOcjVAwdc+4ug8cuHOGO/MwH3fmOmxMkXQ6IRWp/v4ENysHNSwBtZPxejvikpKCzXRaXlJSEIWCvKS0oLikCUFRSVOCYpImBUUkTQtSWJKUFNQJ7lYfeqlX2ILE9eIi0iMjaJTLnNHHuODH/b3q5G5jA0+7u5zVx7hg4+FBdVJaXcVbIsFZfYwLdr6+cNDXh5OJCdRvbzmrj3FB4iIQwOHAADrtNmf06Yng4/Y2crOzXPobPREsra0h6XKhXipxRh/jgrQGjz0eFJeXUQiHOauPcUHaufm5ObQbDWTGxlBJJrlGD+OC534/3uJx9VxNpXA8PIxmpaLKOhgVJKHs1JQavVo+j3I0iqOhIbqlIDs5icz4OHIzM7hZWVEf9J8wJtisVnE2PY306CguQyF1krzGYqgXi2rTpNxuPG5t4WVvD1eRCC6CQX6zG3HBz+dnXC8t0f8u7tbX0Wm1uKYbmnaa/vz8PAoLCyhvbnJNN6KCtVwOR4ODakRo5Frv71zzOzT9tNN/Q1SQpJ52dnDq86Gyv89Za4gK0pFG1ypaV1KICprAFrSKLWgVW9Aq/xbsZXC3NsI4HN+SR91peiRN2QAAAABJRU5ErkJggg=="
-                />
-              </a>
-              <a
-                href="#"
-                class="btn btn-warning btn-fab"
-                data-toggle="tooltip"
-                data-placement="left"
-                data-original-title="EXCEL"
-                title=""
-                id="sms"
-              >
-                <img
-                  style="width:24px;height:24px"
-                  src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjBweCIgeT0iMHB4IgogICAgIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIKICAgICB2aWV3Qm94PSIwIDAgNDggNDgiCiAgICAgc3R5bGU9ImZpbGw6IzAwMDAwMDsiPjxnIGlkPSJzdXJmYWNlMSI+PHBhdGggc3R5bGU9IiBmaWxsOiM0Q0FGNTA7IiBkPSJNIDQxIDEwIEwgMjUgMTAgTCAyNSAzOCBMIDQxIDM4IEMgNDEuNTU0Njg4IDM4IDQyIDM3LjU1NDY4OCA0MiAzNyBMIDQyIDExIEMgNDIgMTAuNDQ1MzEzIDQxLjU1NDY4OCAxMCA0MSAxMCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAxNSBMIDM5IDE1IEwgMzkgMTggTCAzMiAxOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAyNSBMIDM5IDI1IEwgMzkgMjggTCAzMiAyOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAzMCBMIDM5IDMwIEwgMzkgMzMgTCAzMiAzMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAzMiAyMCBMIDM5IDIwIEwgMzkgMjMgTCAzMiAyMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAxNSBMIDMwIDE1IEwgMzAgMTggTCAyNSAxOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAyNSBMIDMwIDI1IEwgMzAgMjggTCAyNSAyOCBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAzMCBMIDMwIDMwIEwgMzAgMzMgTCAyNSAzMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAyNSAyMCBMIDMwIDIwIEwgMzAgMjMgTCAyNSAyMyBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojMkU3RDMyOyIgZD0iTSAyNyA0MiBMIDYgMzggTCA2IDEwIEwgMjcgNiBaICI+PC9wYXRoPjxwYXRoIHN0eWxlPSIgZmlsbDojRkZGRkZGOyIgZD0iTSAxOS4xMjg5MDYgMzEgTCAxNi43MTg3NSAyNi40Mzc1IEMgMTYuNjI1IDI2LjI2OTUzMSAxNi41MzEyNSAyNS45NTcwMzEgMTYuNDMzNTk0IDI1LjUgTCAxNi4zOTg0MzggMjUuNSBDIDE2LjM1MTU2MyAyNS43MTQ4NDQgMTYuMjQyMTg4IDI2LjA0Mjk2OSAxNi4wNzQyMTkgMjYuNDgwNDY5IEwgMTMuNjUyMzQ0IDMxIEwgOS44OTQ1MzEgMzEgTCAxNC4zNTU0NjkgMjQgTCAxMC4yNzM0MzggMTcgTCAxNC4xMDkzNzUgMTcgTCAxNi4xMTMyODEgMjEuMTk1MzEzIEMgMTYuMjY5NTMxIDIxLjUyNzM0NCAxNi40MDYyNSAyMS45MjE4NzUgMTYuNTMxMjUgMjIuMzc1IEwgMTYuNTcwMzEzIDIyLjM3NSBDIDE2LjY0ODQzOCAyMi4xMDU0NjkgMTYuNzk2ODc1IDIxLjY5NTMxMyAxNy4wMTE3MTkgMjEuMTU2MjUgTCAxOS4yMzgyODEgMTcgTCAyMi43NTM5MDYgMTcgTCAxOC41NTQ2ODggMjMuOTM3NSBMIDIyLjg2NzE4OCAzMC45OTYwOTQgTCAxOS4xMjg5MDYgMzAuOTk2MDk0IFogIj48L3BhdGg+PC9nPjwvc3ZnPg=="
-                />
-              </a>
-              <a
-                href="#"
+              href="{% url 'proyecto_administrar' project_pk 'i'%}"
                 class="btn btn-danger btn-fab"
                 data-toggle="tooltip"
                 data-placement="left"
@@ -94,125 +49,75 @@
     </div>
 
     {% include 'layouts/scripts.html' %}
+
     <script type="text/javascript">
-        var poll_xhr;
-   var willstop = 0;
-  (function(){
-    var poll = function(){
-      var json_dump = "{{ data }}";
-      var task_id = "{{task_id}}";
 
-      console.log(task_id);
-      poll_xhr = $.ajax({
-        url:'poll_state',
-        type: 'POST',
-        data: {
-            task_id: task_id,
-            csrfmiddlewaretoken: "{{csrf_token}}",
-        },
-        success: function(result) {
-                    if (result.process_percent == null || result.process_percent == undefined) {
-                        willstop = 1;
-                        document.getElementById("user-count").textContent="DONE";
-                        jQuery('.bar').css({'width': 100 + '%'});
-                        jQuery('.bar').html(100 + '%');
-                        document.getElementById('returnBtn').style.visibility = 'visible';
-
-                       } else {
-                         jQuery('.bar').css({'width': result.process_percent + '%'});
-                         jQuery('.bar').html(result.process_percent + '%');
-                         document.getElementById("user-count").textContent="PROCRESSING";
-                       };
+      var pgb = $('#pgb');
+      pgb.ariaProgressbar();
+  
+      var willstop = 0;
+      (function(){
+        var poll = function(){
+          var task_id = "{{task_id}}";
+          $.ajax({
+            url:'/poll_state/',
+            type: 'POST',
+            data: {
+                task_id: task_id,
+                csrfmiddlewaretoken: "{{csrf_token}}",
+            },
+            success: function(response) {
+              if (response.state == 'PENDING') {
+                document.getElementById("status").innerHTML = "Iniciando...";
+              }
+              else if (response.state == 'PROGRESS') {
+                pgb.ariaProgressbar('update', response.result.percent);
+                document.getElementById("status").innerHTML = "Población "+response.result.current+" de "+response.result.total+" - "+response.result.percent+"% Completado";
+              }
+              if(response.state == 'SUCCESS'){
+                willstop = 1
+                pgb.ariaProgressbar('update', 100);
+                
+                if(response.result == "NOT_LOAD_GENETIC_DIAMETER"){
+                  document.getElementById("status").innerHTML = "Error! No hay diametros cargados";
+                }
+                else if(response.result == "NO_GENETIC_DATA_LOAD"){
+                  document.getElementById("status").innerHTML = "Error! No hay data genetica cargada";
+                }
+                else if(response.result == "ERROR_MAX_LIMIT_ITERATION"){
+                  document.getElementById("status").innerHTML = "Error! se ha superado el limite de iteraciones que es 100, por favor revise que los datos cargados esten correctos";
+                }
+                else {
+                  document.getElementById("status").innerHTML = "¡Listo!";
+                  $.ajax({
+                    url:'/reporte/pdf/genetico/',
+                    type: 'POST',
+                    data: {
+                      data: response.result,
+                      csrfmiddlewaretoken: "{{csrf_token}}",
+                    },
+                    success: function(response) {
+                      window.open("data:application/pdf," + encodeURIComponent(response));
                     }
-      });
-    };
+                  });
+                }
+              }
+            },
+            error: function (data) {
+              document.getElementById("status").innerHTML = "Ha ocurrido un error!";
+              console.error(data)
+            }
+          });
+        };
 
-    var refreshIntervalId = setInterval(function() {
-      poll();
-      if(willstop == 1){
-        clearInterval(refreshIntervalId);
-      }
-    },500);
-
-
-  })();
-    //   {% if data %}
-    //   var data = "{{data}}"
-    //   {%for iteracion in data %}
-    //       var table = $('<table class="table table-bordered"></table>');
-    //       var theader = $('<thead><tr><th>Tuberia</th><th>Qx</th><th>Lx</th><th>Dx</th><th>A</th><th>V</th><th>f</th><th>hf</th><th>a</th><th>a*Qx</th></tr></thead>');
-    //       var tbody = $('<tbody></tbody>');
-    //       table.append(theader);
-    //     {% for row in iteracion.tabla %}
-    //       var tuberia = "{{row.tuberia}}";
-    //       var Qx = "{{row.Qx}}";
-    //       var Lx = "{{row.Lx}}";
-    //       var Dx = "{{row.Dx}}";
-    //       var A = "{{row.A}}";
-    //       var V = "{{row.V}}";
-    //       var f = "{{row.f}}";
-    //       var hf = "{{row.hf}}";
-    //       var a = "{{row.a}}";
-    //       var af = "{{row.af}}";
-    //       var row = $('<tr><td>'+tuberia+'</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
-    //       tbody.append(row)
-    //     {% endfor %}
-    //     table.append(tbody);
-
-    //     var div_row = $('<div class="row"></div>')
-    //     $('#container').append(div_row);
-    //     div_row.append($('<h2>Iteracion {{iteracion.iteracion}}</h2>'));
-    //     div_row.append(table);
-    //     var div_col_h = $('<div class="col-md-4"></div>')
-    //     var div_col_qx = $('<div class="col-md-4"></div>')
-    //     var div_col_terror = $('<div class="col-md-4"></div>')
-    //     div_row.append(div_col_h);
-    //     div_row.append(div_col_qx);
-    //     div_row.append(div_col_terror);
-
-    //     // tabla error
-    //     var table_error = $('<table class="table table-bordered"></table>');
-    //     var theader_error = $('<thead><tr><th>Error</th></tr></thead>');
-    //     var tbody_error = $('<tbody></tbody>');
-    //     table_error.append(theader_error);
-    //     table_error.append(tbody_error);
-    //     div_col_terror.append(table_error);
-
-    //     {%if iteracion.error%}
-    //       {% for e in iteracion.error %}
-    //         var row = $('<tr><td>{{e}}</td></tr>');
-    //         tbody_error.append(row)
-    //       {% endfor %}
-    //     {%endif%}
-
-    //     // tabla H
-    //     var table_H = $('<table class="table table-bordered"></table>');
-    //     var theader_H = $('<thead><tr><th>H</th></tr></thead>');
-    //     var tbody_H = $('<tbody></tbody>');
-    //     table_H.append(theader_H);
-    //     table_H.append(tbody_H);
-    //     div_col_h.append(table_H);
-
-    //     {% for h in iteracion.H %}
-    //       var row = $('<tr><td>{{h}}</td></tr>');
-    //       tbody_H.append(row)
-    //     {% endfor %}
-
-    //     // tabla Qx
-    //     var table_Qx = $('<table class="table table-bordered"></table>');
-    //     var theader_Qx = $('<thead><tr><th>Qx</th></tr></thead>');
-    //     var tbody_Qx = $('<tbody></tbody>');
-    //     table_Qx.append(theader_Qx);
-    //     table_Qx.append(tbody_Qx);
-    //     div_col_qx.append(table_Qx);
-
-    //     {% for qx in iteracion.Qx %}
-    //       var row = $('<tr><td>{{qx}}</td></tr>');
-    //       tbody_Qx.append(row)
-    //     {% endfor %}
-    //     $('#container').append( $('</div></br>'));
-    //   {%endfor%}
-    //   {% endif %}
+        var refreshIntervalId = setInterval(function() {
+          if(willstop == 0){
+            poll();
+          }else{
+            clearInterval(refreshIntervalId);
+          }
+        },1000);
+      })();
     </script>
   </body>
 </html>

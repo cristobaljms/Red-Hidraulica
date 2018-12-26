@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'celery_try.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'root.settings')
 
 from django.conf import settings
 from celery import Celery
 
-app = Celery('celery_try',
-             backend='amqp',
-             broker='amqp://guest@localhost//')
+# app = Celery('root',
+#              backend='redis',
+#              broker='redis://localhost:6379/0')
+app = Celery('root')
 
 # This reads, e.g., CELERY_ACCEPT_CONTENT = ['json'] from settings.py:
 app.config_from_object('django.conf:settings')

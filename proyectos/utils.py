@@ -1,7 +1,9 @@
 import math
+import json
 import numpy as np
 from numpy import inf
-
+from django.http import HttpResponse
+from celery.result import AsyncResult
 
 def concatArr(arr):
     cad = ""
@@ -133,30 +135,16 @@ def validate_result_fo(fo, pos, k):
         return False
 
 
-from celery import task, shared_task,current_task
-@shared_task
-def do_work():
-    for i in range(n):
-        if(i%30 == 0):
-            process_percent = int(100 * float(i) / float(n))
-            current_task.update_state(state='PROGRESS',
-            meta={'process_percent': process_percent})
-        return random.random()
-
-from celery.result import AsyncResult
 # Create your views here.
 def poll_state(request):
     """ A view to report the progress to the user """
-    data = 'Fail'
+
     if request.is_ajax():
-        if 'task_id' in request.POST.keys() and request.POST['task_id']:
-            task_id = request.POST['task_id']
-            task = AsyncResult(task_id)
-            data = task.result or task.state
-        else:
-            data = 'No task_id in the request'
-    else:
-        data = 'This is not an ajax request'
-    
-    json_data = json.dumps(data)
-    return HttpResponse(json_data, content_type='application/json')
+        task_id = request.POST['task_id']
+        task = AsyncResult(task_id)
+        response_data = {
+            'state': task.state,
+            'result': task.result,
+        }
+
+    return HttpResponse(json.dumps(response_data), content_type='application/json')
