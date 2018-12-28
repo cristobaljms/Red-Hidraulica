@@ -353,6 +353,7 @@ def calculosGenetico(project_pk):
     return result
 
 def GeneticoToPDFView(request):
+    data = request.POST['data']
     # data = getProjectData(pk)
     # ntuberias = len(data['tuberias'])
     
@@ -382,55 +383,41 @@ def GeneticoToPDFView(request):
     Story.append(p)
     Story.append(Spacer(1,0.5*inch))
 
-    # titles = [
-    #     Paragraph('<b>Tuberia</b>', ps_tabla),
-    #     Paragraph('<b>Caudal</b>', ps_tabla),
-    #     Paragraph('<b>Longitud</b>', ps_tabla),
-    #     Paragraph('<b>Diametro</b>', ps_tabla),
-    #     Paragraph('<b>Area</b>', ps_tabla),
-    #     Paragraph('<b>Velocidad</b>', ps_tabla),
-    #     Paragraph('<b>f</b>', ps_tabla),
-    #     Paragraph('<b>Km</b>', ps_tabla),
-    #     Paragraph('<b>hf+hm</b>', ps_tabla),
-    #     Paragraph('<b>a</b>', ps_tabla),
-    #     Paragraph('<b>a*Qx</b>', ps_tabla)
-    # ]
+    titles = [
+        Paragraph('<b>FO</b>', ps_tabla),
+        Paragraph('<b>Binario</b>', ps_tabla),
+    ]
     
-    # for iteracion in calculos:
-    #     text = "<b>Iteracion {}</b>".format(iteracion['iteracion'])
-    #     p = Paragraph(text, ps_iteracion)
-    #     Story.append(p)
-    #     Story.append(Spacer(1,0.2*inch))
+    poblacion_cont = 1 
+    for poblacion in json.loads(data):
 
-    #     table_formatted = [titles]
-    #     for i in iteracion['tabla']:
-    #         tuberia = i['tuberia']
-    #         Qx = i['Qx']
-    #         Lx = i['Lx']
-    #         Dx = i['Dx']
-    #         A = i['A']
-    #         V = i['V']
-    #         Re = i['Re']
-    #         f = i['f']
-    #         hf = i['hf']
-    #         Km = i['Km']
-    #         hm = i['hm']
-    #         hfhm = i['hfhm']
-    #         a = i['a']
-    #         af = i['af']
-    #         row = [ tuberia, Qx, Lx, Dx, A, V, f, Km, hfhm, a, af ]
-    #         table_formatted.append(row)
+        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
 
-    #     t=Table(table_formatted, (60,40,60,60,60,60,50,40,100,100,80))
+        table_formatted = [titles]
+        individuo_cont = 0
+        for i in poblacion:
+            if individuo_cont == 10:
+                break
+            binarios=i['binarios']
+            FO=np.round(i['FO'],0)
+            row = [ FO, binarios ]
+            table_formatted.append(row)
+            individuo_cont += 1
 
-    #     t.setStyle(TableStyle([
-    #         ('BACKGROUND',(0,0),(13,0),'#878787'),
-    #         ('INNERGRID',(0,0),(13,0), 0.25, colors.gray),
-    #         ('BOX',(0,0),(13,0), 0.25, colors.gray)
-    #     ]))
+        t=Table(table_formatted, (200,200))
 
-    #     Story.append(t)
-    #     Story.append(Spacer(1,0.2*inch))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(2,0),'#878787'),
+            ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
+            ('BOX',(0,0),(2,0), 0.25, colors.gray)
+        ]))
+
+        Story.append(t)
+        poblacion_cont += 1
+    # Story.append(Spacer(1,0.2*inch))
 
     #     THtitles = [ 
     #         Paragraph('H', ps_tabla)
