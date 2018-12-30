@@ -169,6 +169,7 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
         Cph = 0
         K = getK(Cc)
 
+        ncont = 0
         for n in projectData['nodos']:
             Pmin = 10
             Pnodo = data_maxima['H'][cont] - n['cota']
@@ -178,6 +179,7 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
             else:
                 C = np.power(2.71828,AP)
                 AP = C
+                ncont += 1
             cont += 1
             if Cph <= AP:
                 Cph = AP
@@ -185,6 +187,7 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
 
         #Calculo de Cv
         Cv = 0
+        tcont = 0
         for t in range(ntuberias):
             Vmin = 0.3
             Vtubo = data_maxima['tabla'][t]['V']
@@ -193,12 +196,15 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
                 AV = 0
             else:
                 Cv += AV
+                tcont += 1
         Cv*=K
 
         FO = Cc + Cph + Cv
         result.append({
             'FO':FO,
             'binarios': concatArr(matrizBinarios[i].tolist()[0]),
+            'ncont': ncont,
+            'tcont': tcont
         })
     return bubbleSort(result, 'FO')
 
@@ -354,22 +360,6 @@ def calculosGenetico(project_pk):
 
 def GeneticoToPDFView(request):
     data = request.POST['data']
-    # data = getProjectData(pk)
-    # ntuberias = len(data['tuberias'])
-    
-    # qx = 0
-    # for nodo in data['nodos']:
-    #     qx = qx + nodo['demanda']
-
-    # Qx = np.zeros(ntuberias) + (qx/ntuberias)
-
-    # calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
-
-    # if calculos == "ERROR_MAX_LIMIT_ITERATION":
-    #     active_tab = 'i'
-    #     messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
-    #     return redirect('proyecto_administrar', pk, active_tab)
-
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
     Story = []
@@ -417,75 +407,287 @@ def GeneticoToPDFView(request):
 
         Story.append(t)
         poblacion_cont += 1
-    # Story.append(Spacer(1,0.2*inch))
+    
+    #punto 3
 
-    #     THtitles = [ 
-    #         Paragraph('H', ps_tabla)
-    #     ]
-    #     table_formatted = [THtitles]
-    #     for value in iteracion['H']:
-    #         table_formatted.append([value])
+    text = "<b>Punto 3</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
 
-    #     t=Table(table_formatted, (40))
-    #     t.setStyle(TableStyle([
-    #         ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
-    #         ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
-    #         ('BOX',(0,0),(1,0), 0.25, colors.gray)
-    #     ]))
-    #     Story.append(t)
-    #     Story.append(Spacer(1,0.2*inch))
+    todo_array = []
+    for poblacion in json.loads(data):
+        todo_array += poblacion
+    
+    todo_array = bubbleSort(todo_array, 'FO')
 
-    #     TQxtitles = [ 
-    #         Paragraph('Qx', ps_tabla)
-    #     ]
+    table_formatted = [titles]
+ 
+    for i in range(10):
+        binarios=todo_array[i]['binarios']
+        FO=np.round(todo_array[i]['FO'],0)
+        row = [ FO, binarios ]
+        table_formatted.append(row)
 
-    #     table_formatted = [TQxtitles]
-    #     for value in iteracion['Qx']:
-    #         table_formatted.append([value])
+    t=Table(table_formatted, (200,200))
 
-    #     t=Table(table_formatted, (40))
-    #     t.setStyle(TableStyle([
-    #         ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
-    #         ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
-    #         ('BOX',(0,0),(1,0), 0.25, colors.gray)
-    #     ]))
-    #     Story.append(t)
-    #     Story.append(Spacer(1,0.2*inch))
+    t.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(2,0),'#878787'),
+        ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
+        ('BOX',(0,0),(2,0), 0.25, colors.gray)
+    ]))
+
+    Story.append(t)
 
 
-    #     TErrortitles = [ 
-    #         Paragraph('Error', ps_tabla)
-    #     ]
+    # punto 4
 
-    #     table_formatted = [TErrortitles]
+    text = "<b>Punto 4</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
 
-    #     if 'error' in iteracion:
-    #         for value in iteracion['error']:
-    #             table_formatted.append([value])
+    titles = [
+        Paragraph('<b>Poblacion</b>', ps_tabla),
+        Paragraph('<b>FO</b>', ps_tabla),
+    ]
 
-    #         t=Table(table_formatted, (40))
-    #         t.setStyle(TableStyle([
-    #             ('BACKGROUND',(0,0),(1,0),colors.lightgrey),
-    #             ('INNERGRID',(0,0),(1,0), 0.25, colors.gray),
-    #             ('BOX',(0,0),(1,0), 0.25, colors.gray)
-    #         ]))
-    #         Story.append(t)
-    #         Story.append(Spacer(1,0.2*inch))
+    poblacion_cont = 1
+    table_formatted = [titles]
+    for poblacion in json.loads(data):
 
-    #     #table_formatted = [titles]
-    #     frameCount = 2
-    #     frames = []
-    #     #construct a frame for each column
-    #     for frame in range(frameCount):
-    #         column = Frame(100, 50, 50, 50)
-    #         frames.append(column)
+        FO=np.round(poblacion[0]['FO'],0)
+        row = [poblacion_cont, FO ]
+        table_formatted.append(row)
+        poblacion_cont += 1 
 
-    #     #Story.append(frames)
-    #     Story.append(Spacer(1,0.2*inch))
+    t=Table(table_formatted, (200,200))
 
-    # proyecto = Proyecto.objects.get(pk=pk)
+    t.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(2,0),'#878787'),
+        ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
+        ('BOX',(0,0),(2,0), 0.25, colors.gray)
+    ]))
+    
+    Story.append(t)
+
+    #punto 5
+    text = "<b>Punto 5</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
+    
+    titles = [
+        Paragraph('<b>Poblacion</b>', ps_tabla),
+        Paragraph('<b>Promedio</b>', ps_tabla),
+        Paragraph('<b>Desviación</b>', ps_tabla),
+    ]
+    table_formatted = [titles]
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        promedio = 0
+        n = len(poblacion)
+        for i in poblacion:
+            promedio += i['FO']
+        
+        promedio = promedio / n
+        desvEstandar = 0
+        for i in poblacion:
+            desvEstandar += np.power((i['FO']-promedio),2)
+        desvEstandar = np.power((desvEstandar/(n-1)),0.5)
+        
+        row = [poblacion_cont, np.round(promedio,0), np.round(desvEstandar,0) ]
+        table_formatted.append(row)
+
+        t=Table(table_formatted, (200,200,200))
+        poblacion_cont += 1
+
+    t.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(3,0),'#878787'),
+        ('INNERGRID',(0,0),(3,0), 0.25, colors.gray),
+        ('BOX',(0,0),(3,0), 0.25, colors.gray)
+    ]))
+    
+    Story.append(t)
+
+    text = "<b>Punto 6</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
+    
+    titles = [
+        Paragraph('<b>Individuo</b>', ps_tabla),
+        Paragraph('<b>N° nodos que no cumplen</b>', ps_tabla),
+    ]
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+        poblacion_cont += 1
+        individuo_cont = 1
+        table_formatted = [titles]
+
+        nodos_promedio = 0
+        for i in poblacion:
+            row = [individuo_cont, i['ncont']]
+            table_formatted.append(row)
+            individuo_cont += 1
+            nodos_promedio += i['ncont']
+        
+
+        t=Table(table_formatted, (200,200))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(2,0),'#878787'),
+            ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
+            ('BOX',(0,0),(2,0), 0.25, colors.gray)
+        ]))
+        Story.append(t)
+
+        text = "<b>Nodos que no cumplen: {}</b>".format(nodos_promedio)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+
+        nodos_promedio = nodos_promedio / len(poblacion)
+
+        text = "<b>Promedio: {}</b>".format(nodos_promedio)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+    
+    text = "<b>Punto 7</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
+    
+    titles = [
+        Paragraph('<b>Individuo</b>', ps_tabla),
+        Paragraph('<b>N° tuberias que no cumplen</b>', ps_tabla),
+    ]
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+        poblacion_cont += 1
+        individuo_cont = 1
+        table_formatted = [titles]
+
+        tuberias_promedio = 0
+        for i in poblacion:
+            row = [individuo_cont, i['tcont']]
+            table_formatted.append(row)
+            individuo_cont += 1
+            tuberias_promedio += i['tcont']
+
+        t=Table(table_formatted, (200,200))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(2,0),'#878787'),
+            ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
+            ('BOX',(0,0),(2,0), 0.25, colors.gray)
+        ]))
+        Story.append(t)
+
+        text = "<b>Tuberias que no cumplen: {}</b>".format(tuberias_promedio)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+
+        tuberias_promedio = tuberias_promedio / len(poblacion)
+
+        text = "<b>Promedio: {}</b>".format(tuberias_promedio)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+
+    # Punto 8
+
+    text = "<b>Punto 8</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
+
+    titles = [
+        Paragraph('<b>Individuo</b>', ps_tabla),
+        Paragraph('<b>N° tuberias</b>', ps_tabla),
+        Paragraph('<b>N° Nodos</b>', ps_tabla),
+        Paragraph('<b>Status</b>', ps_tabla),
+    ]
+
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+        poblacion_cont += 1
+
+        individuo_cont = 1
+        table_formatted = [titles]
+        individuos_cumplen_cont = len(poblacion)
+        for i in poblacion:
+            status = 'No cumple'
+            if (i['tcont'] == 0 and i['ncont'] == 0):
+                status = 'Cumple'
+                individuos_cumplen_cont -= 1
+            row = [individuo_cont, i['tcont'], i['ncont'], status]
+            table_formatted.append(row)
+            individuo_cont += 1
+            
+        t=Table(table_formatted, (200,200,200,200))
+        t.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(4,0),'#878787'),
+            ('INNERGRID',(0,0),(4,0), 0.25, colors.gray),
+            ('BOX',(0,0),(4,0), 0.25, colors.gray)
+        ]))
+        Story.append(t)
+
+        text = "<b>Individuos que no cumplen: {}</b>".format(individuos_cumplen_cont)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+            
+        text = "<b>Promedio: {}</b>".format(individuos_cumplen_cont/len(poblacion))
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.2*inch))
+
+    # punto 9
+    text = "<b>Punto 9</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
+
+    data = json.loads(data)
+    poblacion = data[-1]
+
+    titles = [
+        Paragraph('<b>FO</b>', ps_tabla),
+        Paragraph('<b>Binario</b>', ps_tabla),
+    ]
+    
+    table_formatted = [titles]
+    for i in range(3):
+        binarios=poblacion[i]['binarios']
+        FO=np.round(poblacion[i]['FO'],0)
+        row = [ FO, binarios ]
+        table_formatted.append(row)
+
+    t=Table(table_formatted, (200,200))
+
+    t.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(2,0),'#878787'),
+        ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
+        ('BOX',(0,0),(2,0), 0.25, colors.gray)
+    ]))
+
+    Story.append(t)
 
     doc.build(Story)
+
     pdf_value = pdf_buffer.getvalue()
     pdf_buffer.close()
     response = HttpResponse(content_type='application/pdf')
