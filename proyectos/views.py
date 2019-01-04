@@ -348,7 +348,9 @@ def calculosGenetico(project_pk):
         if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
             return "ERROR_MAX_LIMIT_ITERATION"
 
-        result.append(resultado_FO)
+        # print(i,resultado_FO)
+        # resultado_FO['npoblacion'] = i
+        result.append([i,resultado_FO])
         resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
         resultado_cruzamiento = cruzamiento(resultado_seleccion)
         resultado_mutacion = mutacion(resultado_cruzamiento)
@@ -361,10 +363,11 @@ def calculosGenetico(project_pk):
 def GeneticoToPDFView(request):
     data = request.POST['data']
     pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
     Story = []
 
     ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 14, fontName="Times-Roman")
+    ps_subtitle = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 14, fontName="Times-Roman")
     ps_iteracion = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 12, fontName="Times-Roman")
     ps_tabla = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
 
@@ -378,17 +381,22 @@ def GeneticoToPDFView(request):
         Paragraph('<b>Binario</b>', ps_tabla),
     ]
     
+    text = "<b>1. Mejores 10 individuos de cada generación</b>"
+    p = Paragraph(text, ps_subtitle)
+    Story.append(p)
+    Story.append(Spacer(1,0.2*inch))
+
     poblacion_cont = 1 
     for poblacion in json.loads(data):
-
-        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        Story.append(Spacer(1,0.1*inch))
+        text = "<p>Poblacion {}</p>".format(poblacion_cont)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
 
         table_formatted = [titles]
         individuo_cont = 0
-        for i in poblacion:
+        for i in poblacion[1]:
             if individuo_cont == 10:
                 break
             binarios=i['binarios']
@@ -397,7 +405,7 @@ def GeneticoToPDFView(request):
             table_formatted.append(row)
             individuo_cont += 1
 
-        t=Table(table_formatted, (200,200))
+        t=Table(table_formatted, (100,300))
 
         t.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(2,0),'#878787'),
@@ -407,17 +415,18 @@ def GeneticoToPDFView(request):
 
         Story.append(t)
         poblacion_cont += 1
+
     
     #punto 3
-
-    text = "<b>Punto 3</b>"
-    p = Paragraph(text, ps_iteracion)
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>2. 10 mejores individuos de todo el proceso</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
 
     todo_array = []
     for poblacion in json.loads(data):
-        todo_array += poblacion
+        todo_array += poblacion[1]
     
     todo_array = bubbleSort(todo_array, 'FO')
 
@@ -429,7 +438,7 @@ def GeneticoToPDFView(request):
         row = [ FO, binarios ]
         table_formatted.append(row)
 
-    t=Table(table_formatted, (200,200))
+    t=Table(table_formatted, (100,300))
 
     t.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(2,0),'#878787'),
@@ -441,9 +450,9 @@ def GeneticoToPDFView(request):
 
 
     # punto 4
-
-    text = "<b>Punto 4</b>"
-    p = Paragraph(text, ps_iteracion)
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>3. Mejor individuo de cada generación</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
 
@@ -456,12 +465,12 @@ def GeneticoToPDFView(request):
     table_formatted = [titles]
     for poblacion in json.loads(data):
 
-        FO=np.round(poblacion[0]['FO'],0)
+        FO=np.round(poblacion[1][0]['FO'],0)
         row = [poblacion_cont, FO ]
         table_formatted.append(row)
         poblacion_cont += 1 
 
-    t=Table(table_formatted, (200,200))
+    t=Table(table_formatted, (50,100))
 
     t.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(2,0),'#878787'),
@@ -472,8 +481,9 @@ def GeneticoToPDFView(request):
     Story.append(t)
 
     #punto 5
-    text = "<b>Punto 5</b>"
-    p = Paragraph(text, ps_iteracion)
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>4. Promedio y desviación estandar de cada generación</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
     
@@ -486,20 +496,20 @@ def GeneticoToPDFView(request):
     poblacion_cont = 1
     for poblacion in json.loads(data):
         promedio = 0
-        n = len(poblacion)
-        for i in poblacion:
+        n = len(poblacion[1])
+        for i in poblacion[1]:
             promedio += i['FO']
         
         promedio = promedio / n
         desvEstandar = 0
-        for i in poblacion:
+        for i in poblacion[1]:
             desvEstandar += np.power((i['FO']-promedio),2)
         desvEstandar = np.power((desvEstandar/(n-1)),0.5)
         
         row = [poblacion_cont, np.round(promedio,0), np.round(desvEstandar,0) ]
         table_formatted.append(row)
 
-        t=Table(table_formatted, (200,200,200))
+        t=Table(table_formatted, (50,100,100))
         poblacion_cont += 1
 
     t.setStyle(TableStyle([
@@ -510,18 +520,22 @@ def GeneticoToPDFView(request):
     
     Story.append(t)
 
-    text = "<b>Punto 6</b>"
-    p = Paragraph(text, ps_iteracion)
+    # punto 6
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>5. Número y promedio de nodos que no cumplen las restricciones de presión</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
     
     titles = [
         Paragraph('<b>Individuo</b>', ps_tabla),
-        Paragraph('<b>N° nodos que no cumplen</b>', ps_tabla),
+        Paragraph('<b>N°</b>', ps_tabla),
+        Paragraph('<b>Población</b>', ps_tabla),
     ]
     poblacion_cont = 1
     for poblacion in json.loads(data):
-        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        Story.append(Spacer(1,0.1*inch))
+        text = "<p>Poblacion {}</p>".format(poblacion_cont)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
@@ -530,45 +544,48 @@ def GeneticoToPDFView(request):
         table_formatted = [titles]
 
         nodos_promedio = 0
-        for i in poblacion:
-            row = [individuo_cont, i['ncont']]
+        for i in poblacion[1]:
+            row = [individuo_cont, i['ncont'],poblacion[0]+1]
             table_formatted.append(row)
             individuo_cont += 1
             nodos_promedio += i['ncont']
         
 
-        t=Table(table_formatted, (200,200))
+        t=Table(table_formatted, (60,40,50))
         t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(2,0),'#878787'),
-            ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
-            ('BOX',(0,0),(2,0), 0.25, colors.gray)
+            ('BACKGROUND',(0,0),(3,0),'#878787'),
+            ('INNERGRID',(0,0),(3,0), 0.25, colors.gray),
+            ('BOX',(0,0),(3,0), 0.25, colors.gray)
         ]))
         Story.append(t)
 
-        text = "<b>Nodos que no cumplen: {}</b>".format(nodos_promedio)
+        text = "<p><b>Nodos que no cumplen:</b> {}</p>".format(nodos_promedio)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
 
-        nodos_promedio = nodos_promedio / len(poblacion)
+        nodos_promedio = nodos_promedio / len(poblacion[1])
 
-        text = "<b>Promedio: {}</b>".format(nodos_promedio)
+        text = "<p><b>Promedio:</b> {}</p>".format(nodos_promedio)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
     
-    text = "<b>Punto 7</b>"
-    p = Paragraph(text, ps_iteracion)
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>6. Número y promedio de tuberias que no cumplen las restricciones</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
     
     titles = [
         Paragraph('<b>Individuo</b>', ps_tabla),
-        Paragraph('<b>N° tuberias que no cumplen</b>', ps_tabla),
+        Paragraph('<b>N°</b>', ps_tabla),
+        Paragraph('<b>Población</b>', ps_tabla),
     ]
     poblacion_cont = 1
     for poblacion in json.loads(data):
-        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        Story.append(Spacer(1,0.1*inch))
+        text = "<p>Poblacion {}</p>".format(poblacion_cont)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
@@ -577,36 +594,37 @@ def GeneticoToPDFView(request):
         table_formatted = [titles]
 
         tuberias_promedio = 0
-        for i in poblacion:
-            row = [individuo_cont, i['tcont']]
+        for i in poblacion[1]:
+            row = [individuo_cont, i['tcont'], poblacion[0]+1]
             table_formatted.append(row)
             individuo_cont += 1
             tuberias_promedio += i['tcont']
 
-        t=Table(table_formatted, (200,200))
+        t=Table(table_formatted, (60,40,50))
         t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(2,0),'#878787'),
-            ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
-            ('BOX',(0,0),(2,0), 0.25, colors.gray)
+            ('BACKGROUND',(0,0),(3,0),'#878787'),
+            ('INNERGRID',(0,0),(3,0), 0.25, colors.gray),
+            ('BOX',(0,0),(3,0), 0.25, colors.gray)
         ]))
         Story.append(t)
 
-        text = "<b>Tuberias que no cumplen: {}</b>".format(tuberias_promedio)
+        text = "<p><b>Tuberias que no cumplen:</b> {}</p>".format(tuberias_promedio)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
 
-        tuberias_promedio = tuberias_promedio / len(poblacion)
+        tuberias_promedio = tuberias_promedio / len(poblacion[1])
 
-        text = "<b>Promedio: {}</b>".format(tuberias_promedio)
+        text = "<p><b>Promedio:</b> {}</p>".format(tuberias_promedio)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
 
     # Punto 8
 
-    text = "<b>Punto 8</b>"
-    p = Paragraph(text, ps_iteracion)
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>7. Número y promedio de individuos que no cumplen restricciones</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
 
@@ -619,7 +637,8 @@ def GeneticoToPDFView(request):
 
     poblacion_cont = 1
     for poblacion in json.loads(data):
-        text = "<b>Poblacion {}</b>".format(poblacion_cont)
+        Story.append(Spacer(1,0.1*inch))
+        text = "<p>Poblacion {}</p>".format(poblacion_cont)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
         Story.append(Spacer(1,0.2*inch))
@@ -627,8 +646,8 @@ def GeneticoToPDFView(request):
 
         individuo_cont = 1
         table_formatted = [titles]
-        individuos_cumplen_cont = len(poblacion)
-        for i in poblacion:
+        individuos_cumplen_cont = len(poblacion[1])
+        for i in poblacion[1]:
             status = 'No cumple'
             if (i['tcont'] == 0 and i['ncont'] == 0):
                 status = 'Cumple'
@@ -637,7 +656,7 @@ def GeneticoToPDFView(request):
             table_formatted.append(row)
             individuo_cont += 1
             
-        t=Table(table_formatted, (200,200,200,200))
+        t=Table(table_formatted, (60,60,60,60))
         t.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(4,0),'#878787'),
             ('INNERGRID',(0,0),(4,0), 0.25, colors.gray),
@@ -645,24 +664,25 @@ def GeneticoToPDFView(request):
         ]))
         Story.append(t)
 
-        text = "<b>Individuos que no cumplen: {}</b>".format(individuos_cumplen_cont)
+        text = "<p><b>Individuos que no cumplen:</b> {}</p>".format(individuos_cumplen_cont)
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
+        Story.append(Spacer(1,0.1*inch))
             
-        text = "<b>Promedio: {}</b>".format(individuos_cumplen_cont/len(poblacion))
+        text = "<p><b>Promedio: </b>{}</p>".format(individuos_cumplen_cont/len(poblacion))
         p = Paragraph(text, ps_iteracion)
         Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
+        Story.append(Spacer(1,0.3*inch))
 
     # punto 9
-    text = "<b>Punto 9</b>"
-    p = Paragraph(text, ps_iteracion)
+    Story.append(Spacer(1,0.2*inch))
+    text = "<b>8. Mejores 3 individuos de la ultima iteración</b>"
+    p = Paragraph(text, ps_subtitle)
     Story.append(p)
     Story.append(Spacer(1,0.2*inch))
 
     data = json.loads(data)
-    poblacion = data[-1]
+    poblacion = data[1][-1]
 
     titles = [
         Paragraph('<b>FO</b>', ps_tabla),
@@ -676,7 +696,7 @@ def GeneticoToPDFView(request):
         row = [ FO, binarios ]
         table_formatted.append(row)
 
-    t=Table(table_formatted, (200,200))
+    t=Table(table_formatted, (100,300))
 
     t.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(2,0),'#878787'),
