@@ -1,0 +1,48 @@
+Para instalar el sistema necesita:
+- Postgresql 9 o mayor
+- python 3
+- pip 3
+- rabbitMQ 3 o mayor
+
+Pasos:
+1) instalar los paquetes que se encuentran en requirements.txt
+
+    pip install -r requirements.txt
+
+2) Configurar la base de datos
+    - Existen varias formas para configurar la base de datos.
+    - Lo primero es buscar el archivo de settings.py que se encontra
+    en la carpeta de root. Alli debe colocar los datos de la base de datos
+    
+    EJEMPLO:
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'redhidraulicadb',
+                'USER': 'postgres',
+                'PASSWORD': '',
+                'HOST': 'localhost',
+                'PORT': 5432,
+            }
+        }
+
+    luego de asegurarse que la conexion este lista puede hacer una de las 2 siguientes cosas:
+    a) restaurar directamente la copia de base de datos que se encuentra en la carpeta files.
+    ya alli hay data cargada. El usuario para el login aqui es admin/admin
+
+    b) hacer un migrate, de tal manera que se creen las tablas en la base de datos y cargar luego toda la data 
+    manualmente desde el mismo sistema. Es importante saber, que este sistema no tiene formulario de registro, por lo que probablemente
+    tenga que crear los usuarios con el comando de:
+
+        python manager.py createsuperuser    
+
+3) ejecutar celery:
+
+    celery -A root worker -l info -P eventlet
+
+4) ejecutar el proyecto:
+
+    python manager.py runserver
+
+
