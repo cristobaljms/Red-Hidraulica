@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dd1cc76b-21d6-41dc-a80b-f022a6928d58" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/proyectos/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/proyectos/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/sections/proyectos/partials/info.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/sections/proyectos/partials/info.html" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,20 +15,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/proyectos/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3360">
-              <caret line="256" column="26" selection-start-line="256" selection-start-column="12" selection-end-line="256" selection-end-column="26" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/out.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="24" column="11" selection-start-line="24" selection-start-column="11" selection-end-line="24" selection-end-column="11" />
+            <state relative-caret-position="801">
+              <caret line="252" column="26" selection-start-line="252" selection-start-column="26" selection-end-line="252" selection-end-column="26" />
             </state>
           </provider>
         </entry>
@@ -45,8 +36,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/salida.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3570">
-              <caret line="238" selection-start-line="238" selection-end-line="242" selection-end-column="75" />
+            <state relative-caret-position="285">
+              <caret line="19" column="65" selection-start-line="19" selection-start-column="65" selection-end-line="19" selection-end-column="65" />
             </state>
           </provider>
         </entry>
@@ -73,10 +64,10 @@
     <auto-save>true</auto-save>
   </component>
   <component name="ProjectFrameBounds" extendedState="7">
-    <option name="x" value="-47" />
-    <option name="y" value="128" />
-    <option name="width" value="1299" />
-    <option name="height" value="764" />
+    <option name="x" value="1430" />
+    <option name="y" value="-11" />
+    <option name="width" value="1857" />
+    <option name="height" value="1092" />
   </component>
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="1" id="Add" />
@@ -147,15 +138,15 @@
       <workItem from="1544712289875" duration="5888000" />
       <workItem from="1544790749168" duration="2758000" />
       <workItem from="1545139388455" duration="598000" />
+      <workItem from="1548948731269" duration="599000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="16223000" />
+    <option name="totallyTimeSpent" value="16822000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="64" y="121" width="1303" height="780" extended-state="7" />
-    <editor active="true" />
+    <frame x="1430" y="-11" width="1857" height="1092" extended-state="7" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.23181455" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -236,8 +227,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/proyectos/views.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3360">
-          <caret line="256" column="26" selection-start-line="256" selection-start-column="12" selection-end-line="256" selection-end-column="26" />
+        <state relative-caret-position="801">
+          <caret line="252" column="26" selection-start-line="252" selection-start-column="26" selection-end-line="252" selection-end-column="26" />
         </state>
       </provider>
     </entry>
@@ -250,15 +241,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/salida.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3570">
-          <caret line="238" selection-start-line="238" selection-end-line="242" selection-end-column="75" />
+        <state relative-caret-position="285">
+          <caret line="19" column="65" selection-start-line="19" selection-start-column="65" selection-end-line="19" selection-end-column="65" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/out.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
-          <caret line="24" column="11" selection-start-line="24" selection-start-column="11" selection-end-line="24" selection-end-column="11" />
+          <caret line="24" column="1" lean-forward="true" selection-start-line="24" selection-start-column="1" selection-end-line="24" selection-end-column="1" />
         </state>
       </provider>
     </entry>

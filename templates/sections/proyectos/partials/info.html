@@ -1,7 +1,7 @@
 {% load staticfiles %} {% if proyecto%}
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-3">
 
         <h4>
             <b>Nombre: </b> {{proyecto.nombre}}</h4>
@@ -15,8 +15,8 @@
             Generar grafo
         </a>
     </div>
-    <div id="sample" class="col-md-8">
-        <div id="mynetwork" style="border: solid 1px lightgray; width:600px; height:400px"></div>
+    <div id="sample" class="col-md-9">
+        <div id="mynetwork" style="border: solid 1px lightgray; width:700px; height:600px"></div>
     </div>
 </div>
 <script src="{% static 'admin/js/vis.min.js' %}"></script>
@@ -56,13 +56,20 @@
                     })
                 })
 
+                var FontSize = 10
+                var ArrowSize = 0.5
+
+                if(nodos.length > 30){
+                    FontSize = 6
+                    ArrowSize = 0.3
+                }
 
                 var links = []
                 tuberias = data.tuberias
                 tuberias.map(nodo => {
                     links.push({
                         arrows: {
-                            to: { enabled: true, scaleFactor: 1, type: 'arrow' },
+                            to: { enabled: true, scaleFactor: ArrowSize, type: 'arrow' },
                             middle: { enabled: false, scaleFactor: 1, type: 'arrow' },
                             from: { enabled: false, scaleFactor: 1, type: 'arrow' }
                         },
@@ -83,19 +90,20 @@
                     nodes: nodos,
                     edges: edges
                 };
-
+                
                 var options = {
                     edges: {
                         inheritColors: false,
                         font: {
-                            size: 20,
+                            size: FontSize,
                             color: '#111'
+                           
                         },
                     },
                     nodes: {
                         parseColor: false,
                         font: {
-                            size: 20,
+                            size: FontSize,
                             color: '#111'
                         },
                         borderWidth: 2
