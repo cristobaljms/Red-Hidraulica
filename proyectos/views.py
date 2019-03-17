@@ -305,11 +305,11 @@ def mutacion(hijosCruzamiento):
             hijosCruzamiento[0]['binarios'] = concatArr(arrBinarios)  
 
     return hijosCruzamiento
+
 from celery import task, shared_task, current_task
 
 @shared_task
 def calculosGenetico(project_pk):
-
     try:
         dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
     except DatosGeneticos.DoesNotExist:
@@ -362,6 +362,8 @@ def calculosGenetico(project_pk):
 
 def GeneticoToPDFView(request):
     data = request.POST['data']
+    test = [121,1212,1212,12]
+
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
     Story = []

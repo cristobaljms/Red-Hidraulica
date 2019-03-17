@@ -1,8 +1,15 @@
-Para instalar el sistema necesita:
-- Postgresql 9 o mayor
-- python 3
-- pip 3
-- rabbitMQ 3 o mayor
+Para instalar el sistema necesita primero necesita instalar:
+
+- Postgresql >= 9:  https://www.postgresql.org/download/
+- python 3:         https://www.python.org/downloads/
+- pip 3:            https://pypi.org/project/pip/
+- rabbitMQ >= 3:    https://www.rabbitmq.com/#getstarted
+
+NOTA: para instalar rabbitmq probablemente necesite instalar earlang.
+
+    https://www.erlang.org/downloads
+
+-----------------------------------------------------------------------------
 
 Pasos:
 1) instalar los paquetes que se encuentran en requirements.txt
@@ -27,22 +34,25 @@ Pasos:
             }
         }
 
-    luego de asegurarse que la conexion este lista puede hacer una de las 2 siguientes cosas:
-    a) restaurar directamente la copia de base de datos que se encuentra en la carpeta files.
-    ya alli hay data cargada. El usuario para el login aqui es admin/admin
+    luego de asegurarse que la conexion este lista puede hacer SOLO UNA de las DOS siguientes cosas:
 
-    b) hacer un migrate, de tal manera que se creen las tablas en la base de datos y cargar luego toda la data 
-    manualmente desde el mismo sistema. Es importante saber, que este sistema no tiene formulario de registro, por lo que probablemente
-    tenga que crear los usuarios con el comando de:
+        1.- restaurar directamente la copia de base de datos que se encuentra en la carpeta files.
+        ya alli hay data cargada. El usuario para el login aqui es admin/admin
 
-        python manager.py createsuperuser    
+        2.- hacer un migrate, de tal manera que se creen las tablas en la base de datos y cargar luego toda la data 
+        manualmente desde el mismo sistema. Es importante saber, que este sistema no tiene formulario de registro, por lo que probablemente
+        tenga que crear los usuarios con el comando de:
+
+            python manager.py createsuperuser    
 
 3) ejecutar celery:
 
-    celery -A root worker -l info -P eventlet
+    En una consola o terminal ubicarse dentro del proyecto y ejecutar:
+
+        celery -A root worker -l info -P eventlet
 
 4) ejecutar el proyecto:
 
-    python manager.py runserver
+    Luego en otra consola ubicarse tambien dentro del proyecto y ejecutar:
 
-
+        python manager.py runserver

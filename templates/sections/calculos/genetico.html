@@ -48,6 +48,10 @@
       </div>
     </div>
 
+    <form id="my_form" action="export" method="post">
+      <input id="my_form_data" type="hidden" name="data" />
+  </form>
+
     {% include 'layouts/scripts.html' %}
 
     <script type="text/javascript">
@@ -89,7 +93,6 @@
                 }
                 else {
                   document.getElementById("status").innerHTML = "¡Listo!";
-
                   $.ajax({
                     url:'/reporte/pdf/genetico/',
                     type: 'POST',
@@ -98,7 +101,17 @@
                       csrfmiddlewaretoken: "{{csrf_token}}",
                     },
                     success: function(response) {
-                      window.open("data:application/pdf," + encodeURIComponent(response));
+                      var element = document.createElement('a');
+                      element.setAttribute('href', "data:application/pdf," + encodeURIComponent(response));
+                      element.setAttribute('download', "reporteGenetico.pdf");
+
+                      element.style.display = 'none';
+                      document.body.appendChild(element);
+
+                      element.click();
+
+                      document.body.removeChild(element);
+                      // window.open("data:application/pdf," + encodeURIComponent(response));
                     }
                   });
                 }

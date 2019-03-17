@@ -146,5 +146,4 @@ def poll_state(request):
             'state': task.state,
             'result': task.result,
         }
-
     return HttpResponse(json.dumps(response_data), content_type='application/json')
