@@ -362,7 +362,6 @@ def calculosGenetico(project_pk):
 
 def GeneticoToPDFView(request):
     data = request.POST['data']
-    test = [121,1212,1212,12]
 
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
@@ -857,9 +856,12 @@ class ProyectoAdminView(generic.CreateView):
             active_tab = 'g'
             nindividuos = request.POST.get('nindividuos')
             npoblacion = request.POST.get('npoblacion')
-            preplicacion = request.POST.get('preplicacion')
-            pmutacion = request.POST.get('pmutacion')
-            pcruzami = request.POST.get('pcruzami')
+            # preplicacion = request.POST.get('preplicacion')
+            # pmutacion = request.POST.get('pmutacion')
+            # pcruzami = request.POST.get('pcruzami')
+            preplicacion = 0
+            pmutacion = 0
+            pcruzami = 0
             beta = request.POST.get('beta')
             try:
                 datagentica = DatosGeneticos.objects.get(proyecto=id_proyecto)
