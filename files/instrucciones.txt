@@ -1,4 +1,4 @@
-Para instalar el sistema necesita primero necesita instalar:
+Para instalar el sistema primero necesita instalar:
 
 - Postgresql >= 9:  https://www.postgresql.org/download/
 - python 3:         https://www.python.org/downloads/

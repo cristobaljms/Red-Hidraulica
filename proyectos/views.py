@@ -307,16 +307,18 @@ def mutacion(hijosCruzamiento):
     return hijosCruzamiento
 
 from celery import task, shared_task, current_task
+import logging
 
 @shared_task
 def calculosGenetico(project_pk):
+    
     try:
         dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
     except DatosGeneticos.DoesNotExist:
         return "NO_GENETIC_DATA_LOAD"
 
     nindividuos = dataGenetica.nindividuos
-
+    logging.info(nindividuos)
     pos = int(np.round(nindividuos*0.8,0))-1
 
     npoblacion = dataGenetica.npoblacion
@@ -1131,6 +1133,7 @@ def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
 
 def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
+    
     if (iteracion > ITERACION_MAX):
         return "ERROR_MAX_LIMIT_ITERATION"
 
