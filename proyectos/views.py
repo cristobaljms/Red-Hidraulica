@@ -200,6 +200,8 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
         Cv*=K
 
         FO = Cc + Cph + Cv
+        # logging.info("FO:{} Cc:{} Cph:{} Cv:{}".format(FO, np.round(Cc,1), np.round(Cph,1), np.round(Cv,1)))
+        # logging.info("binarios {}".format(concatArr(matrizBinarios[i].tolist()[0])              ))
         result.append({
             'FO':FO,
             'binarios': concatArr(matrizBinarios[i].tolist()[0]),
@@ -209,7 +211,6 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
     return bubbleSort(result, 'FO')
 
 def seleccion(FO, Nc, B):
-
     Pmax = B/Nc
     Pmin = (2-B)/Nc
 
@@ -219,10 +220,10 @@ def seleccion(FO, Nc, B):
         Pi = Pmin + ( Pmax - Pmin ) * ((Nc - i)/(Nc - 1))
         PiN = Pi * Nc
         if PiN >= 1.5:
-            arrProbabilidad.append(FO[i])
-            arrProbabilidad.append(FO[i])
+            arrProbabilidad.append(FO[i-1])
+            arrProbabilidad.append(FO[i-1])
         elif PiN >= 0.5:
-            arrProbabilidad.append(FO[i])
+            arrProbabilidad.append(FO[i-1])
 
     arrPadresCruzamiento = []
 
@@ -249,38 +250,52 @@ def seleccion(FO, Nc, B):
                 arrIndexPadres.append({'a':auxArr[0], 'b':-1})
             elif(len(auxArr) == 0):
                 flagA = False
-              
     return [arrIndexPadres, arrProbabilidad]
 
 def cruzamiento(data):
     arrIndexPadres = data[0]
     arrProbabilidad = data[1]
-
+    print(arrIndexPadres)
+    print(arrProbabilidad)
     arrHijosCruzamiento = []
     for aIP in arrIndexPadres:
+
         if aIP['b'] == -1:
+            print("===============================")
+            print("impar")
+            print(arrProbabilidad[aIP['a']-1])
             arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
+            print("===============================")
         else:
+            
             binA = arrProbabilidad[aIP['a']-1]['binarios']
             binB = arrProbabilidad[aIP['b']-1]['binarios']
-
+            print("===============================")
+            print("padres")
+            print("a: {}".format(binA))
+            print("b: {}".format(binB))
             arrbinA = [binA[c] for c in range(len(binA))]
             arrbinB = [binB[c] for c in range(len(binB))]
 
             a = random.randint(1, len(binA) -1)
             b = random.randint(1, len(binA) -1)
-            
             if a > b:
                 a, b = b, a
+            print("ramd a {}".format(a))
+            print("ramd b {}".format(b))
 
             for i in range(a ,b-1):
                 arrbinA[i], arrbinB[i] = arrbinB[i], arrbinA[i]
 
             arrProbabilidad[aIP['a']-1]['binarios'] = concatArr(arrbinA)
             arrProbabilidad[aIP['b']-1]['binarios'] = concatArr(arrbinB)
-
+            print("hijos")
+            print("a: {}".format(arrProbabilidad[aIP['a']-1]['binarios']))
+            print("b: {}".format(arrProbabilidad[aIP['b']-1]['binarios']))
+            print("===============================")
             arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
             arrHijosCruzamiento.append(arrProbabilidad[aIP['b']-1])
+    print(arrHijosCruzamiento)
     return arrHijosCruzamiento
 
 def mutacion(hijosCruzamiento):
@@ -318,7 +333,7 @@ def calculosGenetico(project_pk):
         return "NO_GENETIC_DATA_LOAD"
 
     nindividuos = dataGenetica.nindividuos
-    logging.info(nindividuos)
+    
     pos = int(np.round(nindividuos*0.8,0))-1
 
     npoblacion = dataGenetica.npoblacion
@@ -337,7 +352,11 @@ def calculosGenetico(project_pk):
     projectData = getProjectData(project_pk)
     matrizBinariosFromMutacion = []
     result = []
+    # print("Matriz binario inicial aleatoria")
+    # print(matrizBinarios)
+
     for i in range(npoblacion):
+        logging.info("poblacion {}".format(i))
         process_percent = int(100 * float(i) / float(npoblacion))
         current_task.update_state(state='PROGRESS', meta={'current': i,'total':npoblacion, 'percent':process_percent})
         if len(matrizBinariosFromMutacion) == 0:
@@ -349,15 +368,31 @@ def calculosGenetico(project_pk):
         
         if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
             return "ERROR_MAX_LIMIT_ITERATION"
+        # logging.info(resultado_FO)
+        # # with open('your_file.txt', 'w') as f:
+        # #     for item in resultado_FO:
+        # #         f.write("%s\n" % item)
 
         # print(i,resultado_FO)
         # resultado_FO['npoblacion'] = i
         result.append([i,resultado_FO])
+        # print("FO")
+        # print(resultado_FO)
         resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
+        # print("Resultado Calculo de seleccion")
+        # print(resultado_seleccion)
         resultado_cruzamiento = cruzamiento(resultado_seleccion)
+        # print("Resultado Calculo de cruzamiento")
+        # print(resultado_cruzamiento)
         resultado_mutacion = mutacion(resultado_cruzamiento)
+        # print("Resultado Calculo de mutacion")
+        # print(resultado_mutacion)
         arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
+        # print("arrBinarios")
+        # print(arrBinarios)
         matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
+        # print("Matriz binarios desde la mutacion")
+        # print(matrizBinariosFromMutacion)
         if(validate_result_fo(resultado_FO, pos, K)):
             break
     return result

@@ -128,7 +128,6 @@ def handleArrMutacionToMatrizBinarios(arr, ndiametros):
 
 def validate_result_fo(fo, pos, k):
     value = fo[pos]['FO'] - fo[0]['FO']
-    print("validacion: ", np.round(value,0), "  K:", k)
     if((fo[pos]['FO'] - fo[0]['FO']) <= k):
         return True
     else:
