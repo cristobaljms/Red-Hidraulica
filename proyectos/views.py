@@ -119,11 +119,11 @@ def getGeneticData(project_pk, nindividuos):
 
     ntuberias = len(tuberias)
     ndiametros = len(data_genetico)
-    # matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
-    #                             ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
-    #                             ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
-    #                             ['10', '11', '01', '11' ,'00' ,'01', '00' ,'11', '10', '00', '01'],
-    #                             ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
+    matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
+                                ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
+                                ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
+                                ['10', '11', '01', '11' ,'00', '01', '00' ,'11', '10', '00', '01'],
+                                ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
     matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
@@ -220,10 +220,13 @@ def seleccion(FO, Nc, B):
         Pi = Pmin + ( Pmax - Pmin ) * ((Nc - i)/(Nc - 1))
         PiN = Pi * Nc
         if PiN >= 1.5:
-            arrProbabilidad.append(FO[i-1])
-            arrProbabilidad.append(FO[i-1])
+            FOaux = copy.deepcopy(FO[i-1])
+            arrProbabilidad.append(FOaux)
+            FOaux = copy.deepcopy(FO[i-1])
+            arrProbabilidad.append(FOaux)
         elif PiN >= 0.5:
-            arrProbabilidad.append(FO[i-1])
+            FOaux = copy.deepcopy(FO[i-1])
+            arrProbabilidad.append(FOaux)
 
     arrPadresCruzamiento = []
 
@@ -250,30 +253,39 @@ def seleccion(FO, Nc, B):
                 arrIndexPadres.append({'a':auxArr[0], 'b':-1})
             elif(len(auxArr) == 0):
                 flagA = False
+    
+    for i in range(0,len(arrProbabilidad)):
+        arrProbabilidad[i]["n"] = i
+        
     return [arrIndexPadres, arrProbabilidad]
 
 def cruzamiento(data):
+    # print("CRUZAMIENTO")
     arrIndexPadres = data[0]
     arrProbabilidad = data[1]
-    print(arrIndexPadres)
-    print(arrProbabilidad)
+    # print(arrIndexPadres)
+    # print("arrProbabilidad 1")
+    # print(arrProbabilidad)
     arrHijosCruzamiento = []
     for aIP in arrIndexPadres:
-
+        # print("aIP")
+        # print(aIP)
         if aIP['b'] == -1:
-            print("===============================")
-            print("impar")
+            # print("===============================")
+            # print("impar")
             print(arrProbabilidad[aIP['a']-1])
             arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
-            print("===============================")
+            # print("===============================")
         else:
-            
-            binA = arrProbabilidad[aIP['a']-1]['binarios']
-            binB = arrProbabilidad[aIP['b']-1]['binarios']
-            print("===============================")
-            print("padres")
-            print("a: {}".format(binA))
-            print("b: {}".format(binB))
+            # print("arrProbabilidad 2")
+            # print(arrProbabilidad)
+            # print("pos: a:{} b:{}".format(aIP['a']-1,aIP['b']-1))
+            binA = copy.deepcopy(arrProbabilidad[aIP['a']-1]['binarios'])
+            binB = copy.deepcopy(arrProbabilidad[aIP['b']-1]['binarios'])
+            # print("===============================")
+            # print("padres")
+            # print("a: {}".format(binA))
+            # print("b: {}".format(binB))
             arrbinA = [binA[c] for c in range(len(binA))]
             arrbinB = [binB[c] for c in range(len(binB))]
 
@@ -281,22 +293,23 @@ def cruzamiento(data):
             b = random.randint(1, len(binA) -1)
             if a > b:
                 a, b = b, a
-            print("ramd a {}".format(a))
-            print("ramd b {}".format(b))
+            # print("ramd a {}".format(a))
+            # print("ramd b {}".format(b))
 
             for i in range(a ,b-1):
                 arrbinA[i], arrbinB[i] = arrbinB[i], arrbinA[i]
 
             arrProbabilidad[aIP['a']-1]['binarios'] = concatArr(arrbinA)
             arrProbabilidad[aIP['b']-1]['binarios'] = concatArr(arrbinB)
-            print("hijos")
-            print("a: {}".format(arrProbabilidad[aIP['a']-1]['binarios']))
-            print("b: {}".format(arrProbabilidad[aIP['b']-1]['binarios']))
-            print("===============================")
+            # print("hijos")
+            # print("a: {}".format(arrProbabilidad[aIP['a']-1]['binarios']))
+            # print("b: {}".format(arrProbabilidad[aIP['b']-1]['binarios']))
+            # print("===============================")
             arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
             arrHijosCruzamiento.append(arrProbabilidad[aIP['b']-1])
-    print(arrHijosCruzamiento)
-    return arrHijosCruzamiento
+    # print("hijosCrizamiento")
+    # print(arrHijosCruzamiento)
+    return bubbleSort(arrHijosCruzamiento, 'n') 
 
 def mutacion(hijosCruzamiento):
     Lc = len(hijosCruzamiento[0]['binarios'])
@@ -356,7 +369,7 @@ def calculosGenetico(project_pk):
     # print(matrizBinarios)
 
     for i in range(npoblacion):
-        logging.info("poblacion {}".format(i))
+        # logging.info("poblacion {}".format(i))
         process_percent = int(100 * float(i) / float(npoblacion))
         current_task.update_state(state='PROGRESS', meta={'current': i,'total':npoblacion, 'percent':process_percent})
         if len(matrizBinariosFromMutacion) == 0:
