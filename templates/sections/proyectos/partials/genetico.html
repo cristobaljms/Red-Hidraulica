@@ -8,7 +8,7 @@
       name="id_proyecto"
     />
     <div class="row">
-      <div class="form-group col-md-3">
+      <div class="form-group col-md-2">
           <label for="nindividuos">Numero de individuos</label>
         <input
           value="{{datagenetica.nindividuos}}"
@@ -20,7 +20,7 @@
           required
         />
       </div>
-      <div class="form-group col-md-3">
+      <div class="form-group col-md-2">
         <label for="npoblacion">Numero de poblacion</label>
         <input
           value="{{datagenetica.npoblacion}}"
@@ -42,6 +42,32 @@
             class="form-control"
             id="beta"
             name="beta"
+            required
+          />
+        </div>
+        <div class="form-group col-md-2">
+          <label for="pmin">Pmin</label>
+          <input
+            value="{{datagenetica.pmin}}"
+            type="number"
+            step="any"
+            placeholder="Pmin"
+            class="form-control"
+            id="pmin"
+            name="pmin"
+            required
+          />
+        </div>
+        <div class="form-group col-md-2">
+          <label for="vmin">vmin</label>
+          <input
+            value="{{datagenetica.vmin}}"
+            type="number"
+            step="any"
+            placeholder="vmin"
+            class="form-control"
+            id="vmin"
+            name="vmin"
             required
           />
         </div>
