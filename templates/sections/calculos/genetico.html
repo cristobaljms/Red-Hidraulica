@@ -32,6 +32,7 @@
               </a>
             </div>
             <div class="btn-group">
+              
               <a
                 href="javascript:void(0)"
                 class="btn btn-success btn-fab"
@@ -55,6 +56,13 @@
     {% include 'layouts/scripts.html' %}
 
     <script type="text/javascript">
+
+      function sortByKey(array, key) {
+        return array.sort(function(a, b) {
+            var x = a[key]; var y = b[key];
+            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+        });
+      }
 
       var pgb = $('#pgb');
       pgb.ariaProgressbar();
@@ -93,6 +101,30 @@
                 }
                 else {
                   document.getElementById("status").innerHTML = "¡Listo!";
+
+                  console.log("response",response.result)
+                  var mejores = []
+
+                  response.result.map(function(row){
+                    row[1].map(function(obj){
+                      mejores.push(obj)
+                    })
+                  })
+                  mejoresSorted = sortByKey(mejores, "FO")
+                  
+                            // tabla H
+                  var table_H = $('<table class="table table-bordered"></table>');
+                  var theader_H = $('<thead><tr><th>Binario</th><th>FO</th></tr></thead>');
+                  var tbody_H = $('<tbody></tbody>');
+                  table_H.append(theader_H);
+                  table_H.append(tbody_H);
+                  $('#container').append(table_H);
+                  
+                  for(var i = 0; i <= 10; i++ ){
+                    var row = $('<tr><td><a href="'+mejoresSorted[i].binarios+'">'+mejoresSorted[i].binarios+'</a></td><td>'+mejoresSorted[i].FO+'</td></tr>');
+                    tbody_H.append(row)
+                  }
+   
                   $.ajax({
                     url:'/reporte/pdf/genetico/',
                     type: 'POST',
@@ -101,6 +133,9 @@
                       csrfmiddlewaretoken: "{{csrf_token}}",
                     },
                     success: function(response) {
+                      
+                      
+
                       var element = document.createElement('a');
                       element.setAttribute('href', "data:application/pdf," + encodeURIComponent(response));
                       element.setAttribute('download', "reporteGenetico.pdf");
@@ -111,7 +146,6 @@
                       element.click();
 
                       document.body.removeChild(element);
-                      // window.open("data:application/pdf," + encodeURIComponent(response));
                     }
                   });
                 }

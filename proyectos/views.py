@@ -119,11 +119,11 @@ def getGeneticData(project_pk, nindividuos):
 
     ntuberias = len(tuberias)
     ndiametros = len(data_genetico)
-    matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
-                                ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
-                                ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
-                                ['10', '11', '01', '11' ,'00', '01', '00' ,'11', '10', '00', '01'],
-                                ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
+    # matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
+    #                             ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
+    #                             ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
+    #                             ['10', '11', '01', '11' ,'00', '01', '00' ,'11', '10', '00', '01'],
+    #                             ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
     matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
@@ -258,32 +258,16 @@ def seleccion(FO, Nc, B):
     return [arrIndexPadres, arrProbabilidad]
 
 def cruzamiento(data):
-    # print("CRUZAMIENTO")
     arrIndexPadres = data[0]
     arrProbabilidad = data[1]
-    # print(arrIndexPadres)
-    # print("arrProbabilidad 1")
-    # print(arrProbabilidad)
     arrHijosCruzamiento = []
     for aIP in arrIndexPadres:
-        # print("aIP")
-        # print(aIP)
         if aIP['b'] == -1:
-            # print("===============================")
-            # print("impar")
-            # print(arrProbabilidad[aIP['a']-1])
             arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
-            # print("===============================")
         else:
-            # print("arrProbabilidad 2")
-            # print(arrProbabilidad)
-            # print("pos: a:{} b:{}".format(aIP['a']-1,aIP['b']-1))
             binA = copy.deepcopy(arrProbabilidad[aIP['a']-1]['binarios'])
             binB = copy.deepcopy(arrProbabilidad[aIP['b']-1]['binarios'])
-            # print("===============================")
-            # print("padres")
-            # print("a: {}".format(binA))
-            # print("b: {}".format(binB))
+            
             arrbinA = [binA[c] for c in range(len(binA))]
             arrbinB = [binB[c] for c in range(len(binB))]
 
@@ -291,59 +275,37 @@ def cruzamiento(data):
             b = random.randint(1, len(binB) -1)
             if a > b:
                 a, b = b, a
-            # print("ramd a {}".format(a))
-            # print("ramd b {}".format(b))
 
             for i in range(a ,b):
                 arrbinA[i], arrbinB[i] = arrbinB[i], arrbinA[i]
 
             arrProbabilidad[aIP['a']-1]['binarios'] = concatArr(arrbinA)
             arrProbabilidad[aIP['b']-1]['binarios'] = concatArr(arrbinB)
-            # print("hijos")
-            # print("a: {}".format(arrProbabilidad[aIP['a']-1]['binarios']))
-            # print("b: {}".format(arrProbabilidad[aIP['b']-1]['binarios']))
-            # print("===============================")
+
             arrHijosCruzamiento.append(arrProbabilidad[aIP['a']-1])
             arrHijosCruzamiento.append(arrProbabilidad[aIP['b']-1])
-    # print("hijosCrizamiento")
-    # print(arrHijosCruzamiento)
+
     return arrHijosCruzamiento
 
 def mutacion(hijosCruzamiento):
-    # print("MUTACION")
     Lc = len(hijosCruzamiento[0]['binarios'])
     Pm = 1/Lc
-    # print(" hijos Cruzamiento ")
-    # print(hijosCruzamiento)
     listado_mutacion = []
-    # print("COMENZAMOS A ITERAR")
     for d in hijosCruzamiento:
         a = random.uniform(0.0001, 1)
-        # print("registro")
-        # print(d)
-        # print("probabilidad: {}".format(a))
         if a >= Pm:
-            # print("pasa a la siguiente generacion")
             listado_mutacion.append(d)
-            # print(listado_mutacion)
         else:
-
             a = random.randint(0, Lc-1)
             arrBinarios = [d['binarios'][c] for c in range(Lc)]
-            # print("pos mutada {}".format(a))
-            # print("ingreso")
-            # print(d['binarios'], arrBinarios)
             if arrBinarios[a] == '0':
                 arrBinarios[a] = '1'
             else:
                 arrBinarios[a] = '0' 
             
             d['binarios'] = concatArr(arrBinarios)  
-            # print(d['binarios'], arrBinarios)
             listado_mutacion.append(d)
 
-    # print(" RESULTADO MUTACION ")
-    # print(listado_mutacion)                        
     return listado_mutacion
 
 from celery import task, shared_task, current_task
@@ -379,8 +341,6 @@ def calculosGenetico(project_pk):
     projectData = getProjectData(project_pk)
     matrizBinariosFromMutacion = []
     result = []
-    # print("Matriz binario inicial aleatoria")
-    # print(matrizBinarios)
 
     for i in range(npoblacion):
         print("poblacion {}".format(i))
@@ -395,34 +355,15 @@ def calculosGenetico(project_pk):
         
         if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
             return "ERROR_MAX_LIMIT_ITERATION"
-        # logging.info(resultado_FO)
-        # # with open('your_file.txt', 'w') as f:
-        # #     for item in resultado_FO:
-        # #         f.write("%s\n" % item)
 
-        # print(i,resultado_FO)
-        # resultado_FO['npoblacion'] = i
         result.append([i,resultado_FO])
-        # print("FO")
-        # print(resultado_FO)
         resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
-        # print("Resultado Calculo de seleccion")
-        # print(resultado_seleccion)
         resultado_cruzamiento = cruzamiento(resultado_seleccion)
-        # print("Resultado Calculo de cruzamiento")
-        # print(resultado_cruzamiento)
         resultado_mutacion = mutacion(resultado_cruzamiento)
-        # print("Resultado Calculo de mutacion")
-        # print(resultado_mutacion)
         arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
-        # print("arrBinarios")
-        # print(arrBinarios)
         matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
-        # print("Matriz binarios desde la mutacion")
-        # print(matrizBinariosFromMutacion)
         if(validate_result_fo(resultado_FO, pos, K)):
             break
-    # print(result)
     return result
 
 def GeneticoToPDFView(request):
@@ -1447,6 +1388,7 @@ class GradienteView(generic.View):
         }
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
+
 
 def GradienteToPDFView(request, pk):
     data = getProjectData(pk)
