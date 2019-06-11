@@ -8,19 +8,19 @@
       name="id_proyecto"
     />
     <div class="row">
-      <div class="form-group col-md-2">
+      <div class="form-group col-md-3">
           <label for="nindividuos">Numero de individuos</label>
-        <input
-          value="{{datagenetica.nindividuos}}"
-          type="number"
-          placeholder="Numero individuos"
-          class="form-control"
-          id="nindividuos"
-          name="nindividuos"
-          required
-        />
+          <input
+            value="{{datagenetica.nindividuos}}"
+            type="number"
+            placeholder="Numero individuos"
+            class="form-control"
+            id="nindividuos"
+            name="nindividuos"
+            required
+          />
       </div>
-      <div class="form-group col-md-2">
+      <div class="form-group col-md-3">
         <label for="npoblacion">Numero de poblacion</label>
         <input
           value="{{datagenetica.npoblacion}}"
@@ -45,7 +45,7 @@
             required
           />
         </div>
-        <div class="form-group col-md-2">
+        <div class="form-group col-md-3">
           <label for="pmin">Pmin</label>
           <input
             value="{{datagenetica.pmin}}"
@@ -58,41 +58,21 @@
             required
           />
         </div>
-        <div class="form-group col-md-2">
-          <label for="vmin">vmin</label>
-          <input
-            value="{{datagenetica.vmin}}"
-            type="number"
-            step="any"
-            placeholder="vmin"
-            class="form-control"
-            id="vmin"
-            name="vmin"
-            required
-          />
-        </div>
-        <div class="form-group col-md-3">
-          <br>
-          <button type="submit" style="margin-top:10px" class="btn btn-primary ">
-            Guardar
-          </button>
-        </div> 
+        
+
     </div>
 
-    
-    <!--
     <div class="row">
         <div class="form-group col-md-3">
-            <label for="preplicacion">Porcentaje de replicación</label>
+            <label for="vmin">vmin</label>
             <input
-              value="{{datagenetica.porcentaje_replicacion}}"
+              value="{{datagenetica.vmin}}"
               type="number"
               step="any"
-              placeholder="% Replicacion"
+              placeholder="vmin"
               class="form-control"
-              id="preplicacion"
-              name="preplicacion"
-              min="0" max="100"
+              id="vmin"
+              name="vmin"
               required
             />
           </div>
@@ -124,12 +104,14 @@
                   required
                 />
               </div>
-      <div class="form-group col-md-3">
-          
-
-      </div>
+              <div class="form-group col-md-3">
+                <br>
+                <button type="submit" style="margin-top:10px" class="btn btn-primary ">
+                  Guardar
+                </button>
+              </div> 
     </div>
-    -->
+    
   </form>
 <div class="table-responsive ">
   <table id="NodeTable" class="table table-bordered">

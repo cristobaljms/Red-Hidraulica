@@ -48,7 +48,8 @@
         </div>
       </div>
     </div>
-
+    <br>
+    <br>
     <form id="my_form" action="export" method="post">
       <input id="my_form_data" type="hidden" name="data" />
   </form>
@@ -102,7 +103,6 @@
                 else {
                   document.getElementById("status").innerHTML = "¡Listo!";
 
-                  console.log("response",response.result)
                   var mejores = []
 
                   response.result.map(function(row){
@@ -112,7 +112,6 @@
                   })
                   mejoresSorted = sortByKey(mejores, "FO")
                   
-                            // tabla H
                   var table_H = $('<table class="table table-bordered"></table>');
                   var theader_H = $('<thead><tr><th>Binario</th><th>FO</th></tr></thead>');
                   var tbody_H = $('<tbody></tbody>');
@@ -126,15 +125,13 @@
                   }
    
                   $.ajax({
-                    url:'/reporte/pdf/genetico/',
+                    url:'/reporte/pdf/genetico/{{project_pk}}/',
                     type: 'POST',
                     data: {
                       data: JSON.stringify(response.result),
                       csrfmiddlewaretoken: "{{csrf_token}}",
                     },
                     success: function(response) {
-                      
-                      
 
                       var element = document.createElement('a');
                       element.setAttribute('href', "data:application/pdf," + encodeURIComponent(response));

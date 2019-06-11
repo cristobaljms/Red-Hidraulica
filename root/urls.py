@@ -27,7 +27,7 @@ urlpatterns = [
     path('calculos/genetico/<int:pk>/', login_required(GeneticView.as_view(), login_url='/login/'), name='calculo_genetico'),
     path('calculos/genetico/<int:pk>/<int:bin>', login_required(GradienteView.as_view(), login_url='/login/'), name='calculo_gradiente'),
     path('reporte/pdf/gradiente/<int:pk>/', login_required(GradienteToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
-    path('reporte/pdf/genetico/', login_required(GeneticoToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
+    path('reporte/pdf/genetico/<int:pk>/', login_required(GeneticoToPDFView, login_url='/login/'), name='reporte_pdf_genetico'),
     path('reporte/excel/gradiente/<int:pk>/', login_required(GradienteToExcelView, login_url='/login/'), name='reporte_excel_gradiente'),
     path('materiales/', login_required(MaterialesListView.as_view(), login_url='/login/'), name='materiales'),
     path('materiales/crear/', login_required(MaterialesCreateView.as_view(), login_url='/login/'), name='materiales_crear'),

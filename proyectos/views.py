@@ -198,8 +198,6 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
         Cv*=K
 
         FO = Cc + Cph + Cv
-        print("FO:{} Cc:{} Cph:{} Cv:{}".format(FO, np.round(Cc,1), np.round(Cph,1), np.round(Cv,1)))
-        print("binarios {}".format(concatArr(matrizBinarios[i].tolist()[0])              ))
         result.append({
             'FO':FO,
             'binarios': concatArr(matrizBinarios[i].tolist()[0]),
@@ -343,7 +341,6 @@ def calculosGenetico(project_pk):
     result = []
 
     for i in range(npoblacion):
-        print("poblacion {}".format(i))
         process_percent = int(100 * float(i) / float(npoblacion))
         current_task.update_state(state='PROGRESS', meta={'current': i,'total':npoblacion, 'percent':process_percent})
         if len(matrizBinariosFromMutacion) == 0:
@@ -366,8 +363,9 @@ def calculosGenetico(project_pk):
             break
     return result
 
-def GeneticoToPDFView(request):
+def GeneticoToPDFView(request, pk):
     data = request.POST['data']
+    dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
 
     pdf_buffer = BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
@@ -383,6 +381,48 @@ def GeneticoToPDFView(request):
     Story.append(p)
     Story.append(Spacer(1,0.5*inch))
 
+    text = "<b>DATOS</b>"
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.1*inch))
+
+    text = "<p>Numero individuos: {}</p>".format(dataGenetica.nindividuos)
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.1*inch))
+
+    text = "<p>Numero poblacion: {}</p>".format(dataGenetica.npoblacion)
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.1*inch))
+
+    text = "<p>Beta: {}</p>".format(dataGenetica.beta)
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.1*inch))
+
+    text = "<p>Pmin: {}</p>".format(dataGenetica.pmin)
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.1*inch))
+
+    text = "<p>Vmin: {}</p>".format(dataGenetica.vmin)
+    p = Paragraph(text, ps_iteracion)
+    Story.append(p)
+    Story.append(Spacer(1,0.1*inch))
+
+    if(dataGenetica.porcentaje_cruzami != 0):
+        text = "<p>Porcentaje de cruzamiento: {}</p>".format(dataGenetica.porcentaje_cruzami)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.1*inch))
+
+    if(dataGenetica.porcentaje_mutacion != 0):
+        text = "<p>Porcentaje de mutación: {}</p>".format(dataGenetica.porcentaje_mutacion)
+        p = Paragraph(text, ps_iteracion)
+        Story.append(p)
+        Story.append(Spacer(1,0.1*inch))
+    Story.append(Spacer(1,0.4*inch))
     titles = [
         Paragraph('<b>FO</b>', ps_tabla),
         Paragraph('<b>Binario</b>', ps_tabla),
@@ -863,11 +903,11 @@ class ProyectoAdminView(generic.CreateView):
             nindividuos = request.POST.get('nindividuos')
             npoblacion = request.POST.get('npoblacion')
             # preplicacion = request.POST.get('preplicacion')
-            # pmutacion = request.POST.get('pmutacion')
-            # pcruzami = request.POST.get('pcruzami')
+            pmutacion = request.POST.get('pmutacion')
+            pcruzami = request.POST.get('pcruzami')
             preplicacion = 0
-            pmutacion = 0
-            pcruzami = 0
+            # pmutacion = 0
+            # pcruzami = 0
             beta = request.POST.get('beta')
             pmin = request.POST.get('pmin')
             vmin = request.POST.get('vmin')
