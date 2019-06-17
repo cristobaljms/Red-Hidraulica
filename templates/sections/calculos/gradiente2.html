@@ -1,0 +1,150 @@
+{% load static from staticfiles%} <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Metodo Gradiente</title>
+    {% include 'layouts/header.html' %}
+  </head>
+  <body>
+      <div class="preloader">
+          <svg class="circular" viewBox="25 25 50 50">
+            <circle
+              class="path"
+              cx="50"
+              cy="50"
+              r="20"
+              fill="none"
+              stroke-width="2"
+              stroke-miterlimit="10"
+            />
+          </svg>
+        </div>
+    <div id="container" class="container">
+      <b><h1 style="text-align: center;">METODO DE LA GRADIENTE</h1></b>
+
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="btn-group-sm hidden" id="mini-fab">
+              <a
+                href="{% url 'proyecto_administrar' project_pk 'i'%}"
+                class="btn btn-danger btn-fab"
+                data-toggle="tooltip"
+                data-placement="left"
+                data-original-title="Retornar"
+                title=""
+                id="mail"
+              >
+                <img
+                  style="width:24px;height:24px"
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAANOSURBVFhH5ZhJqI5RGMevMWMyiw0LJENkyoKQqcRGESVjppKSeWMslDKUaWFIVmKHhVgQG8qQzHNZIFNEken3O999u8M33u9738/i/utX73Pu+53z3POec57nORX1QV1gDMyARbAApsFgaA1lV0MYB0fhFfzNwS+4DpuhFySqxuDsPAUH/wmXYSvMhFHgrMkEWAwH4CFEDp+H4RC7hsFtcJDnsBzaQaHqD/vgG/yB49AeYtEqcLY+wTJwJotVJzgCOunyKGk2G8F+cNauQDeISy6Bd/AdpthQjFw/OncCmtgQs7rDI/gB422oi1aCzp2EBjYkJI+oJ+Da7GNDIXJdRDu0qQ0Jqzd8gXvQzIZccgO4W90QXW0ok2aDX2xjsHJoIfji0mCVV5fATeNnzygjhOvhGdTlKBkKzVOPJcl+nJydwcogw5cvrAhWYdoA/sYYHIdc928h46nhAeqW7xCs/FoPOmenLWyIQfPAPicFq5Y82R2sEK2DyLmWNsQkI41RZlewqskd64DbgpVbayEJ5yLdh6upxyqNBgedFazsWgNJOqfOwIfUY5V0zIFHBiuzVkPSzqk94Dg1goS70MaBwUqX2bJ/l6/wsUReQLZ0aws4To10Lto9nkWZpONGF9+5A6dKxNwwWxjdDo7TJliVmg42jg1WZg2Bz/AeBtmQkA7Cb6iRpJim6+CSYGWXM5y0kxfgZeqxSlZfFjjmgPmUpJPO2hs4G6xaugEPUo95ZUqWhJN9wS/pcZamaPcMCFZ+VXcyrpJyE+iDRVaaeoJhZm+wCtMIcL1MDlZpMoMy3N4KVhadA9NvY2K5NRecvfnByiJnxFk0symnWsFr8FIgb4FmUa2TE4NVHh0CZ6+gpWKIcS2YOPawIWFF9Yh3PQXLqw7XoiVA1hohBpmYmiRbqNU56Z0K/tgaJYmbqTlg/4+how3FyCsKsxfrVjuMQ26Iw+BnvQklfyEr/rtghxfBz1+MPOf8J92t9nUM4qplQllpUW3daucmraZohZyX/cALTHNAf+u6juNgz6jOYN3qDncwjyNriNOwG7zM3AGmTGYlBn7fE/NI/6kkLqLS5CDuQKuva2A8jhwR8zlnzKzEwO8s/nfpdNtK6osqKv4BCJ3oDfft8w0AAAAASUVORK5CYII="
+                />
+              </a>
+            </div>
+            <div class="btn-group">
+              <a
+                href="javascript:void(0)"
+                class="btn btn-success btn-fab"
+                id="main"
+              >
+                <img
+                  style="width:24px;height:24px"
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEtSURBVGhD7daxSgNREIXhJe8gFhY+hwimUou8u0Ww9SEUIljFOeycZrMhzt25O/fG+eFAAiE7X7dDlmVZdq096roOgE9dtxgijrouMVNEl5gp4kfXFWYOsdN1gzmHYF1gLiFY05i/IliTGCuCNYUpRbAmMBbEi26uUIwV8a1rClOC4G+bweCPv2R8mAXBWTB4ljtmCeKg4/cwzFLEky4U44FgYRhPBFsds5HtZfwTDwRbgsFNuM3UvexD5olgJRjcgpuKupM9jx9PKkUwCwY34Bb3liKYBeOeF4KFYLwRbFXMq6wGgs1h8EzXaiNYVcxaCFYFM4fYymqHZ7hhohDMBYPXgDdZFIJNMbjJ/IpyK3uXRSEYMbgFNxV1I3sYP4aGG3BLlmVZlmX/oGH4BQxKPnDHqXUbAAAAAElFTkSuQmCC"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% include 'layouts/scripts.html' %}
+    <script type="text/javascript">
+
+      {% if data %}
+      var data = "{{data}}"
+      if (data == "ERROR_MAX_LIMIT_ITERATION") {
+        var parrafo1 = $(' <p>Se ha sobrapasado el limite maximo de iteraciones permitidas, se sugiere servisar que los valores cargados en el proyectos esten correctos.</p>');
+        var parrafo2 = $(' <p><b>NOTA:</b> Puede cambiar el limite de iteraciones maxima del proyecto en el codigo fuente si asi lo desea actualizando la constante ITERACION_MAX que se encuentra en /proyectos/views.py</p>');
+        $('#container').append(parrafo1);
+        $('#container').append(parrafo2);
+      }
+      else {
+        {%for iteracion in data %}
+            var table = $('<table class="table table-bordered"></table>');
+            var theader = $('<thead><tr><th>Tuberia</th><th>Qx</th><th>Lx</th><th>Dx</th><th>A</th><th>V</th><th>f</th><th>hf</th><th>a</th><th>a*Qx</th></tr></thead>');
+            var tbody = $('<tbody></tbody>');
+            table.append(theader);
+          {% for row in iteracion.tabla %}
+            var tuberia = "{{row.tuberia}}";
+            var Qx = "{{row.Qx}}";
+            var Lx = "{{row.Lx}}";
+            var Dx = "{{row.Dx}}";
+            var A = "{{row.A}}";
+            var V = "{{row.V}}";
+            var f = "{{row.f}}";
+            var hf = "{{row.hf}}";
+            var a = "{{row.a}}";
+            var af = "{{row.af}}";
+            var row = $('<tr><td>'+tuberia+'</td><td>'+Qx+'</td><td>'+Lx+'</td><td>'+Dx+'</td><td>'+A+'</td><td>'+V+'</td><td>'+f+'</td><td>'+hf+'</td><td>'+a+'</td><td>'+af+'</td></tr>');
+            tbody.append(row)
+          {% endfor %}
+          table.append(tbody);
+
+          var div_row = $('<div class="row"></div>')
+          $('#container').append(div_row);
+          div_row.append($('<h2>Iteracion {{iteracion.iteracion}}</h2>'));
+          div_row.append(table);
+          var div_col_h = $('<div class="col-md-4"></div>')
+          var div_col_qx = $('<div class="col-md-4"></div>')
+          var div_col_terror = $('<div class="col-md-4"></div>')
+          div_row.append(div_col_h);
+          div_row.append(div_col_qx);
+          div_row.append(div_col_terror);
+
+          // tabla error
+          var table_error = $('<table class="table table-bordered"></table>');
+          var theader_error = $('<thead><tr><th>Error</th></tr></thead>');
+          var tbody_error = $('<tbody></tbody>');
+          table_error.append(theader_error);
+          table_error.append(tbody_error);
+          div_col_terror.append(table_error);
+
+          {%if iteracion.error%}
+            {% for e in iteracion.error %}
+              var row = $('<tr><td>{{e}}</td></tr>');
+              tbody_error.append(row)
+            {% endfor %}
+          {%endif%}
+
+          // tabla H
+          var table_H = $('<table class="table table-bordered"></table>');
+          var theader_H = $('<thead><tr><th>H</th></tr></thead>');
+          var tbody_H = $('<tbody></tbody>');
+          table_H.append(theader_H);
+          table_H.append(tbody_H);
+          div_col_h.append(table_H);
+
+          {% for h in iteracion.H %}
+            var row = $('<tr><td>{{h}}</td></tr>');
+            tbody_H.append(row)
+          {% endfor %}
+
+          // tabla Qx
+          var table_Qx = $('<table class="table table-bordered"></table>');
+          var theader_Qx = $('<thead><tr><th>Qx</th></tr></thead>');
+          var tbody_Qx = $('<tbody></tbody>');
+          table_Qx.append(theader_Qx);
+          table_Qx.append(tbody_Qx);
+          div_col_qx.append(table_Qx);
+
+          {% for qx in iteracion.Qx %}
+            var row = $('<tr><td>{{qx}}</td></tr>');
+            tbody_Qx.append(row)
+          {% endfor %}
+          $('#container').append( $('</div></br>'));
+        {%endfor%}
+        {% endif %}
+      }
+    </script>
+  </body>
+</html>

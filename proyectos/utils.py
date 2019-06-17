@@ -4,13 +4,22 @@ import numpy as np
 from numpy import inf
 from django.http import HttpResponse
 from celery.result import AsyncResult
+from .models import *
+
+def getArrayBin(pk):
+    dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
+    return json.loads(dataGenetica.arraybin)
+
+def setArrayBin(arraybin, pk):
+    dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
+    dataGenetica.arraybin = str(json.dumps(arraybin))
+    dataGenetica.save()
 
 def concatArr(arr):
     cad = ""
     for i in arr:
         cad += i
     return cad
-
 
 def bubbleSort(arr, key):
     n = len(arr)
@@ -19,7 +28,6 @@ def bubbleSort(arr, key):
             if arr[j][key] > arr[j+1][key] :
                 arr[j], arr[j+1] = arr[j+1], arr[j]
     return arr
-
 
 def getK(Cc):
     if Cc > 10:
@@ -31,7 +39,6 @@ def getK(Cc):
     else:
         return 1
 
-
 def infToZeros(arreglo):
     dimension = arreglo.shape
     for i in range(0, dimension[0]):
@@ -39,7 +46,6 @@ def infToZeros(arreglo):
             if(arreglo[i,j] == inf):
                 arreglo[i,j] = 0
     return arreglo
-
 
 def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
     ban = False
@@ -62,7 +68,6 @@ def f_calculo(Re, rf_D, fhijo=0.001, error=0.001):
                 Xi = Xi_1
     return f
 
-
 def validateError(Error):
     flag = False
     dimension = Error.shape
@@ -71,7 +76,6 @@ def validateError(Error):
             if(Error[i,j] > 0.001):
                 flag = True
     return flag
-
 
 def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af):
         V = np.round(V, 4)
@@ -104,7 +108,6 @@ def TableFormatter(ntuberias,tuberias, Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af
             })
         return tabla
 
-
 def handleArrMutacionToMatrizBinarios(arr, ndiametros):
     matriz = []
 
@@ -125,14 +128,12 @@ def handleArrMutacionToMatrizBinarios(arr, ndiametros):
 
     return np.matrix(matriz)    
 
-
 def validate_result_fo(fo, pos, k):
     value = fo[pos]['FO'] - fo[0]['FO']
     if((fo[pos]['FO'] - fo[0]['FO']) <= k):
         return True
     else:
         return False
-
 
 # Create your views here.
 def poll_state(request):

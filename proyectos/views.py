@@ -119,11 +119,7 @@ def getGeneticData(project_pk, nindividuos):
 
     ntuberias = len(tuberias)
     ndiametros = len(data_genetico)
-    # matrizBinarios = np.matrix([['11', '10', '10', '11', '10', '00', '10', '01', '00', '11', '00'],
-    #                             ['11', '01', '00', '11', '00', '10' ,'00', '01', '00', '01', '00'],
-    #                             ['00', '11', '01', '10', '11', '01', '01' ,'10', '11', '00', '11'],
-    #                             ['10', '11', '01', '11' ,'00', '01', '00' ,'11', '10', '00', '01'],
-    #                             ['10', '01', '01', '10', '11', '11', '01', '00', '01', '01', '11']])
+    setArrayBin(data_genetico,project_pk)
     matrizBinarios = getMatrizBinarios(nindividuos, ntuberias, ndiametros)
     matrizDiametros = getMatrizDiametros(matrizBinarios, data_genetico)
     matrizCostos = getMatrizCostos(matrizBinarios, data_genetico)
@@ -911,6 +907,9 @@ class ProyectoAdminView(generic.CreateView):
             beta = request.POST.get('beta')
             pmin = request.POST.get('pmin')
             vmin = request.POST.get('vmin')
+            if int(nindividuos) < 4 or int(npoblacion) < 4:
+                messages.add_message(request, messages.ERROR, 'El numero minimo de la poblacion y los individuos debe ser 4')
+                return redirect('proyecto_administrar', id_proyecto, active_tab)
             try:
                 datagentica = DatosGeneticos.objects.get(proyecto=id_proyecto)
                 datagentica.nindividuos = nindividuos
@@ -1180,7 +1179,7 @@ def getProjectData(pk):
 def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
 
-def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
+def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
     
     if (iteracion > ITERACION_MAX):
         return "ERROR_MAX_LIMIT_ITERATION"
@@ -1202,11 +1201,20 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response):
 
     # Creacion del arreglo de diametro
     if len(Dx) == 0:
-        array_diametro = []
-        for t in data['tuberias']:
-            array_diametro.append(t['diametro'])
+        if binario == 0:
+            array_diametro = []
+            for t in data['tuberias']:
+                array_diametro.append(t['diametro'])
+        else:
+            array_diametro = []
+            arrayBinFormatted = [binario[i:i+2] for i in range(0, len(binario), 2)]
+            arrayBin = getArrayBin(pk)
+            for a in arrayBinFormatted:
+                for obj in arrayBin:
+                    if obj['codigo'] == a:
+                        array_diametro.append(obj['diametro'])
         Dx = np.array(array_diametro)
-    
+ 
 
     # Creacion del arreglo de km
     array_km = []
@@ -1429,6 +1437,26 @@ class GradienteView(generic.View):
         #return JsonResponse(context, safe=False)
         return render(request, self.template_name, context)
 
+class GradienteView2(generic.View):
+    template_name = "sections/calculos/gradiente2.html"
+
+    def get(self, request, *args, **kwargs):
+        data = getProjectData(kwargs['pk'])
+        binario = kwargs['bin']
+        ntuberias = len(data['tuberias'])
+        qx = 0
+        for nodo in data['nodos']:
+            qx = qx + nodo['demanda']
+        Qx = np.zeros(ntuberias) + (qx/ntuberias)
+
+        calculos = calculosGradiente(1, kwargs['pk'], [],  Qx, [], [], [], str(binario))
+
+        context = {
+            'data': calculos,
+            'project_pk': kwargs['pk']
+        }
+        #return JsonResponse(context, safe=False)
+        return render(request, self.template_name, context)
 
 def GradienteToPDFView(request, pk):
     data = getProjectData(pk)

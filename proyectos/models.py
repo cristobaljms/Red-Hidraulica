@@ -44,11 +44,12 @@ class DiametrosGeneticos(models.Model):
 
 class DatosGeneticos(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
-    nindividuos = models.IntegerField(default=0)
-    npoblacion = models.IntegerField(default=0)
+    nindividuos = models.IntegerField(default=4)
+    npoblacion = models.IntegerField(default=4)
     porcentaje_replicacion = models.FloatField(default=0)
     porcentaje_mutacion = models.FloatField(default=0)
     porcentaje_cruzami = models.FloatField(default=0)
     beta = models.FloatField(default=0)
     pmin = models.FloatField(default=0)
     vmin = models.FloatField(default=0)
+    arraybin = models.TextField(default="")
