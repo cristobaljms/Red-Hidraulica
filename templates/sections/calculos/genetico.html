@@ -111,7 +111,6 @@
                     })
                   })
                   mejoresSorted = sortByKey(mejores, "FO")
-                  
                   var table_H = $('<table class="table table-bordered"></table>');
                   var theader_H = $('<thead><tr><th>Binario</th><th>FO</th></tr></thead>');
                   var tbody_H = $('<tbody></tbody>');
@@ -119,7 +118,11 @@
                   table_H.append(tbody_H);
                   $('#container').append(table_H);
                   
-                  for(var i = 0; i <= 10; i++ ){
+                  var contl = mejoresSorted.length
+                  if(contl > 10){
+                    contl = 10
+                  }
+                  for(var i = 0; i < contl; i++ ){
                     var row = $('<tr><td><a href="'+mejoresSorted[i].binarios+'">'+mejoresSorted[i].binarios+'</a></td><td>'+mejoresSorted[i].FO+'</td></tr>');
                     tbody_H.append(row)
                   }

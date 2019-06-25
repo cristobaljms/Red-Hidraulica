@@ -68,4 +68,4 @@ Pasos:
 
     Luego en otra consola ubicarse tambien dentro del proyecto y ejecutar:
 
-        python manager.py runserver
+        python manage.py runserver

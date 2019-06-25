@@ -29,6 +29,14 @@ def bubbleSort(arr, key):
                 arr[j], arr[j+1] = arr[j+1], arr[j]
     return arr
 
+def bubbleSort2(arr, key):
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, n-i-1):
+            if float(arr[j][key]) > float(arr[j+1][key]) :
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+    return arr
+
 def getK(Cc):
     if Cc > 10:
         result = 10
@@ -129,8 +137,8 @@ def handleArrMutacionToMatrizBinarios(arr, ndiametros):
     return np.matrix(matriz)    
 
 def validate_result_fo(fo, pos, k):
-    value = fo[pos]['FO'] - fo[0]['FO']
-    if((fo[pos]['FO'] - fo[0]['FO']) <= k):
+    value = float(fo[pos]['FO']) - float(fo[0]['FO'])
+    if((float(fo[pos]['FO']) - float(fo[0]['FO'])) <= k):
         return True
     else:
         return False

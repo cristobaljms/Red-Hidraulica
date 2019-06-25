@@ -195,7 +195,7 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
 
         FO = Cc + Cph + Cv
         result.append({
-            'FO':FO,
+            'FO':str(FO),
             'binarios': concatArr(matrizBinarios[i].tolist()[0]),
             'ncont': ncont,
             'tcont': tcont
@@ -364,13 +364,13 @@ def GeneticoToPDFView(request, pk):
     dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
 
     pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=portrait(A4))
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
     Story = []
 
-    ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 14, fontName="Times-Roman")
-    ps_subtitle = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 14, fontName="Times-Roman")
-    ps_iteracion = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 12, fontName="Times-Roman")
-    ps_tabla = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
+    ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 8, fontName="Times-Roman")
+    ps_subtitle = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
+    ps_iteracion = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
+    ps_tabla = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 5, fontName="Times-Roman")
 
     text = "<b>ALGORITMO GENETICO</b>"
     p = Paragraph(text, ps_head)
@@ -443,12 +443,13 @@ def GeneticoToPDFView(request, pk):
             if individuo_cont == 10:
                 break
             binarios=i['binarios']
-            FO=np.round(i['FO'],0)
+
+            FO=np.round(float(i['FO']),0)
             row = [ FO, binarios ]
             table_formatted.append(row)
             individuo_cont += 1
 
-        t=Table(table_formatted, (100,300))
+        t=Table(table_formatted, (200,500))
 
         t.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(2,0),'#878787'),
@@ -471,17 +472,18 @@ def GeneticoToPDFView(request, pk):
     for poblacion in json.loads(data):
         todo_array += poblacion[1]
     
-    todo_array = bubbleSort(todo_array, 'FO')
+    todo_array = bubbleSort2(todo_array, 'FO')
 
     table_formatted = [titles]
- 
+    
     for i in range(10):
+        
         binarios=todo_array[i]['binarios']
-        FO=np.round(todo_array[i]['FO'],0)
+        FO=np.round(float(todo_array[i]['FO']),0)
         row = [ FO, binarios ]
         table_formatted.append(row)
 
-    t=Table(table_formatted, (100,300))
+    t=Table(table_formatted, (200,500))
 
     t.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(2,0),'#878787'),
@@ -508,7 +510,7 @@ def GeneticoToPDFView(request, pk):
     table_formatted = [titles]
     for poblacion in json.loads(data):
 
-        FO=np.round(poblacion[1][0]['FO'],0)
+        FO=np.round(float(poblacion[1][0]['FO']),0)
         row = [poblacion_cont, FO ]
         table_formatted.append(row)
         poblacion_cont += 1 
@@ -541,18 +543,18 @@ def GeneticoToPDFView(request, pk):
         promedio = 0
         n = len(poblacion[1])
         for i in poblacion[1]:
-            promedio += i['FO']
+            promedio += float(i['FO'])
         
         promedio = promedio / n
         desvEstandar = 0
         for i in poblacion[1]:
-            desvEstandar += np.power((i['FO']-promedio),2)
+            desvEstandar += np.power((float(i['FO'])-promedio),2)
         desvEstandar = np.power((desvEstandar/(n-1)),0.5)
         
         row = [poblacion_cont, np.round(promedio,0), np.round(desvEstandar,0) ]
         table_formatted.append(row)
 
-        t=Table(table_formatted, (50,100,100))
+        t=Table(table_formatted, (50,200,100))
         poblacion_cont += 1
 
     t.setStyle(TableStyle([
@@ -735,11 +737,11 @@ def GeneticoToPDFView(request, pk):
     table_formatted = [titles]
     for i in range(3):
         binarios=poblacion[i]['binarios']
-        FO=np.round(poblacion[i]['FO'],0)
+        FO=np.round(float(poblacion[i]['FO']),0)
         row = [ FO, binarios ]
         table_formatted.append(row)
 
-    t=Table(table_formatted, (100,300))
+    t=Table(table_formatted, (200,500))
 
     t.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(2,0),'#878787'),

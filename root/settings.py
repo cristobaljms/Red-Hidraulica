@@ -157,12 +157,12 @@ MESSAGE_TAGS = {
 #CELERY_IMPORTS = ("root.tasks",)
 
 # SI EL PROYECTO SE EJECUTARA CON REDIS USAR
-# BROKER_URL = 'redis://localhost:6379'
-# CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 
 # SI SE VA A EJECUTAR CON RABBITMQ USAR
-BROKER_URL = 'amqp://guest:guest@localhost//'
-CELERY_RESULT_BACKEND = 'amqp://guest:guest@localhost//'
+#BROKER_URL = 'amqp://guest:guest@localhost//'
+#CELERY_RESULT_BACKEND = 'amqp://guest:guest@localhost//'
 
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
