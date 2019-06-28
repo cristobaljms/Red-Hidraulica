@@ -760,6 +760,25 @@ def GeneticoToPDFView(request, pk):
     response.write(pdf_value)
     return response
 
+import os
+
+from django.conf import settings
+def GeneticToExcelView(request, pk):
+    data = request.POST['data']
+    dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
+    
+    f = open(os.path.join("static",'temp.txt'), 'w')
+    for i in range(10):
+        f.write("This is line %d\r\n" % (i+1))
+
+    f.close()
+
+    f = open(os.path.join("static",'temp.txt'), 'w')
+    response = HttpResponse(f.read(),content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename=export.txt'
+    
+    return response
+
 class GeneticView(generic.View):
     template_name = "sections/calculos/genetico.html"
 

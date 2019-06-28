@@ -9,6 +9,7 @@
       <b><h1 style="text-align: center;">ALGORITMO GENETICO</h1></b>
       <br>
       <h3>Se estan realizando los calculos, esta operación puede tardar varios minutos. Por favor espere...</h3>
+
       <div id="pgb"></div>
       <br>
       <h1 id="status"></h1>
@@ -137,8 +138,9 @@
                     success: function(response) {
 
                       var element = document.createElement('a');
-                      element.setAttribute('href', "data:application/pdf," + encodeURIComponent(response));
-                      element.setAttribute('download', "reporteGenetico.pdf");
+                      var data_type = 'data:text/plain';
+                      element.setAttribute('href', data_type+ "," + encodeURIComponent(response));
+                      element.setAttribute('download', "reporteGenetico.txt");
 
                       element.style.display = 'none';
                       document.body.appendChild(element);
