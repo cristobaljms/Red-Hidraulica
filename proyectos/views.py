@@ -34,7 +34,7 @@ import copy
 
 BIN_LIST_2 = ['00', '01', '10', '11']
 BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
-ITERACION_MAX = 100
+ITERACION_MAX = 200
 
 def getMatrizBinarios(nindividuos, ntuberias, l):
     matriz = []
@@ -281,9 +281,9 @@ def cruzamiento(data):
 
     return arrHijosCruzamiento
 
-def mutacion(hijosCruzamiento):
+def mutacion(hijosCruzamiento, Pm):
     Lc = len(hijosCruzamiento[0]['binarios'])
-    Pm = 1/Lc
+    # Pm = 1/Lc
     listado_mutacion = []
     for d in hijosCruzamiento:
         a = random.uniform(0.0001, 1)
@@ -321,6 +321,7 @@ def calculosGenetico(project_pk):
     B = dataGenetica.beta
     Pmin = dataGenetica.pmin
     Vmin = dataGenetica.vmin
+    Pm = dataGenetica.porcentaje_mutacion
 
     geneticData = getGeneticData(project_pk, nindividuos)
     if geneticData == "NOT_LOAD_GENETIC_DIAMETER":
@@ -352,7 +353,7 @@ def calculosGenetico(project_pk):
         result.append([i,resultado_FO])
         resultado_seleccion = seleccion(resultado_FO, nindividuos, B)
         resultado_cruzamiento = cruzamiento(resultado_seleccion)
-        resultado_mutacion = mutacion(resultado_cruzamiento)
+        resultado_mutacion = mutacion(resultado_cruzamiento, Pm)
         arrBinarios = [rm['binarios'] for rm in resultado_mutacion]
         matrizBinariosFromMutacion = handleArrMutacionToMatrizBinarios(arrBinarios, 4)
         if(validate_result_fo(resultado_FO, pos, K)):
@@ -767,14 +768,247 @@ def GeneticToExcelView(request, pk):
     data = request.POST['data']
     dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
     
-    f = open(os.path.join("static",'temp.txt'), 'w')
-    for i in range(10):
-        f.write("This is line %d\r\n" % (i+1))
+    OutText = ""
 
-    f.close()
+    text = "ALGORITMO GENETICO \n\n"
+    OutText += text
 
-    f = open(os.path.join("static",'temp.txt'), 'w')
-    response = HttpResponse(f.read(),content_type='text/plain')
+    text = "DATOS\n\n"
+    OutText += text
+
+    text = "Numero individuos: {}\n".format(dataGenetica.nindividuos)
+    OutText += text
+
+    text = "Numero poblacion: {}\n".format(dataGenetica.npoblacion)
+    OutText += text
+
+    text = "Beta: {}\n".format(dataGenetica.beta)
+    OutText += text
+
+    text = "Pmin: {}\n".format(dataGenetica.pmin)
+    OutText += text
+
+    text = "Vmin: {}\n".format(dataGenetica.vmin)
+    OutText += text
+
+    if(dataGenetica.porcentaje_cruzami != 0):
+        text = "Porcentaje de cruzamiento: {}\n".format(dataGenetica.porcentaje_cruzami)
+        OutText += text
+
+    if(dataGenetica.porcentaje_mutacion != 0):
+        text = "Porcentaje de mutación: {}\n".format(dataGenetica.porcentaje_mutacion)
+        OutText += text
+
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "1. Mejores 10 individuos de cada generación \n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+    poblacion_cont = 1 
+    for poblacion in json.loads(data):
+        text = "\nPoblacion {}\n".format(poblacion_cont)
+        OutText += text
+        individuo_cont = 0
+        for i in poblacion[1]:
+            if individuo_cont == 10:
+                break
+            binarios=i['binarios']
+
+            FO=np.round(float(i['FO']),0)
+            text = "FO: {} BIN: {}\n".format(FO, binarios)
+            OutText += text
+            individuo_cont += 1
+        poblacion_cont += 1
+
+    
+    #punto 3
+
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "2. 10 mejores individuos de todo el proceso\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+    todo_array = []
+    for poblacion in json.loads(data):
+        todo_array += poblacion[1]
+    
+    todo_array = bubbleSort2(todo_array, 'FO')
+
+    poblacion_cont = 1
+    for arr in todo_array:
+        if poblacion_cont == 10:
+                break
+        binarios=arr['binarios']
+        FO=np.round(float(arr['FO']),0)
+        text = "FO: {} BIN: {}\n".format(FO, binarios)
+        OutText += text
+        poblacion_cont += 1
+
+   
+
+    # punto 4
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "3. Mejor individuo de cada generación\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        FO=np.round(float(poblacion[1][0]['FO']),0)
+        text = "N° Poblacion: {} BIN: {}\n".format(poblacion_cont, FO)
+        OutText += text
+        poblacion_cont += 1 
+
+
+    #punto 5
+
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "4. Promedio y desviación estandar de cada generación\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        promedio = 0
+        n = len(poblacion[1])
+        for i in poblacion[1]:
+            promedio += float(i['FO'])
+        
+        promedio = promedio / n
+        desvEstandar = 0
+        for i in poblacion[1]:
+            desvEstandar += np.power((float(i['FO'])-promedio),2)
+        desvEstandar = np.power((desvEstandar/(n-1)),0.5)
+        text = "N° Poblacion: {} Promedio: {} Desviación: {}\n".format(poblacion_cont, np.round(promedio,0), np.round(desvEstandar,0))
+        OutText += text
+        poblacion_cont += 1
+    
+
+    # punto 6
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "5. Número y promedio de nodos que no cumplen las restricciones de presión\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        text = "Poblacion {}\n".format(poblacion_cont)
+        OutText += text
+        poblacion_cont += 1
+        individuo_cont = 1
+
+        nodos_promedio = 0
+        for i in poblacion[1]:
+            text = "Individuo: {} N°: {} \n".format(individuo_cont, i['ncont'])
+            OutText += text
+            individuo_cont += 1
+            nodos_promedio += i['ncont']
+        
+
+        text = "Nodos que no cumplen:{}\n".format(nodos_promedio)
+        OutText += text
+
+        nodos_promedio = nodos_promedio / len(poblacion[1])
+
+        text = "Promedio: {}\n\n".format(nodos_promedio)
+        OutText += text
+
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "6. Número y promedio de tuberias que no cumplen las restricciones\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        text = "Poblacion {}\n".format(poblacion_cont)
+        OutText += text
+        poblacion_cont += 1
+        individuo_cont = 1
+
+        tuberias_promedio = 0
+        for i in poblacion[1]:
+            text = "Individuo: {} N°: {}\n".format(individuo_cont, i['tcont'])
+            OutText += text
+            individuo_cont += 1
+            tuberias_promedio += i['tcont']
+
+
+        text = "Tuberias que no cumplen: {}\n".format(tuberias_promedio)
+        OutText += text
+
+        tuberias_promedio = tuberias_promedio / len(poblacion[1])
+
+        text = "Promedio: {}\n\n".format(tuberias_promedio)
+        OutText += text
+
+    # Punto 8
+
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "7. Número y promedio de individuos que no cumplen restricciones\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+    poblacion_cont = 1
+    for poblacion in json.loads(data):
+        text = "Poblacion {}\n".format(poblacion_cont)
+        OutText += text
+
+        poblacion_cont += 1
+
+        individuo_cont = 1
+        individuos_cumplen_cont = len(poblacion[1])
+        for i in poblacion[1]:
+            status = 'No cumple'
+            if (i['tcont'] == 0 and i['ncont'] == 0):
+                status = 'Cumple'
+                individuos_cumplen_cont -= 1
+            text = "Individuo: {} N° tuberias: {} N° tuberias: {} Status: {}\n".format(individuo_cont, i['tcont'], i['ncont'], status)
+            OutText += text
+            individuo_cont += 1
+
+
+        text = "Individuos que no cumplen: {}\n".format(individuos_cumplen_cont)
+        OutText += text
+        
+        text = "Promedio: {}\n\n".format(individuos_cumplen_cont/len(poblacion))
+        OutText += text
+
+
+    # punto 9
+    text = "\n\n=============================================================================\n"
+    OutText += text
+    text = "8. Mejores 3 individuos de la ultima iteración\n"
+    OutText += text
+    text = "=============================================================================\n\n"
+    OutText += text
+
+
+    data = json.loads(data)
+    poblacion = data[-1][1]
+
+    
+    for i in range(3):
+        binarios=poblacion[i]['binarios']
+        FO=np.round(float(poblacion[i]['FO']),0)
+        text = "FO: {} BIN: {}\n".format(FO, binarios)
+        OutText += text
+
+    response = HttpResponse(OutText,content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename=export.txt'
     
     return response
