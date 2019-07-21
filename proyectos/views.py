@@ -34,7 +34,7 @@ import copy
 
 BIN_LIST_2 = ['00', '01', '10', '11']
 BIN_LIST_3 = ['000', '001', '010', '011','100', '101', '110', '111']
-ITERACION_MAX = 200
+ITERACION_MAX = 100000000000000
 
 def getMatrizBinarios(nindividuos, ntuberias, l):
     matriz = []
@@ -764,7 +764,7 @@ def GeneticoToPDFView(request, pk):
 import os
 
 from django.conf import settings
-def GeneticToExcelView(request, pk):
+def GeneticToTextView(request, pk):
     data = request.POST['data']
     dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
     
@@ -836,9 +836,10 @@ def GeneticToExcelView(request, pk):
     for poblacion in json.loads(data):
         todo_array += poblacion[1]
     
+    print(todo_array)
     todo_array = bubbleSort2(todo_array, 'FO')
 
-    poblacion_cont = 1
+    poblacion_cont = 0
     for arr in todo_array:
         if poblacion_cont == 10:
                 break

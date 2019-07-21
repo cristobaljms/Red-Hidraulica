@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import  login
-from proyectos.views import GeneticoToPDFView,GeneticToExcelView, GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, GradienteView2, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
+from proyectos.views import GeneticoToPDFView,GeneticToTextView, GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, GradienteView2, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
 from materiales.views import MaterialesListView, MaterialesCreateView, MaterialesUpdateView, MaterialesDeleteView
 from fluidos.views import FluidosListView, FluidosCreateView, FluidosUpdateView, FluidosDeleteView
 from django.contrib.auth.decorators import login_required
@@ -27,7 +27,7 @@ urlpatterns = [
     path('calculos/genetico/<int:pk>/', login_required(GeneticView.as_view(), login_url='/login/'), name='calculo_genetico'),
     path('calculos/genetico/<int:pk>/<str:bin>', login_required(GradienteView2.as_view(), login_url='/login/'), name='calculo_gradiente2'),
     path('reporte/pdf/gradiente/<int:pk>/', login_required(GradienteToPDFView, login_url='/login/'), name='reporte_pdf_gradiente'),
-    path('reporte/pdf/genetico/<int:pk>/', login_required(GeneticToExcelView, login_url='/login/'), name='reporte_pdf_genetico'),
+    path('reporte/pdf/genetico/<int:pk>/', login_required(GeneticToTextView, login_url='/login/'), name='reporte_pdf_genetico'),
     path('reporte/excel/gradiente/<int:pk>/', login_required(GradienteToExcelView, login_url='/login/'), name='reporte_excel_gradiente'),
     path('materiales/', login_required(MaterialesListView.as_view(), login_url='/login/'), name='materiales'),
     path('materiales/crear/', login_required(MaterialesCreateView.as_view(), login_url='/login/'), name='materiales_crear'),
