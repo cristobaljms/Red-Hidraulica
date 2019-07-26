@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import  login
-from proyectos.views import GeneticoToPDFView,GeneticToTextView, GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, GradienteView2, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
+from proyectos.views import GeneticToTextView, GeneticView, borrarDiametroGenetico, DiametroGeneticoUpdateView, NodoUpdateView, TuberiaUpdateView,GradienteToExcelView, GradienteToPDFView, GradienteView, GradienteView2, obtenerProyectoDatos, ProyectosListView, ProyectosCreateView, ProyectosUpdateView, ProyectoDeleteView, ProyectoAdminView, borrarTuberia, borrarNodo, borrarReservorio
 from materiales.views import MaterialesListView, MaterialesCreateView, MaterialesUpdateView, MaterialesDeleteView
 from fluidos.views import FluidosListView, FluidosCreateView, FluidosUpdateView, FluidosDeleteView
 from django.contrib.auth.decorators import login_required

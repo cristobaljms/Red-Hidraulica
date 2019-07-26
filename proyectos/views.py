@@ -46,7 +46,7 @@ def getMatrizBinarios(nindividuos, ntuberias, l):
             x = [random.choice(BIN_LIST_3) for i in range(ntuberias)]
         if not(x in matriz):
             matriz.append(x)
-            i = i + 1  
+            i = i + 1
     return np.matrix(matriz)
 
 def getMatrizDiametros(matrizBinarios, data_genetico):
@@ -56,7 +56,7 @@ def getMatrizDiametros(matrizBinarios, data_genetico):
         for j in range(0, dimension[1]):
             for dg in data_genetico:
                 if str(matrizBinarios[i, j]) == dg['codigo']:
-                    matriz[i, j] = dg['diametro']   
+                    matriz[i, j] = dg['diametro']
     return matriz
 
 def getMatrizCostos(matrizBinarios, data_genetico):
@@ -66,12 +66,12 @@ def getMatrizCostos(matrizBinarios, data_genetico):
         for j in range(0, dimension[1]):
             for dg in data_genetico:
                 if str(matrizBinarios[i, j]) == dg['codigo']:
-                    matriz[i, j] = dg['costo']   
+                    matriz[i, j] = dg['costo']
     return matriz
 
 def getGeneticData(project_pk, nindividuos):
     diametros = DiametrosGeneticos.objects.filter(proyecto=project_pk).order_by('diametro')
-    
+
     if len(diametros) == 0:
         return "NOT_LOAD_GENETIC_DIAMETER"
 
@@ -81,7 +81,7 @@ def getGeneticData(project_pk, nindividuos):
             "diametro":dg.diametro,
             "costo": dg.costo
         })
-        
+
     l = len(diametros)
 
     if l <= 4:
@@ -109,7 +109,7 @@ def getGeneticData(project_pk, nindividuos):
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[1]['diametro'], 'costo': data_genetico[1]['costo']})
     elif l == 7:
         data_genetico.append({ 'codigo':BIN_LIST_3[7], 'diametro': data_genetico[0]['diametro'], 'costo': data_genetico[0]['costo']})
-    
+
     tuberias = Tuberia.objects.filter(proyecto=project_pk)
     K = 0
     for t in tuberias:
@@ -128,7 +128,7 @@ def getGeneticData(project_pk, nindividuos):
 
 def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, projectData, nindividuos, Pmin, Vmin):
     result = []
-    
+
     ntuberias = len(projectData['tuberias'])
 
     qx = 0
@@ -200,7 +200,7 @@ def calculoFO(project_pk, matrizBinarios, matrizDiametros, matrizCostos, project
             'ncont': ncont,
             'tcont': tcont
         })
-    return bubbleSort(result, 'FO')
+    return bubbleSort2(result, 'FO')
 
 def seleccion(FO, Nc, B):
     Pmax = B/Nc
@@ -237,7 +237,7 @@ def seleccion(FO, Nc, B):
             if (a != b and (a + 1) != b and (a-1) != b):
                 auxArr.remove(a)
                 auxArr.remove(b)
-                arrIndexPadres.append({'a':a, 'b':b})    
+                arrIndexPadres.append({'a':a, 'b':b})
             if(len(auxArr) == 2 and ((auxArr[0] + 1) == auxArr[1] or (auxArr[1] + 1) == auxArr[0])):
                 break
             elif( len(auxArr) == 1 ):
@@ -245,10 +245,10 @@ def seleccion(FO, Nc, B):
                 arrIndexPadres.append({'a':auxArr[0], 'b':-1})
             elif(len(auxArr) == 0):
                 flagA = False
-    
+
     for i in range(0,len(arrProbabilidad)):
         arrProbabilidad[i]["n"] = i
-        
+
     return [arrIndexPadres, arrProbabilidad]
 
 def cruzamiento(data):
@@ -261,7 +261,7 @@ def cruzamiento(data):
         else:
             binA = copy.deepcopy(arrProbabilidad[aIP['a']-1]['binarios'])
             binB = copy.deepcopy(arrProbabilidad[aIP['b']-1]['binarios'])
-            
+
             arrbinA = [binA[c] for c in range(len(binA))]
             arrbinB = [binB[c] for c in range(len(binB))]
 
@@ -295,9 +295,9 @@ def mutacion(hijosCruzamiento, Pm):
             if arrBinarios[a] == '0':
                 arrBinarios[a] = '1'
             else:
-                arrBinarios[a] = '0' 
-            
-            d['binarios'] = concatArr(arrBinarios)  
+                arrBinarios[a] = '0'
+
+            d['binarios'] = concatArr(arrBinarios)
             listado_mutacion.append(d)
 
     return listado_mutacion
@@ -307,14 +307,14 @@ import logging
 
 @shared_task
 def calculosGenetico(project_pk):
-    
+
     try:
         dataGenetica = DatosGeneticos.objects.get(proyecto=project_pk)
     except DatosGeneticos.DoesNotExist:
         return "NO_GENETIC_DATA_LOAD"
 
     nindividuos = dataGenetica.nindividuos
-    
+
     pos = int(np.round(nindividuos*0.8,0))-1
 
     npoblacion = dataGenetica.npoblacion
@@ -346,7 +346,7 @@ def calculosGenetico(project_pk):
             matrizDiametros = getMatrizDiametros(matrizBinariosFromMutacion, data_genetico)
             matrizCostos = getMatrizCostos(matrizBinariosFromMutacion, data_genetico)
             resultado_FO = calculoFO(project_pk, matrizBinariosFromMutacion, matrizDiametros, matrizCostos, projectData, nindividuos, Pmin, Vmin)
-        
+
         if resultado_FO == "ERROR_MAX_LIMIT_ITERATION":
             return "ERROR_MAX_LIMIT_ITERATION"
 
@@ -360,414 +360,10 @@ def calculosGenetico(project_pk):
             break
     return result
 
-def GeneticoToPDFView(request, pk):
-    data = request.POST['data']
-    dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
-
-    pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=landscape(A4))
-    Story = []
-
-    ps_head = ParagraphStyle('titulo',alignment = TA_CENTER, fontSize = 8, fontName="Times-Roman")
-    ps_subtitle = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
-    ps_iteracion = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 8, fontName="Times-Roman")
-    ps_tabla = ParagraphStyle('titulo',alignment = TA_JUSTIFY, fontSize = 5, fontName="Times-Roman")
-
-    text = "<b>ALGORITMO GENETICO</b>"
-    p = Paragraph(text, ps_head)
-    Story.append(p)
-    Story.append(Spacer(1,0.5*inch))
-
-    text = "<b>DATOS</b>"
-    p = Paragraph(text, ps_iteracion)
-    Story.append(p)
-    Story.append(Spacer(1,0.1*inch))
-
-    text = "<p>Numero individuos: {}</p>".format(dataGenetica.nindividuos)
-    p = Paragraph(text, ps_iteracion)
-    Story.append(p)
-    Story.append(Spacer(1,0.1*inch))
-
-    text = "<p>Numero poblacion: {}</p>".format(dataGenetica.npoblacion)
-    p = Paragraph(text, ps_iteracion)
-    Story.append(p)
-    Story.append(Spacer(1,0.1*inch))
-
-    text = "<p>Beta: {}</p>".format(dataGenetica.beta)
-    p = Paragraph(text, ps_iteracion)
-    Story.append(p)
-    Story.append(Spacer(1,0.1*inch))
-
-    text = "<p>Pmin: {}</p>".format(dataGenetica.pmin)
-    p = Paragraph(text, ps_iteracion)
-    Story.append(p)
-    Story.append(Spacer(1,0.1*inch))
-
-    text = "<p>Vmin: {}</p>".format(dataGenetica.vmin)
-    p = Paragraph(text, ps_iteracion)
-    Story.append(p)
-    Story.append(Spacer(1,0.1*inch))
-
-    if(dataGenetica.porcentaje_cruzami != 0):
-        text = "<p>Porcentaje de cruzamiento: {}</p>".format(dataGenetica.porcentaje_cruzami)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.1*inch))
-
-    if(dataGenetica.porcentaje_mutacion != 0):
-        text = "<p>Porcentaje de mutación: {}</p>".format(dataGenetica.porcentaje_mutacion)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.1*inch))
-    Story.append(Spacer(1,0.4*inch))
-    titles = [
-        Paragraph('<b>FO</b>', ps_tabla),
-        Paragraph('<b>Binario</b>', ps_tabla),
-    ]
-    
-    text = "<b>1. Mejores 10 individuos de cada generación</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-
-    poblacion_cont = 1 
-    for poblacion in json.loads(data):
-        Story.append(Spacer(1,0.1*inch))
-        text = "<p>Poblacion {}</p>".format(poblacion_cont)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-
-        table_formatted = [titles]
-        individuo_cont = 0
-        for i in poblacion[1]:
-            if individuo_cont == 10:
-                break
-            binarios=i['binarios']
-
-            FO=np.round(float(i['FO']),0)
-            row = [ FO, binarios ]
-            table_formatted.append(row)
-            individuo_cont += 1
-
-        t=Table(table_formatted, (200,500))
-
-        t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(2,0),'#878787'),
-            ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
-            ('BOX',(0,0),(2,0), 0.25, colors.gray)
-        ]))
-
-        Story.append(t)
-        poblacion_cont += 1
-
-    
-    #punto 3
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>2. 10 mejores individuos de todo el proceso</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-
-    todo_array = []
-    for poblacion in json.loads(data):
-        todo_array += poblacion[1]
-    
-    todo_array = bubbleSort2(todo_array, 'FO')
-
-    table_formatted = [titles]
-    
-    for i in range(10):
-        
-        binarios=todo_array[i]['binarios']
-        FO=np.round(float(todo_array[i]['FO']),0)
-        row = [ FO, binarios ]
-        table_formatted.append(row)
-
-    t=Table(table_formatted, (200,500))
-
-    t.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(2,0),'#878787'),
-        ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
-        ('BOX',(0,0),(2,0), 0.25, colors.gray)
-    ]))
-
-    Story.append(t)
-
-
-    # punto 4
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>3. Mejor individuo de cada generación</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-
-    titles = [
-        Paragraph('<b>Poblacion</b>', ps_tabla),
-        Paragraph('<b>FO</b>', ps_tabla),
-    ]
-
-    poblacion_cont = 1
-    table_formatted = [titles]
-    for poblacion in json.loads(data):
-
-        FO=np.round(float(poblacion[1][0]['FO']),0)
-        row = [poblacion_cont, FO ]
-        table_formatted.append(row)
-        poblacion_cont += 1 
-
-    t=Table(table_formatted, (50,100))
-
-    t.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(2,0),'#878787'),
-        ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
-        ('BOX',(0,0),(2,0), 0.25, colors.gray)
-    ]))
-    
-    Story.append(t)
-
-    #punto 5
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>4. Promedio y desviación estandar de cada generación</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-    
-    titles = [
-        Paragraph('<b>Poblacion</b>', ps_tabla),
-        Paragraph('<b>Promedio</b>', ps_tabla),
-        Paragraph('<b>Desviación</b>', ps_tabla),
-    ]
-    table_formatted = [titles]
-    poblacion_cont = 1
-    for poblacion in json.loads(data):
-        promedio = 0
-        n = len(poblacion[1])
-        for i in poblacion[1]:
-            promedio += float(i['FO'])
-        
-        promedio = promedio / n
-        desvEstandar = 0
-        for i in poblacion[1]:
-            desvEstandar += np.power((float(i['FO'])-promedio),2)
-        desvEstandar = np.power((desvEstandar/(n-1)),0.5)
-        
-        row = [poblacion_cont, np.round(promedio,0), np.round(desvEstandar,0) ]
-        table_formatted.append(row)
-
-        t=Table(table_formatted, (50,200,100))
-        poblacion_cont += 1
-
-    t.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(3,0),'#878787'),
-        ('INNERGRID',(0,0),(3,0), 0.25, colors.gray),
-        ('BOX',(0,0),(3,0), 0.25, colors.gray)
-    ]))
-    
-    Story.append(t)
-
-    # punto 6
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>5. Número y promedio de nodos que no cumplen las restricciones de presión</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-    
-    titles = [
-        Paragraph('<b>Individuo</b>', ps_tabla),
-        Paragraph('<b>N°</b>', ps_tabla),
-        Paragraph('<b>Población</b>', ps_tabla),
-    ]
-    poblacion_cont = 1
-    for poblacion in json.loads(data):
-        Story.append(Spacer(1,0.1*inch))
-        text = "<p>Poblacion {}</p>".format(poblacion_cont)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-        poblacion_cont += 1
-        individuo_cont = 1
-        table_formatted = [titles]
-
-        nodos_promedio = 0
-        for i in poblacion[1]:
-            row = [individuo_cont, i['ncont'],poblacion[0]+1]
-            table_formatted.append(row)
-            individuo_cont += 1
-            nodos_promedio += i['ncont']
-        
-
-        t=Table(table_formatted, (60,40,50))
-        t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(3,0),'#878787'),
-            ('INNERGRID',(0,0),(3,0), 0.25, colors.gray),
-            ('BOX',(0,0),(3,0), 0.25, colors.gray)
-        ]))
-        Story.append(t)
-
-        text = "<p><b>Nodos que no cumplen:</b> {}</p>".format(nodos_promedio)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-
-        nodos_promedio = nodos_promedio / len(poblacion[1])
-
-        text = "<p><b>Promedio:</b> {}</p>".format(nodos_promedio)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-    
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>6. Número y promedio de tuberias que no cumplen las restricciones</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-    
-    titles = [
-        Paragraph('<b>Individuo</b>', ps_tabla),
-        Paragraph('<b>N°</b>', ps_tabla),
-        Paragraph('<b>Población</b>', ps_tabla),
-    ]
-    poblacion_cont = 1
-    for poblacion in json.loads(data):
-        Story.append(Spacer(1,0.1*inch))
-        text = "<p>Poblacion {}</p>".format(poblacion_cont)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-        poblacion_cont += 1
-        individuo_cont = 1
-        table_formatted = [titles]
-
-        tuberias_promedio = 0
-        for i in poblacion[1]:
-            row = [individuo_cont, i['tcont'], poblacion[0]+1]
-            table_formatted.append(row)
-            individuo_cont += 1
-            tuberias_promedio += i['tcont']
-
-        t=Table(table_formatted, (60,40,50))
-        t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(3,0),'#878787'),
-            ('INNERGRID',(0,0),(3,0), 0.25, colors.gray),
-            ('BOX',(0,0),(3,0), 0.25, colors.gray)
-        ]))
-        Story.append(t)
-
-        text = "<p><b>Tuberias que no cumplen:</b> {}</p>".format(tuberias_promedio)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-
-        tuberias_promedio = tuberias_promedio / len(poblacion[1])
-
-        text = "<p><b>Promedio:</b> {}</p>".format(tuberias_promedio)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-
-    # Punto 8
-
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>7. Número y promedio de individuos que no cumplen restricciones</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-
-    titles = [
-        Paragraph('<b>Individuo</b>', ps_tabla),
-        Paragraph('<b>N° tuberias</b>', ps_tabla),
-        Paragraph('<b>N° Nodos</b>', ps_tabla),
-        Paragraph('<b>Status</b>', ps_tabla),
-    ]
-
-    poblacion_cont = 1
-    for poblacion in json.loads(data):
-        Story.append(Spacer(1,0.1*inch))
-        text = "<p>Poblacion {}</p>".format(poblacion_cont)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.2*inch))
-        poblacion_cont += 1
-
-        individuo_cont = 1
-        table_formatted = [titles]
-        individuos_cumplen_cont = len(poblacion[1])
-        for i in poblacion[1]:
-            status = 'No cumple'
-            if (i['tcont'] == 0 and i['ncont'] == 0):
-                status = 'Cumple'
-                individuos_cumplen_cont -= 1
-            row = [individuo_cont, i['tcont'], i['ncont'], status]
-            table_formatted.append(row)
-            individuo_cont += 1
-            
-        t=Table(table_formatted, (60,60,60,60))
-        t.setStyle(TableStyle([
-            ('BACKGROUND',(0,0),(4,0),'#878787'),
-            ('INNERGRID',(0,0),(4,0), 0.25, colors.gray),
-            ('BOX',(0,0),(4,0), 0.25, colors.gray)
-        ]))
-        Story.append(t)
-
-        text = "<p><b>Individuos que no cumplen:</b> {}</p>".format(individuos_cumplen_cont)
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.1*inch))
-            
-        text = "<p><b>Promedio: </b>{}</p>".format(individuos_cumplen_cont/len(poblacion))
-        p = Paragraph(text, ps_iteracion)
-        Story.append(p)
-        Story.append(Spacer(1,0.3*inch))
-
-    # punto 9
-    Story.append(Spacer(1,0.2*inch))
-    text = "<b>8. Mejores 3 individuos de la ultima iteración</b>"
-    p = Paragraph(text, ps_subtitle)
-    Story.append(p)
-    Story.append(Spacer(1,0.2*inch))
-
-    data = json.loads(data)
-    poblacion = data[1][-1]
-
-    titles = [
-        Paragraph('<b>FO</b>', ps_tabla),
-        Paragraph('<b>Binario</b>', ps_tabla),
-    ]
-    
-    table_formatted = [titles]
-    for i in range(3):
-        binarios=poblacion[i]['binarios']
-        FO=np.round(float(poblacion[i]['FO']),0)
-        row = [ FO, binarios ]
-        table_formatted.append(row)
-
-    t=Table(table_formatted, (200,500))
-
-    t.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(2,0),'#878787'),
-        ('INNERGRID',(0,0),(2,0), 0.25, colors.gray),
-        ('BOX',(0,0),(2,0), 0.25, colors.gray)
-    ]))
-
-    Story.append(t)
-
-    doc.build(Story)
-
-    pdf_value = pdf_buffer.getvalue()
-    pdf_buffer.close()
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="gradientmethod.pdf"'
-    response.write(pdf_value)
-    return response
-
-import os
-
-from django.conf import settings
 def GeneticToTextView(request, pk):
     data = request.POST['data']
     dataGenetica = DatosGeneticos.objects.get(proyecto=pk)
-    
+
     OutText = ""
 
     text = "ALGORITMO GENETICO \n\n"
@@ -806,7 +402,7 @@ def GeneticToTextView(request, pk):
     text = "=============================================================================\n\n"
     OutText += text
 
-    poblacion_cont = 1 
+    poblacion_cont = 1
     for poblacion in json.loads(data):
         text = "\nPoblacion {}\n".format(poblacion_cont)
         OutText += text
@@ -822,7 +418,7 @@ def GeneticToTextView(request, pk):
             individuo_cont += 1
         poblacion_cont += 1
 
-    
+
     #punto 3
 
     text = "\n\n=============================================================================\n"
@@ -835,8 +431,7 @@ def GeneticToTextView(request, pk):
     todo_array = []
     for poblacion in json.loads(data):
         todo_array += poblacion[1]
-    
-    print(todo_array)
+
     todo_array = bubbleSort2(todo_array, 'FO')
 
     poblacion_cont = 0
@@ -849,7 +444,7 @@ def GeneticToTextView(request, pk):
         OutText += text
         poblacion_cont += 1
 
-   
+
 
     # punto 4
     text = "\n\n=============================================================================\n"
@@ -864,7 +459,7 @@ def GeneticToTextView(request, pk):
         FO=np.round(float(poblacion[1][0]['FO']),0)
         text = "N° Poblacion: {} BIN: {}\n".format(poblacion_cont, FO)
         OutText += text
-        poblacion_cont += 1 
+        poblacion_cont += 1
 
 
     #punto 5
@@ -882,7 +477,7 @@ def GeneticToTextView(request, pk):
         n = len(poblacion[1])
         for i in poblacion[1]:
             promedio += float(i['FO'])
-        
+
         promedio = promedio / n
         desvEstandar = 0
         for i in poblacion[1]:
@@ -891,7 +486,7 @@ def GeneticToTextView(request, pk):
         text = "N° Poblacion: {} Promedio: {} Desviación: {}\n".format(poblacion_cont, np.round(promedio,0), np.round(desvEstandar,0))
         OutText += text
         poblacion_cont += 1
-    
+
 
     # punto 6
     text = "\n\n=============================================================================\n"
@@ -914,7 +509,7 @@ def GeneticToTextView(request, pk):
             OutText += text
             individuo_cont += 1
             nodos_promedio += i['ncont']
-        
+
 
         text = "Nodos que no cumplen:{}\n".format(nodos_promedio)
         OutText += text
@@ -985,7 +580,7 @@ def GeneticToTextView(request, pk):
 
         text = "Individuos que no cumplen: {}\n".format(individuos_cumplen_cont)
         OutText += text
-        
+
         text = "Promedio: {}\n\n".format(individuos_cumplen_cont/len(poblacion))
         OutText += text
 
@@ -1002,7 +597,7 @@ def GeneticToTextView(request, pk):
     data = json.loads(data)
     poblacion = data[-1][1]
 
-    
+
     for i in range(3):
         binarios=poblacion[i]['binarios']
         FO=np.round(float(poblacion[i]['FO']),0)
@@ -1011,7 +606,7 @@ def GeneticToTextView(request, pk):
 
     response = HttpResponse(OutText,content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename=export.txt'
-    
+
     return response
 
 class GeneticView(generic.View):
@@ -1040,14 +635,14 @@ class ProyectoAdminView(generic.CreateView):
         try:
             datagenetica = DatosGeneticos.objects.get(proyecto=proyecto)
         except DatosGeneticos.DoesNotExist:
-            datagenetica = { 
+            datagenetica = {
                 'nindividuos':' ',
                 'npoblacion' :' ',
                 'porcentaje_replicacion' :' ',
                 'porcentaje_mutacion' :' ',
-                'porcentaje_cruzami':' ' 
+                'porcentaje_cruzami':' '
             }
-            
+
         rarray = []
 
         for sr in sreservorios:
@@ -1062,7 +657,7 @@ class ProyectoAdminView(generic.CreateView):
 
         torden = len(tuberias)
         norden = len(nodos)
-        
+
         context = {
             'proyecto': proyecto,
             'nodos':nodos,
@@ -1073,9 +668,9 @@ class ProyectoAdminView(generic.CreateView):
             'torden': torden + 1,
             'reservorios': reservorios,
             'opciones_tuberia': rarray,
-            'active_tab': kwargs['active_tab'], 
+            'active_tab': kwargs['active_tab'],
         }
-        
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -1116,14 +711,14 @@ class ProyectoAdminView(generic.CreateView):
 
             if(re.match('n', start)):
                 patron = re.compile('n')
-                nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))  
+                nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))
             else:
                 patron = re.compile('r')
                 nstart = Reservorio.objects.get(pk = int(patron.split(start)[1]))
 
             if(re.match('n', end)):
                 patron = re.compile('n')
-                nend = Nodo.objects.get(pk = int(patron.split(end)[1]))  
+                nend = Nodo.objects.get(pk = int(patron.split(end)[1]))
             else:
                 patron = re.compile('r')
                 nend = Reservorio.objects.get(pk = int(patron.split(end)[1]))
@@ -1136,7 +731,7 @@ class ProyectoAdminView(generic.CreateView):
 
         elif (tipo == 'genetico'):
             active_tab = 'g'
-            
+
             l = DiametrosGeneticos.objects.filter(proyecto=id_proyecto).count()
             if l == 8:
                 messages.add_message(request, messages.ERROR, 'Solo se pueden cargar 8 diametros como maximo')
@@ -1149,7 +744,7 @@ class ProyectoAdminView(generic.CreateView):
             dg.save()
             messages.add_message(request, messages.SUCCESS, 'Diametro creado con exito')
             return redirect('proyecto_administrar', id_proyecto, active_tab)
-        
+
         elif (tipo == 'datagenetico'):
             active_tab = 'g'
             nindividuos = request.POST.get('nindividuos')
@@ -1193,7 +788,7 @@ class ProyectoAdminView(generic.CreateView):
             z = request.POST.get('z')
             x_position = request.POST.get('x_position')
             y_position = request.POST.get('y_position')
-            
+
             proyecto = Proyecto.objects.get(pk=id_proyecto)
             reservorio = Reservorio(numero=numero, z=z, proyecto=proyecto, y_position=y_position, x_position=x_position)
             reservorio.save()
@@ -1225,7 +820,7 @@ class ProyectosCreateView(generic.CreateView):
         if fluido == '0':
             messages.add_message(request, messages.ERROR, 'El fluido no es valido')
             return redirect('proyectos_crear')
-        
+
         if material == '0':
             messages.add_message(request, messages.ERROR, 'El material no es valido')
             return redirect('proyectos_crear')
@@ -1238,10 +833,10 @@ class ProyectosCreateView(generic.CreateView):
             m = Material.objects.get(pk=material)
             p = Proyecto(nombre=nombre, fluido=f, material=m)
             p.save()
-        
+
         messages.add_message(request, messages.SUCCESS, 'Proyecto creado con exito')
         return redirect('proyectos')
-        
+
 class ProyectosUpdateView(generic.View):
     template_name = "sections/proyectos/edit.html"
 
@@ -1250,7 +845,7 @@ class ProyectosUpdateView(generic.View):
         fluidos = Fluido.objects.all()
         materiales = Material.objects.all()
         context = {
-            'proyecto': proyecto, 
+            'proyecto': proyecto,
             'fluidos': fluidos,
             'materiales':materiales
         }
@@ -1267,7 +862,7 @@ class ProyectosUpdateView(generic.View):
         except Proyecto.DoesNotExist:
             messages.add_message(request, messages.ERROR, 'No existe el proyecto')
             return redirect('proyectos')
-        
+
         if len(nombre) < 2:
             messages.add_message(request, messages.ERROR, 'El nombre del proyecto debe ser mayor a 2 digitos')
             return redirect('proyectos_editar', pk=id_proyecto)
@@ -1275,7 +870,7 @@ class ProyectosUpdateView(generic.View):
         if fluido == '0':
             messages.add_message(request, messages.ERROR, 'El fluido no es valido')
             return redirect('proyectos_editar', pk=id_proyecto)
-        
+
         if material == '0':
             messages.add_message(request, messages.ERROR, 'El material no es valido')
             return redirect('proyectos_editar', pk=id_proyecto)
@@ -1328,14 +923,14 @@ class TuberiaUpdateView(generic.View):
 
         if(re.match('n', start)):
             patron = re.compile('n')
-            nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))  
+            nstart = Nodo.objects.get(pk = int(patron.split(start)[1]))
         else:
             patron = re.compile('r')
             nstart = Reservorio.objects.get(pk = int(patron.split(start)[1]))
 
         if(re.match('n', end)):
             patron = re.compile('n')
-            nend = Nodo.objects.get(pk = int(patron.split(end)[1]))  
+            nend = Nodo.objects.get(pk = int(patron.split(end)[1]))
         else:
             patron = re.compile('r')
             nend = Reservorio.objects.get(pk = int(patron.split(end)[1]))
@@ -1399,7 +994,7 @@ def borrarTuberia(request, pk):
 def borrarNodo(request, pk):
     Nodo.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    
+
 def borrarReservorio(request, pk):
     Reservorio.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -1412,7 +1007,7 @@ def getProjectData(pk):
     tuberias = json.loads(serialize("json", Tuberia.objects.filter(proyecto=pk).order_by('orden')))
     nodos = json.loads(serialize("json", Nodo.objects.filter(proyecto=pk).order_by('orden')))
     reservorios = json.loads(serialize("json", Reservorio.objects.filter(proyecto=pk)))
-    
+
     tarray = []
     for t in tuberias:
         tarray.append(t['fields'])
@@ -1436,7 +1031,7 @@ def obtenerProyectoDatos(request, pk):
     return JsonResponse(getProjectData(pk), safe=False)
 
 def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
-    
+
     if (iteracion > ITERACION_MAX):
         return "ERROR_MAX_LIMIT_ITERATION"
 
@@ -1447,13 +1042,13 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
     ntuberias = len(data['tuberias'])
     nnodos = len(data['nodos'])
     nreservorios = len(data['reservorios'])
-    
+
     # Creacion del arreglo de longitud
     array_longitud = []
     for t in data['tuberias']:
         array_longitud.append(t['longitud'])
     Lx = np.array(array_longitud)
-    
+
 
     # Creacion del arreglo de diametro
     if len(Dx) == 0:
@@ -1470,7 +1065,7 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
                     if obj['codigo'] == a:
                         array_diametro.append(obj['diametro'])
         Dx = np.array(array_diametro)
- 
+
 
     # Creacion del arreglo de km
     array_km = []
@@ -1495,7 +1090,7 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
     # Calculamos la Velocidad
     V = Qx/A
 
-    # Armamos el arrego de Ks 
+    # Armamos el arrego de Ks
     Ks   = np.zeros(ntuberias) + proyecto.material.ks
 
     # Calculamos Re
@@ -1525,7 +1120,7 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
     # Creamos un json on todos estos datos para enviarlos luego a las Vistas y reportes
     table = TableFormatter(ntuberias,data['tuberias'], Qx, Lx, Dx, A,V,Re, f,hf,Km,hm,hfhm,a, af)
     iteracionRow['tabla'] = table
-    
+
     """
     Ahora comenzamos a crear y calcular las matrices
     """
@@ -1563,34 +1158,34 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
         A10.append(a)
     A10 = np.matrix(A10)
 
-    # MATRIZ DIAGONAL A11 
+    # MATRIZ DIAGONAL A11
     A11 = np.zeros((ntuberias, ntuberias))
     for i in range(0, len(af)):
         A11[i][i] = af[i]
-    
+
     # Arreglo alturas de reservorios
     H0 = []
     for reservorio in data['reservorios']:
         H0.append(reservorio['z'])
-    
+
     H0 = np.array(H0)
 
     # Arreglo caudal de salida
     q = []
     for nodo in data['nodos']:
         q.append(nodo['demanda'])
-    
+
     q = np.array(q)
     q = np.reshape(q, (nnodos,1))
-   
+
     # Matriz diagonal del 2 y matriz identidad
     N = np.zeros((ntuberias, ntuberias)).astype(int)
     I = np.zeros((ntuberias, ntuberias)).astype(int)
     for i in range(0, ntuberias):
         N[i][i] = 2
         I[i][i] = 1
-    
-   
+
+
     ##### CALCULAMOS LAS H #####
 
     # ([N][A11])^-1
@@ -1620,12 +1215,12 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
     step7 = A21.dot(Qx)
 
     # A21*Qx-q
-    step8 = step7 - q 
+    step8 = step7 - q
     step9 = step6 - step8
 
     # step10 son las H ya calculadas
     step10 = step4.dot(step9)
-    
+
     # Las guardamos para enviarlas luego a los reportes
     iteracionRow['H'] = np.squeeze(np.asarray(np.round(step10,4))).tolist()
 
@@ -1643,10 +1238,10 @@ def calculosGradiente(iteracion, pk, Dx, Qx, H, A12, response, binario=0):
 
     # En Qstep9 se encuentra el rsultado de todas las Qx
     Qstep9 = Qstep4 - Qstep8
-    
+
     # Guardamos Qx para enviarlo luego a los reportes y vistas
     iteracionRow['Qx'] = np.squeeze(np.asarray(np.round(Qstep9, 4))).tolist()
-   
+
     # Culminamos la iteracion y subimos este valor en 1
     iteracion = iteracion + 1
 
@@ -1717,7 +1312,7 @@ class GradienteView2(generic.View):
 def GradienteToPDFView(request, pk):
     data = getProjectData(pk)
     ntuberias = len(data['tuberias'])
-    
+
     qx = 0
     for nodo in data['nodos']:
         qx = qx + nodo['demanda']
@@ -1757,7 +1352,7 @@ def GradienteToPDFView(request, pk):
         Paragraph('<b>a</b>', ps_tabla),
         Paragraph('<b>a*Qx</b>', ps_tabla)
     ]
-    
+
     for iteracion in calculos:
         text = "<b>Iteracion {}</b>".format(iteracion['iteracion'])
         p = Paragraph(text, ps_iteracion)
@@ -1794,7 +1389,7 @@ def GradienteToPDFView(request, pk):
         Story.append(t)
         Story.append(Spacer(1,0.2*inch))
 
-        THtitles = [ 
+        THtitles = [
             Paragraph('H', ps_tabla)
         ]
         table_formatted = [THtitles]
@@ -1810,7 +1405,7 @@ def GradienteToPDFView(request, pk):
         Story.append(t)
         Story.append(Spacer(1,0.2*inch))
 
-        TQxtitles = [ 
+        TQxtitles = [
             Paragraph('Qx', ps_tabla)
         ]
 
@@ -1828,7 +1423,7 @@ def GradienteToPDFView(request, pk):
         Story.append(Spacer(1,0.2*inch))
 
 
-        TErrortitles = [ 
+        TErrortitles = [
             Paragraph('Error', ps_tabla)
         ]
 
@@ -1878,9 +1473,9 @@ def GradienteToExcelView(request, pk):
         qx = qx + nodo['demanda']
 
     Qx = np.zeros(ntuberias) + (qx/ntuberias)
-    
+
     calculos = calculosGradiente(1, pk, [], Qx, [], [], [])
-    
+
     if calculos == "ERROR_MAX_LIMIT_ITERATION":
         active_tab = 'i'
         messages.add_message(request, messages.ERROR, 'Se ha superado el limite de iteraciones que es {}, se sugiere:\n - Revisar que los datos cargados estan correctos'.format(ITERACION_MAX))
@@ -1928,7 +1523,7 @@ def GradienteToExcelView(request, pk):
     ws['D'+str(cont)].font = Font(size=10, bold=True)
     ws['E'+str(cont)] = 'DEMANDA m3/seg (Qs)'
     ws['E'+str(cont)].font = Font(size=10, bold=True)
-    
+
     cont = cont + 1
     for n in data['nodos']:
         ws.cell(row=cont,column=1).value = n['numero']
@@ -2092,7 +1687,7 @@ def GradienteToExcelView(request, pk):
         cont = cont + 1
 
     nombre_archivo ="ReportGradient.xlsx"
-    response = HttpResponse(content_type="application/ms-excel") 
+    response = HttpResponse(content_type="application/ms-excel")
     contenido = "attachment; filename={0}".format(nombre_archivo)
     response["Content-Disposition"] = contenido
     wb.save(response)

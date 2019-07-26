@@ -37,14 +37,6 @@ def bubbleSort2(arr, key):
                 arr[j], arr[j+1] = arr[j+1], arr[j]
     return arr
 
-def bubbleSort3(arr, key):
-    n = len(arr)
-    for i in range(n):
-        for j in range(0, n-i-1):
-            if float(arr[j][key]) < float(arr[j+1][key]) :
-                arr[j], arr[j+1] = arr[j+1], arr[j]
-    return arr
-
 def getK(Cc):
     if Cc > 10:
         result = 10
