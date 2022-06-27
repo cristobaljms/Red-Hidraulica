@@ -21,7 +21,7 @@ psycopg2==2.7.5
 pylint==2.2.2
 pytz==2018.5
 redis==2.10.6
-reportlab==3.5.9
+reportlab==3.5.55
 six==1.11.0
 typed-ast==1.1.0
 vine==1.1.4
